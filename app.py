@@ -4,12 +4,16 @@ from dotenv import load_dotenv
 import os
 
 import menu_options
+from streamlit_option_menu import option_menu
+
 
 load_dotenv()
 
 client = OpenAI()
 
 USER = 'User'
+
+st.set_page_config(layout="wide")
 
 # Initialize or update chatbot expertise and conversation in session state
 if 'selected_path' not in st.session_state:
@@ -28,8 +32,12 @@ with st.sidebar:
 def display_sidebar_menu(options, path=[]):
     if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
         next_level = list(options.keys())
-        choice = st.sidebar.selectbox("Choose an option:", [""] + next_level, index=0,
-                                      format_func=lambda x: x if x else "-")
+        #choice = st.sidebar.selectbox("Choose an option:", [""] + next_level, index=0,
+        #                              format_func=lambda x: x if x else "-")
+        with st.sidebar:
+            choice = option_menu("Chat Menu", next_level,
+                                   icons=['house', 'gear'], menu_icon="cast", default_index=0)
+
         if choice:
             new_path = path + [choice]
             st.session_state.selected_path = new_path
@@ -74,12 +82,6 @@ def get_openai_response(prompt_text, selected_path_description):
             stream=True,
         )
         response = st.write_stream(stream)
-    # response = client.chat.completions.create(
-    #    model="gpt-4",
-    #    messages=messages
-    # )
-    # print(response)
-    # ai_message = response.choices[0].message.content
 
     return response
 
@@ -100,10 +102,10 @@ if selected_path and isinstance(menu_options.get_final_description(selected_path
     expertise_area = selected_path[-1]
     description = menu_options.get_final_description(selected_path)
 
-    st.image("img/logo.svg", width=150)
+    #st.image("img/logo.svg", width=115)
 
     # Interface to chat with selected expert
-    st.title(f"Chat with {expertise_area}")
+    st.title(f"Chat with {expertise_area} :robot_face:")
 
     if 'conversation' not in st.session_state:
         st.session_state['conversation'] = []

@@ -59,4 +59,12 @@ def ldap_login(username: str, password: str) -> dict[str, list]:
     if len(conn.entries) != 1:
         raise ValueError('Search must return exactly one result', conn.entries)
     logging.debug('Found user data')
-    return conn.entries[0].entry_attributes_as_dict
+    return True
+
+def check_auth(username, password):
+    try:
+        ldap_login(username, password)
+    except Exception as e:
+        logging.debug('Error logging in: %s', e)
+        return False
+    return True

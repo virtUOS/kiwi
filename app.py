@@ -93,7 +93,8 @@ if selected_path:
     # Store the serialized path in session state if not already there or compare with current path
     if ('selected_path_serialized' not in st.session_state or
             menu_options.path_changed(selected_path, st.session_state['selected_path_serialized'])):
-        st.session_state['conversation'] = []  # Clear conversation if the path has changed
+        # Clear conversation if the path has changed
+        st.session_state['conversation'] = []
         st.session_state['selected_path_serialized'] = '/'.join(
             selected_path)  # Update the serialized path in session state
 

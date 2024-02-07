@@ -31,6 +31,6 @@ jobs:
 
     - run: pip install flake8 bandit
 
-    - run: flake8 *.py
+    - run: flake8 *.py --max-line-length=120
 
     - run: bandit *.py

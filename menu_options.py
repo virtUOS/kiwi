@@ -19,7 +19,7 @@ options = {
             "Human Rights Expert": "You stand as a guardian of dignity, advocating for justice, equality, "
                                    "and the inalienable rights of every individual."
 
-}
+        }
     },
     "Lernraum": {
         "Wiss. Arbeiten": {},
@@ -58,5 +58,6 @@ def path_changed(current_path, previous_path_serialized):
     :param previous_path_serialized: Previously stored serialized path.
     :return: Boolean indicating whether the path has changed.
     """
-    current_path_serialized = '/'.join(current_path)  # Serialize the current path for comparison
+    current_path_serialized = '/'.join(
+        current_path)  # Serialize the current path for comparison
     return current_path_serialized != previous_path_serialized

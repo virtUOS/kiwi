@@ -17,7 +17,7 @@ st.write("# Welcome to the AI Portal of Universität Osnabrück! 👋")
 if "password_correct" not in st.session_state:
     st.session_state["password_correct"] = False
 
-with st.sidebar:
+with (((st.sidebar))):
     # Display the logo on the sidebar
     # Create three columns
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -26,18 +26,18 @@ with st.sidebar:
     with col2:
         st.image("img/logo.svg", width=100)
 
-
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        if nglc.ldap_login(username=st.session_state.username, password=st.session_state.password):
+        if nglc.ldap_login(username=st.session_state.username,
+                           password=st.session_state.password):
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # Don't store the password.
         else:
             st.session_state["password_correct"] = False
 
-        if "password_correct" in st.session_state and not st.session_state["password_correct"]:
+        if ("password_correct" in st.session_state and
+                not st.session_state["password_correct"]):
             st.error("😕 Password incorrect")
-
 
     st.write("Login with your university credentials.")
 
@@ -61,7 +61,7 @@ def check_password():
 st.markdown(
     f"""
     This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
-    
+   
     **👈 Login on the sidebar** to enter the chat area!
     ### Want to learn more about your rights as an user for this app?
     - Check out [Datenschutz]({os.environ['DATENSCHUTZ']})
@@ -72,4 +72,5 @@ st.markdown(
 if not check_password():
     st.stop()
 
+st.success("ENTER")
 st.page_link()

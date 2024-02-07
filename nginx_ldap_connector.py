@@ -1,9 +1,9 @@
 import logging
 import os
+import ssl
 from dotenv import load_dotenv
 
-from flask import Flask, request
-from ldap3 import Server, Connection, ALL, AUTO_BIND_NO_TLS
+from ldap3 import Server, Connection, ALL, AUTO_BIND_NO_TLS, Tls
 
 load_dotenv()
 
@@ -16,13 +16,16 @@ ldap_base_dn = os.environ['LDAP_BASE_DN']
 ldap_user_dn = os.environ['LDAP_USER_DN']
 ldap_search_filter = os.environ['LDAP_SEARCH_FILTER']
 
-app = Flask(__name__)
+ciphers = os.environ['CIPHERS']
 
 
 def connect(user_dn=None, password=None):
+    tls = Tls(ciphers=ciphers, validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLS)
+
     server = Server(ldap_server,
                     port=ldap_port,
                     use_ssl=True,
+                    tls=tls,
                     get_info=ALL)
     # Note: AUTO_BIND_NO_TLS means no Start TLS
     # See: https://github.com/cannatag/ldap3/issues/1061
@@ -50,35 +53,10 @@ def ldap_login(username: str, password: str) -> dict[str, list]:
 
     logging.debug('Searching for user data')
     conn.search(
-            ldap_base_dn,
-            ldap_search_filter.format(username=username),
-            attributes=attributes)
+        ldap_base_dn,
+        ldap_search_filter.format(username=username),
+        attributes=attributes)
     if len(conn.entries) != 1:
         raise ValueError('Search must return exactly one result', conn.entries)
     logging.debug('Found user data')
     return conn.entries[0].entry_attributes_as_dict
-
-
-def check_auth(auth):
-    if not auth:
-        return False
-    try:
-        ldap_login(auth.username, auth.password)
-    except Exception as e:
-        logging.debug('Error logging in: %s', e)
-        return False
-    return True
-
-
-@app.route('/auth')
-def auth():
-    if not check_auth(request.authorization):
-        return ('Unauthorized', 401, {
-            'WWW-Authenticate': 'Basic realm="Login Required"'
-        })
-    return 'okay'
-
-
-if __name__ == '__main__':
-    app.run(host=os.environ.get('LISTEN_ADDR', '127.0.0.1'),
-            port=os.environ.get('LISTEN_PORT' '5000'))

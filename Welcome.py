@@ -14,6 +14,9 @@ st.set_page_config(
 
 st.write("# Welcome to the AI Portal of Universität Osnabrück! 👋")
 
+if "password_correct" not in st.session_state:
+    st.session_state["password_correct"] = False
+
 with st.sidebar:
     # Display the logo on the sidebar
     # Create three columns
@@ -32,6 +35,9 @@ with st.sidebar:
         else:
             st.session_state["password_correct"] = False
 
+        if "password_correct" in st.session_state and not st.session_state["password_correct"]:
+            st.error("😕 Password incorrect")
+
 
     st.write("Login with your university credentials.")
 
@@ -46,9 +52,6 @@ with st.sidebar:
     )
 
     st.button("Login", on_click=credentials_entered)
-
-    if "password_correct" in st.session_state:
-        st.error("😕 Password incorrect")
 
 
 def check_password():

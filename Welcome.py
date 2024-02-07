@@ -1,6 +1,8 @@
 import streamlit as st
 from dotenv import load_dotenv
 import os
+from time import sleep
+
 import nginx_ldap_connector as nglc
 
 load_dotenv()
@@ -64,7 +66,7 @@ st.markdown(
    
     **👈 Login on the sidebar** to enter the chat area!
     ### Want to learn more about your rights as an user for this app?
-    - Check out [Datenschutz]({os.environ['DATENSCHUTZ']})
+    - Check out the [Datenschutz]({os.environ['DATENSCHUTZ']})
     - Check out the [Impressum]({os.environ['IMPRESSUM']})
 """
 )
@@ -72,5 +74,6 @@ st.markdown(
 if not check_password():
     st.stop()
 
-st.success("ENTER")
-st.page_link()
+st.sidebar.success("Logged in!")
+sleep(0.5)
+st.switch_page("pages/app.py")

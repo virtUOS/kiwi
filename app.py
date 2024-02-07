@@ -8,15 +8,14 @@ load_dotenv()
 
 client = OpenAI()
 
-USER = 'Renato'
+USER = 'User'
 
 # Initialize or update chatbot expertise and conversation in session state
 if 'selected_path' not in st.session_state:
     st.session_state.selected_path = []
 
-
 # Display the logo on the sidebar
-st.sidebar.image("img/logo.svg", width=100)  # Adjust width as desired, ensures logo is at the sidebar's top
+st.sidebar.image("img/logo.svg", width=100)
 
 
 def display_sidebar_menu(options, path=[]):
@@ -73,6 +72,13 @@ def get_openai_response(prompt_text, selected_path_description):
 selected_path = st.session_state.selected_path
 if selected_path:
     st.sidebar.write("Selected Path: " + " > ".join(selected_path))
+
+    # Store the serialized path in session state if not already there or compare with current path
+    if ('selected_path_serialized' not in st.session_state or
+            menu_options.path_changed(selected_path, st.session_state['selected_path_serialized'])):
+        st.session_state['conversation'] = []  # Clear conversation if the path has changed
+        st.session_state['selected_path_serialized'] = '/'.join(
+            selected_path)  # Update the serialized path in session state
 
 # Checking if the last selected option corresponds to a chatbot conversation
 if selected_path and isinstance(menu_options.get_final_description(selected_path), str):

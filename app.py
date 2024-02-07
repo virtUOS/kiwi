@@ -1,6 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 from dotenv import load_dotenv
+import os
 
 import menu_options
 
@@ -15,7 +16,13 @@ if 'selected_path' not in st.session_state:
     st.session_state.selected_path = []
 
 # Display the logo on the sidebar
-st.sidebar.image("img/logo.svg", width=100)
+with st.sidebar:
+    # Create three columns
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    # Use the middle column to display the logo
+    with col2:
+        st.image("img/logo.svg", width=100)
 
 
 def display_sidebar_menu(options, path=[]):
@@ -59,14 +66,22 @@ def get_openai_response(prompt_text, selected_path_description):
     messages.append({"role": "user", "content": prompt_text})
 
     # Send the request to the OpenAI API
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=messages
-    )
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        stream = client.chat.completions.create(
+            model=os.environ['OPENAI_MODEL'],
+            messages=messages,
+            stream=True,
+        )
+        response = st.write_stream(stream)
+    # response = client.chat.completions.create(
+    #    model="gpt-4",
+    #    messages=messages
+    # )
+    # print(response)
+    # ai_message = response.choices[0].message.content
 
-    ai_message = response.choices[0].message.content
-
-    return ai_message
+    return response
 
 
 selected_path = st.session_state.selected_path
@@ -82,11 +97,10 @@ if selected_path:
 
 # Checking if the last selected option corresponds to a chatbot conversation
 if selected_path and isinstance(menu_options.get_final_description(selected_path), str):
-    expertise_area = selected_path[-1]  # This will give "Programming" or "Finances"
+    expertise_area = selected_path[-1]
     description = menu_options.get_final_description(selected_path)
 
-    # Add the logo at the top of the app
-    st.image("img/logo.svg", width=100)  # Adjust width as desired
+    st.image("img/logo.svg", width=150)
 
     # Interface to chat with selected expert
     st.title(f"Chat with {expertise_area}")
@@ -94,23 +108,26 @@ if selected_path and isinstance(menu_options.get_final_description(selected_path
     if 'conversation' not in st.session_state:
         st.session_state['conversation'] = []
 
-    user_message = st.chat_input(USER)
+    # Accept user input
+    if user_message := st.chat_input(USER):
 
-    if user_message:
         # Prevent re-running the query on refresh or navigating back to the page
         if not st.session_state['conversation'] or st.session_state['conversation'][-1] != (USER, user_message):
+            # Display conversation
+            for speaker, message in st.session_state['conversation']:
+                if speaker == USER:
+                    st.chat_message("user").write(message)
+                else:
+                    st.chat_message("assistant").write(message)
+
             # Add user message to the conversation
             st.session_state['conversation'].append((USER, user_message))
+
+            with st.chat_message("user"):
+                st.markdown(user_message)
 
             # Get response from OpenAI API
             ai_response = get_openai_response(user_message, description)
 
             # Add AI response to the conversation
             st.session_state['conversation'].append(('Assistant', ai_response))
-
-    # Display conversation
-    for speaker, message in st.session_state['conversation']:
-        if speaker == USER:
-            st.chat_message("user").write(message)
-        else:
-            st.chat_message("assistant").write(message)

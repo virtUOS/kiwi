@@ -30,8 +30,9 @@ with (((st.sidebar))):
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        if nglc.ldap_login(username=st.session_state.username,
-                           password=st.session_state.password):
+        user_found = nglc.check_auth(username=st.session_state.username,
+                                  password=st.session_state.password)
+        if user_found:
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # Don't store the password.
         else:

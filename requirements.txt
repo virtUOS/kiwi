@@ -3,3 +3,4 @@ openai
 python-dotenv
 streamlit
 streamlit-option-menu
+PyYAML

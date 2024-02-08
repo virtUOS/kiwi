@@ -59,7 +59,7 @@ display_sidebar_menu(menu_options.options)
 
 selected_path = st.session_state.selected_path
 
-st.sidebar.write("Selected Path: " + " > ".join(selected_path))
+st.sidebar.write("Selected Chatbot: " + " > ".join(selected_path))
 
 
 def get_openai_response(prompt_text, selected_path_description):
@@ -137,6 +137,7 @@ if selected_path:
         if user_message := st.chat_input(USER):
 
             # Prevent re-running the query on refresh or navigating back to the page by checking
+            # if the last stored message is not from the User
             if (not st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] or
                     st.session_state['conversation_histories'][st.session_state['selected_path_serialized']][-1]
                     != (USER, user_message)):

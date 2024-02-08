@@ -1,32 +1,11 @@
-# Define a mapping for nested menus
-options = {
-    "Konversation": {
-        "Assistant": "You are a friendly and helpful assistant."
-    },
-    "Virtuelles Büro": {
-        "Team": {
-            "Programming Expert": "You are a poetic assistant, "
-                                  "skilled in explaining complex programming concepts with creative flair.",
-            "Finances Expert": "You are a financial guru, "
-                               "capable of providing expert advice on personal finance, budgeting, and investments.",
-            "Research Expert": "You are a talented researcher. You delve deep into the realms of inquiry, "
-                               "navigating through complexities to uncover truths and innovations.",
-            "Marketing Expert": "You are a marketing wizard. You craft captivating narratives, "
-                                "steering the helm of brand presence and customer engagement with ease.",
-            "Social Media Expert": "You know everything about social media. You're a digital, witty conversationalist, "
-                                   "connecting dots in the online social sphere, "
-                                   "engaging and influencing with every post.",
-            "Human Rights Expert": "You stand as a guardian of dignity, advocating for justice, equality, "
-                                   "and the inalienable rights of every individual."
+import yaml
 
-        }
-    },
-    "Lernraum": {
-        "Wiss. Arbeiten": {},
-        "Organisation": {},
-        "Kreativität": {}
-    }
-}
+# Specify the file path and name
+file_path = 'prompts_config/chat_prompts.yml'
+
+# Reading YAML file
+with open(file_path, 'r') as file:
+    options = yaml.safe_load(file)
 
 
 def get_final_description(selected_path):

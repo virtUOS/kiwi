@@ -6,7 +6,6 @@ import os
 import menu_options
 from streamlit_option_menu import option_menu
 
-
 load_dotenv()
 
 client = OpenAI()
@@ -15,9 +14,20 @@ USER = 'User'
 
 st.set_page_config(layout="wide")
 
-# Initialize or update chatbot expertise and conversation in session state
-if 'selected_path' not in st.session_state:
-    st.session_state.selected_path = []
+
+def initialize_session_variables():
+    # Initialize or update chatbot expertise and conversation in session state
+    if 'selected_path' not in st.session_state:
+        st.session_state['selected_path'] = []
+
+    if 'conversation_histories' not in st.session_state:
+        st.session_state['conversation_histories'] = {}
+
+    if 'selected_path_serialized' not in st.session_state:
+        st.session_state['selected_path_serialized'] = ""
+
+
+initialize_session_variables()
 
 # Display the logo on the sidebar
 with st.sidebar:
@@ -47,6 +57,10 @@ def display_sidebar_menu(options, path=[]):
 
 display_sidebar_menu(menu_options.options)
 
+selected_path = st.session_state.selected_path
+
+st.sidebar.write("Selected Path: " + " > ".join(selected_path))
+
 
 def get_openai_response(prompt_text, selected_path_description):
     """
@@ -67,7 +81,7 @@ def get_openai_response(prompt_text, selected_path_description):
     }]
 
     # Add the history of the conversation
-    for speaker, message in st.session_state['conversation']:
+    for speaker, message in st.session_state['conversation_histories'][st.session_state['selected_path_serialized']]:
         role = 'user' if speaker == USER else 'assistant'
         messages.append({"role": role, "content": message})
 
@@ -87,49 +101,56 @@ def get_openai_response(prompt_text, selected_path_description):
     return response
 
 
-selected_path = st.session_state.selected_path
 if selected_path:
-    st.sidebar.write("Selected Path: " + " > ".join(selected_path))
 
-    # Store the serialized path in session state if not already there or compare with current path
-    if ('selected_path_serialized' not in st.session_state or
-            menu_options.path_changed(selected_path, st.session_state['selected_path_serialized'])):
-        # Clear conversation if the path has changed
-        st.session_state['conversation'] = []
+    # Store the serialized path in session state if different from current path
+    if menu_options.path_changed(selected_path, st.session_state['selected_path_serialized']):
         st.session_state['selected_path_serialized'] = '/'.join(
             selected_path)  # Update the serialized path in session state
 
-# Checking if the last selected option corresponds to a chatbot conversation
-if selected_path and isinstance(menu_options.get_final_description(selected_path), str):
-    expertise_area = selected_path[-1]
-    description = menu_options.get_final_description(selected_path)
+    # Checking if the last selected option corresponds to a chatbot conversation
+    if isinstance(menu_options.get_final_description(selected_path), str):
+        expertise_area = selected_path[-1]
+        description = menu_options.get_final_description(selected_path)
 
-    # Interface to chat with selected expert
-    st.title(f"Chat with {expertise_area} :robot_face:")
+        # Interface to chat with selected expert
+        st.title(f"Chat with {expertise_area} :robot_face:")
 
-    if 'conversation' not in st.session_state:
-        st.session_state['conversation'] = []
+        if st.sidebar.button("Clear Conversation"):
+            # Clears the current chatbot's conversation history
+            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = []
 
-    # Accept user input
-    if user_message := st.chat_input(USER):
-
-        # Prevent re-running the query on refresh or navigating back to the page
-        if not st.session_state['conversation'] or st.session_state['conversation'][-1] != (USER, user_message):
+        # If there's already a conversation in the history for this chatbot, display it.
+        if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:
             # Display conversation
-            for speaker, message in st.session_state['conversation']:
+            for speaker, message in (st.session_state['conversation_histories']
+            [st.session_state['selected_path_serialized']]):
                 if speaker == USER:
                     st.chat_message("user").write(message)
                 else:
                     st.chat_message("assistant").write(message)
+        else:
+            # If no conversation in history for this chatbot, then create an empty one
+            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = []
 
-            # Add user message to the conversation
-            st.session_state['conversation'].append((USER, user_message))
+        # Accept user input
+        if user_message := st.chat_input(USER):
 
-            with st.chat_message("user"):
-                st.markdown(user_message)
+            # Prevent re-running the query on refresh or navigating back to the page by checking
+            if (not st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] or
+                    st.session_state['conversation_histories'][st.session_state['selected_path_serialized']][-1]
+                    != (USER, user_message)):
+                # Add user message to the conversation
+                st.session_state['conversation_histories'][st.session_state
+                ['selected_path_serialized']].append((USER, user_message))
 
-            # Get response from OpenAI API
-            ai_response = get_openai_response(user_message, description)
+                # Print user message immediately after getting entered because we're streaming the chatbot output
+                with st.chat_message("user"):
+                    st.markdown(user_message)
 
-            # Add AI response to the conversation
-            st.session_state['conversation'].append(('Assistant', ai_response))
+                # Get response from OpenAI API
+                ai_response = get_openai_response(user_message, description)
+
+                # Add AI response to the conversation
+                st.session_state['conversation_histories'][st.session_state
+                ['selected_path_serialized']].append(('Assistant', ai_response))

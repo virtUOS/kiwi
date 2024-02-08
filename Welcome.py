@@ -19,7 +19,7 @@ st.write("# Welcome to the AI Portal of Universität Osnabrück! 👋")
 if "password_correct" not in st.session_state:
     st.session_state["password_correct"] = False
 
-with (((st.sidebar))):
+with st.sidebar:
     # Display the logo on the sidebar
     # Create three columns
     col1, col2, col3 = st.columns([1, 2, 1])

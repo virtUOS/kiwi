@@ -32,11 +32,12 @@ with st.sidebar:
 def display_sidebar_menu(options, path=[]):
     if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
         next_level = list(options.keys())
-        #choice = st.sidebar.selectbox("Choose an option:", [""] + next_level, index=0,
-        #                              format_func=lambda x: x if x else "-")
+
         with st.sidebar:
             choice = option_menu("Chat Menu", next_level,
-                                   icons=['house', 'gear'], menu_icon="cast", default_index=0)
+                                 icons=['chat-dots', 'chat-dots', 'chat-dots',
+                                        'chat-dots', 'chat-dots', 'chat-dots'],
+                                 menu_icon="cast", default_index=0)
 
         if choice:
             new_path = path + [choice]
@@ -102,8 +103,6 @@ if selected_path:
 if selected_path and isinstance(menu_options.get_final_description(selected_path), str):
     expertise_area = selected_path[-1]
     description = menu_options.get_final_description(selected_path)
-
-    #st.image("img/logo.svg", width=115)
 
     # Interface to chat with selected expert
     st.title(f"Chat with {expertise_area} :robot_face:")

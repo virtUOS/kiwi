@@ -6,7 +6,6 @@ from openai import OpenAI
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-
 USER = 'User'
 
 load_dotenv()
@@ -61,7 +60,7 @@ selected_path = st.session_state.selected_path
 st.sidebar.write("Selected Chatbot: " + " > ".join(selected_path))
 
 
-def get_openai_response(prompt_text, selected_path_description):
+def get_openai_response(prompt_text, description_to_use):
     """
     Sends a prompt to the OpenAI API including the history of the conversation
     adjusted for the selected description and returns the API's response.
@@ -70,13 +69,13 @@ def get_openai_response(prompt_text, selected_path_description):
     navigation and the final selected_path_description).
 
     :param prompt_text: The message text submitted by the user.
-    :param selected_path_description: The system message (description) for the chosen expertise area.
+    :param description_to_use: The system message (description) for the chosen expertise area.
     :return: The OpenAI API's response.
     """
     # Building the messages with the "system" message based on expertise area
     messages = [{
         "role": "system",
-        "content": selected_path_description
+        "content": description_to_use
     }]
 
     # Add the history of the conversation
@@ -120,11 +119,18 @@ if selected_path:
             st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
             ]
 
+        # Allow the user to edit the default prompt for the chatbot
+        with st.expander("Edit Bot Prompt", expanded=False):
+            st.session_state['edited_description'] = st.text_area("System Prompt", value=description,
+                                                                  help="Edit the system prompt for more customized responses.")
+        # Use the edited description if available, otherwise use the original one
+        description_to_use = st.session_state.get('edited_description', description)
+
         # If there's already a conversation in the history for this chatbot, display it.
         if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:
             # Display conversation
             for speaker, message in (st.session_state['conversation_histories']
-                                     [st.session_state['selected_path_serialized']]):
+            [st.session_state['selected_path_serialized']]):
                 if speaker == USER:
                     st.chat_message("user").write(message)
                 else:
@@ -144,15 +150,15 @@ if selected_path:
                     != (USER, user_message)):
                 # Add user message to the conversation
                 st.session_state['conversation_histories'][st.session_state
-                                                           ['selected_path_serialized']].append((USER, user_message))
+                ['selected_path_serialized']].append((USER, user_message))
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
                     st.markdown(user_message)
 
                 # Get response from OpenAI API
-                ai_response = get_openai_response(user_message, description)
+                ai_response = get_openai_response(user_message, description_to_use)
 
                 # Add AI response to the conversation
                 st.session_state['conversation_histories'][st.session_state
-                                                           ['selected_path_serialized']].append(('Assistant', ai_response))
+                ['selected_path_serialized']].append(('Assistant', ai_response))

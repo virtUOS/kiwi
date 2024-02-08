@@ -1,17 +1,16 @@
-import streamlit as st
-from openai import OpenAI
-from dotenv import load_dotenv
 import os
 
+from dotenv import load_dotenv
 import menu_options
+from openai import OpenAI
+import streamlit as st
 from streamlit_option_menu import option_menu
 
-load_dotenv()
-
-client = OpenAI()
 
 USER = 'User'
 
+load_dotenv()
+client = OpenAI()
 st.set_page_config(layout="wide")
 
 
@@ -118,20 +117,22 @@ if selected_path:
 
         if st.sidebar.button("Clear Conversation"):
             # Clears the current chatbot's conversation history
-            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = []
+            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
+            ]
 
         # If there's already a conversation in the history for this chatbot, display it.
         if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:
             # Display conversation
             for speaker, message in (st.session_state['conversation_histories']
-            [st.session_state['selected_path_serialized']]):
+                                     [st.session_state['selected_path_serialized']]):
                 if speaker == USER:
                     st.chat_message("user").write(message)
                 else:
                     st.chat_message("assistant").write(message)
         else:
             # If no conversation in history for this chatbot, then create an empty one
-            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = []
+            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
+            ]
 
         # Accept user input
         if user_message := st.chat_input(USER):
@@ -143,7 +144,7 @@ if selected_path:
                     != (USER, user_message)):
                 # Add user message to the conversation
                 st.session_state['conversation_histories'][st.session_state
-                ['selected_path_serialized']].append((USER, user_message))
+                                                           ['selected_path_serialized']].append((USER, user_message))
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
@@ -154,4 +155,4 @@ if selected_path:
 
                 # Add AI response to the conversation
                 st.session_state['conversation_histories'][st.session_state
-                ['selected_path_serialized']].append(('Assistant', ai_response))
+                                                           ['selected_path_serialized']].append(('Assistant', ai_response))

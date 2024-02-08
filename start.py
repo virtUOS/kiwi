@@ -1,9 +1,10 @@
-import streamlit as st
-from dotenv import load_dotenv
 import os
 from time import sleep
 
-import nginx_ldap_connector as nglc
+from dotenv import load_dotenv
+import streamlit as st
+
+import ldap_connector
 
 load_dotenv()
 
@@ -30,8 +31,8 @@ with st.sidebar:
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        user_found = nglc.check_auth(username=st.session_state.username,
-                                  password=st.session_state.password)
+        user_found = ldap_connector.check_auth(username=st.session_state.username,
+                                               password=st.session_state.password)
         if user_found:
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # Don't store the password.
@@ -64,7 +65,7 @@ def check_password():
 st.markdown(
     f"""
     This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
-   
+
     **👈 Login on the sidebar** to enter the chat area!
     ### Want to learn more about your rights as an user for this app?
     - Check out the [Datenschutz]({os.environ['DATENSCHUTZ']})

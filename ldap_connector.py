@@ -1,8 +1,8 @@
 import logging
 import os
 import ssl
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 from ldap3 import Server, Connection, ALL, AUTO_BIND_NO_TLS, Tls
 
 load_dotenv()
@@ -15,20 +15,31 @@ ldap_port = int(os.environ['LDAP_PORT'])
 ldap_base_dn = os.environ['LDAP_BASE_DN']
 ldap_user_dn = os.environ['LDAP_USER_DN']
 ldap_search_filter = os.environ['LDAP_SEARCH_FILTER']
-
-ciphers = os.environ['CIPHERS']
+ldap_ciphers = os.environ['LDAP_CIPHERS']
 
 
 def connect(user_dn=None, password=None):
-    tls = Tls(ciphers=ciphers, validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLS)
+    """
+    Establishes a LDAP connection using the ssl.PROTOCOL_TLS version
+
+    :param user_dn: The user domain to connect. If none is provided, default value will be used.
+    :type user_dn: str, optional
+    :param password: The password for the user domain provided. If none, default value is used.
+    :type password: str, optional
+    :return: The connection to the LDAP server
+    :rtype: ldap3.Connection object
+
+    .. note:: AUTO_BIND_NO_TLS means no Start TLS. For more information refer to
+              https://github.com/cannatag/ldap3/issues/1061
+    """
+    tls = Tls(ciphers=ldap_ciphers, validate=ssl.CERT_NONE,
+              version=ssl.PROTOCOL_TLS)
 
     server = Server(ldap_server,
                     port=ldap_port,
                     use_ssl=True,
                     tls=tls,
                     get_info=ALL)
-    # Note: AUTO_BIND_NO_TLS means no Start TLS
-    # See: https://github.com/cannatag/ldap3/issues/1061
     return Connection(server, user_dn, password, auto_bind=AUTO_BIND_NO_TLS)
 
 
@@ -60,6 +71,7 @@ def ldap_login(username: str, password: str) -> dict[str, list]:
         raise ValueError('Search must return exactly one result', conn.entries)
     logging.debug('Found user data')
     return True
+
 
 def check_auth(username, password):
     try:

@@ -13,27 +13,11 @@ load_dotenv()
 client = OpenAI()
 st.set_page_config(layout="wide")
 
-
-def load_prompts_neutral():
-    # Uncheck the other check first
-    if st.session_state["use_neutral_prompts"]:
-        st.session_state["use_witty_prompts"] = False
-    load_prompts()
-
-
-def load_prompts_witty():
-    # Uncheck the other check first
-    if st.session_state["use_witty_prompts"]:
-        st.session_state["use_neutral_prompts"] = False
-    load_prompts()
-
-
 def load_prompts():
     # Only if the checkboxes were already rendered we want to send their values
-    if "use_neutral_prompts" in st.session_state:
+    if "use_custom_prompts" in st.session_state:
         st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml(
-            st.session_state["use_neutral_prompts"],
-            st.session_state["use_witty_prompts"])
+            st.session_state["use_custom_prompts"])
     else:
         st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml()
 
@@ -89,7 +73,7 @@ display_sidebar_menu(st.session_state["prompt_options"])
 
 selected_path = st.session_state.selected_path
 
-# Add a toggle to select between neutral and witty prompts
+# Add a toggle to select custom prompts
 with st.sidebar:
     st.write("Selected Chatbot: " + " > ".join(selected_path))
     st.checkbox('Use our predefined chatbots',
@@ -97,8 +81,8 @@ with st.sidebar:
                 help="We predefined prompts for different "
                      "chatbots that you might find useful "
                      "or fun to engage with.",
-                on_change=load_prompts_neutral,
-                key="use_neutral_prompts")
+                on_change=load_prompts,
+                key="use_custom_prompts")
 
 
 def get_openai_response(prompt_text, description_to_use):

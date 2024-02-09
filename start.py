@@ -4,7 +4,7 @@ from time import sleep
 from dotenv import load_dotenv
 import streamlit as st
 
-import ldap_connector
+from src import ldap_connector
 
 load_dotenv()
 

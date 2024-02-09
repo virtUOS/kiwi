@@ -1,10 +1,11 @@
 import os
 
 from dotenv import load_dotenv
-import menu_options
 from openai import OpenAI
 import streamlit as st
 from streamlit_option_menu import option_menu
+
+from src import menu_options
 
 USER = 'User'
 
@@ -13,8 +14,28 @@ client = OpenAI()
 st.set_page_config(layout="wide")
 
 
+def load_prompts_neutral():
+    # Uncheck the other check first
+    if st.session_state["use_neutral_prompts"]:
+        st.session_state["use_witty_prompts"] = False
+    load_prompts()
+
+
+def load_prompts_witty():
+    # Uncheck the other check first
+    if st.session_state["use_witty_prompts"]:
+        st.session_state["use_neutral_prompts"] = False
+    load_prompts()
+
+
 def load_prompts():
-    st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml(st.session_state["use_funny_prompts"])
+    # Only if the checkboxes were already rendered we want to send their values
+    if "use_neutral_prompts" in st.session_state:
+        st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml(
+            st.session_state["use_neutral_prompts"],
+            st.session_state["use_witty_prompts"])
+    else:
+        st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml()
 
 
 def initialize_session_variables():
@@ -28,10 +49,9 @@ def initialize_session_variables():
     if 'selected_path_serialized' not in st.session_state:
         st.session_state['selected_path_serialized'] = ""
 
-    # The default are neutral prompts
+    # The default are basic prompts
     if 'prompt_options' not in st.session_state:
         st.session_state['prompt_options'] = menu_options.load_prompts_from_yaml()
-        st.session_state['use_funny_prompts'] = False
 
 
 initialize_session_variables()
@@ -69,21 +89,27 @@ display_sidebar_menu(st.session_state["prompt_options"])
 
 selected_path = st.session_state.selected_path
 
-# Add a toggle to select between default and funny prompts
+# Add a toggle to select between neutral and witty prompts
 with st.sidebar:
     st.write("Selected Chatbot: " + " > ".join(selected_path))
-    st.session_state["use_funny_prompts"] = st.checkbox('Use Witty Prompts', value=False, help="These prompts give"
-                                                                                               " the bots some"
-                                                                                               " distinct personalities"
-                                                                                               " compared to the"
-                                                                                               " default ones which"
-                                                                                               " are fairly neutral. "
-                                                                                               "Take it as a way "
-                                                                                               "to experiment with "
-                                                                                               "different user"
-                                                                                               " experiences.",
-                                                        on_change=load_prompts,
-                                                        )
+    col4, col5 = st.columns([1, 1])
+    col4.checkbox('Use our predefined neutral chatbots',
+                  value=False,
+                  help="We predefined prompts for different "
+                       "chatbots that you might find useful "
+                       "or fun to engage with.",
+                  on_change=load_prompts_neutral,
+                  key="use_neutral_prompts")
+    col5.checkbox('Use our predefined witty chatbots',
+                  value=False,
+                  help="These prompts give the bots some "
+                       "distinct personalities compared "
+                       "to the default ones which are "
+                       "fairly neutral. Take it as a way "
+                       "to experiment with different user "
+                       "experiences.",
+                  on_change=load_prompts_witty,
+                  key="use_witty_prompts")
 
 
 def get_openai_response(prompt_text, description_to_use):
@@ -140,11 +166,6 @@ if selected_path:
         # Interface to chat with selected expert
         st.title(f"Chat with {expertise_area} :robot_face:")
 
-        if st.sidebar.button("Clear Conversation"):
-            # Clears the current chatbot's conversation history
-            st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
-            ]
-
         # Allow the user to edit the default prompt for the chatbot
         with st.expander("Edit Bot Prompt", expanded=False):
             st.session_state['edited_description'] = st.text_area("System Prompt", value=description,
@@ -153,11 +174,17 @@ if selected_path:
         # Use the edited description if available, otherwise use the original one
         description_to_use = st.session_state.get('edited_description', description)
 
+        with st.sidebar:
+            if st.button("Clear Conversation"):
+                # Clears the current chatbot's conversation history
+                st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
+                ]
+
         # If there's already a conversation in the history for this chatbot, display it.
         if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:
             # Display conversation
-            for speaker, message in (st.session_state['conversation_histories'][
-                st.session_state['selected_path_serialized']]):
+            for speaker, message in (
+                    st.session_state['conversation_histories'][st.session_state['selected_path_serialized']]):
                 if speaker == USER:
                     st.chat_message("user").write(message)
                 else:

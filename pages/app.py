@@ -92,24 +92,13 @@ selected_path = st.session_state.selected_path
 # Add a toggle to select between neutral and witty prompts
 with st.sidebar:
     st.write("Selected Chatbot: " + " > ".join(selected_path))
-    col4, col5 = st.columns([1, 1])
-    col4.checkbox('Use our predefined neutral chatbots',
-                  value=False,
-                  help="We predefined prompts for different "
-                       "chatbots that you might find useful "
-                       "or fun to engage with.",
-                  on_change=load_prompts_neutral,
-                  key="use_neutral_prompts")
-    col5.checkbox('Use our predefined witty chatbots',
-                  value=False,
-                  help="These prompts give the bots some "
-                       "distinct personalities compared "
-                       "to the default ones which are "
-                       "fairly neutral. Take it as a way "
-                       "to experiment with different user "
-                       "experiences.",
-                  on_change=load_prompts_witty,
-                  key="use_witty_prompts")
+    st.checkbox('Use our predefined chatbots',
+                value=False,
+                help="We predefined prompts for different "
+                     "chatbots that you might find useful "
+                     "or fun to engage with.",
+                on_change=load_prompts_neutral,
+                key="use_neutral_prompts")
 
 
 def get_openai_response(prompt_text, description_to_use):

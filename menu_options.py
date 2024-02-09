@@ -1,14 +1,18 @@
 import yaml
 
-# Specify the file path and name
-file_path = 'prompts_config/chat_prompts.yml'
 
-# Reading YAML file
-with open(file_path, 'r') as file:
-    options = yaml.safe_load(file)
+# Function to load prompts from a YAML file
+def load_prompts_from_yaml(fun=False):
+    if fun:
+        file_path = 'prompts_config/chat_fun_prompts.yml'
+    else:
+        file_path = 'prompts_config/chat_prompts.yml'
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return yaml.safe_load(file)
 
 
-def get_final_description(selected_path):
+def get_final_description(selected_path, options):
     """
     Navigate through the options based on the selected path,
     returning the final description or None if not a final option.

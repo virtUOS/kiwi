@@ -13,6 +13,10 @@ client = OpenAI()
 st.set_page_config(layout="wide")
 
 
+def load_prompts():
+    st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml(st.session_state["use_funny_prompts"])
+
+
 def initialize_session_variables():
     # Initialize or update chatbot expertise and conversation in session state
     if 'selected_path' not in st.session_state:
@@ -23,6 +27,11 @@ def initialize_session_variables():
 
     if 'selected_path_serialized' not in st.session_state:
         st.session_state['selected_path_serialized'] = ""
+
+    # The default are neutral prompts
+    if 'prompt_options' not in st.session_state:
+        st.session_state['prompt_options'] = menu_options.load_prompts_from_yaml()
+        st.session_state['use_funny_prompts'] = False
 
 
 initialize_session_variables()
@@ -53,11 +62,28 @@ def display_sidebar_menu(options, path=[]):
             display_sidebar_menu(options.get(choice, {}), new_path)
 
 
-display_sidebar_menu(menu_options.options)
+# Load prompts
+load_prompts()
+
+display_sidebar_menu(st.session_state["prompt_options"])
 
 selected_path = st.session_state.selected_path
 
-st.sidebar.write("Selected Chatbot: " + " > ".join(selected_path))
+# Add a toggle to select between default and funny prompts
+with st.sidebar:
+    st.write("Selected Chatbot: " + " > ".join(selected_path))
+    st.session_state["use_funny_prompts"] = st.checkbox('Use Witty Prompts', value=False, help="These prompts give"
+                                                                                               " the bots some"
+                                                                                               " distinct personalities"
+                                                                                               " compared to the"
+                                                                                               " default ones which"
+                                                                                               " are fairly neutral. "
+                                                                                               "Take it as a way "
+                                                                                               "to experiment with "
+                                                                                               "different user"
+                                                                                               " experiences.",
+                                                        on_change=load_prompts,
+                                                        )
 
 
 def get_openai_response(prompt_text, description_to_use):
@@ -107,9 +133,9 @@ if selected_path:
             selected_path)  # Update the serialized path in session state
 
     # Checking if the last selected option corresponds to a chatbot conversation
-    if isinstance(menu_options.get_final_description(selected_path), str):
+    if isinstance(menu_options.get_final_description(selected_path, st.session_state["prompt_options"]), str):
         expertise_area = selected_path[-1]
-        description = menu_options.get_final_description(selected_path)
+        description = menu_options.get_final_description(selected_path, st.session_state["prompt_options"])
 
         # Interface to chat with selected expert
         st.title(f"Chat with {expertise_area} :robot_face:")
@@ -122,15 +148,16 @@ if selected_path:
         # Allow the user to edit the default prompt for the chatbot
         with st.expander("Edit Bot Prompt", expanded=False):
             st.session_state['edited_description'] = st.text_area("System Prompt", value=description,
-                                                                  help="Edit the system prompt for more customized responses.")
+                                                                  help="Edit the system prompt "
+                                                                       "for more customized responses.")
         # Use the edited description if available, otherwise use the original one
         description_to_use = st.session_state.get('edited_description', description)
 
         # If there's already a conversation in the history for this chatbot, display it.
         if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:
             # Display conversation
-            for speaker, message in (st.session_state['conversation_histories']
-            [st.session_state['selected_path_serialized']]):
+            for speaker, message in (st.session_state['conversation_histories'][
+                st.session_state['selected_path_serialized']]):
                 if speaker == USER:
                     st.chat_message("user").write(message)
                 else:

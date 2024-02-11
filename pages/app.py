@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import streamlit as st
 from streamlit_option_menu import option_menu
+from streamlit_cookies_manager import EncryptedCookieManager
 
 from src import menu_options
 
@@ -12,6 +13,27 @@ USER = 'User'
 load_dotenv()
 client = OpenAI()
 st.set_page_config(layout="wide")
+
+# For session management
+
+# This should be on top of your script
+cookies = EncryptedCookieManager(
+    # This prefix will get added to all your cookie names.
+    # This way you can run your app on Streamlit Cloud without cookie name clashes with other apps.
+    prefix="ktosiek/streamlit-cookies-manager/",
+    # You should really setup a long COOKIES_PASSWORD secret if you're running on Streamlit Cloud.
+    password=os.environ.get("COOKIES_PASSWORD"),
+)
+
+if not cookies.ready():
+    # Wait for the component to load and send us current cookies.
+    st.spinner()
+    st.stop()
+
+# Check if there's a session already started, if not, redirect to start page
+if not cookies.get("session"):
+    st.switch_page("start.py")
+
 
 def load_prompts():
     # Only if the checkboxes were already rendered we want to send their values
@@ -176,8 +198,8 @@ if selected_path:
                     st.session_state['conversation_histories'][st.session_state['selected_path_serialized']][-1]
                     != (USER, user_message)):
                 # Add user message to the conversation
-                st.session_state['conversation_histories'][st.session_state
-                ['selected_path_serialized']].append((USER, user_message))
+                st.session_state['conversation_histories'][st.session_state[
+                    'selected_path_serialized']].append((USER, user_message))
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
@@ -187,5 +209,5 @@ if selected_path:
                 ai_response = get_openai_response(user_message, description_to_use)
 
                 # Add AI response to the conversation
-                st.session_state['conversation_histories'][st.session_state
-                ['selected_path_serialized']].append(('Assistant', ai_response))
+                st.session_state['conversation_histories'][st.session_state[
+                    'selected_path_serialized']].append(('Assistant', ai_response))

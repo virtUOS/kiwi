@@ -3,5 +3,5 @@ openai
 python-dotenv
 streamlit
 streamlit-option-menu
-streamlit_cookies_manager
+streamlit-cookies-manager-hotpatched
 PyYAML

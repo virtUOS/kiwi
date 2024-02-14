@@ -34,7 +34,7 @@ if not cookies.ready():
     st.stop()
 
 
-st.write("# Welcome to the AI Portal of Universität Osnabrück! 👋")
+st.write("# Welcome to the AI Portal of Osnabrück University! 👋")
 
 if "password_correct" not in st.session_state:
     st.session_state["password_correct"] = False

@@ -98,13 +98,13 @@ if not cookies.get("session"):
     # If no session, then check password
     if not check_password():
         st.stop()
+    else:
+        # When the password is correct create a persistent session
+        # Save cookie for the session. Use username as value, maybe it's useful at some point
+        cookies["session"] = st.session_state.username
+        cookies.save()
 
 st.sidebar.success("Logged in!")
-
-# Save cookie for the session. Use username as value, maybe it's useful at some point
-cookies["session"] = st.session_state.username
-cookies.save()
-
 # Wait a bit before redirecting
 sleep(0.5)
 

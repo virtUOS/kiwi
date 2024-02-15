@@ -64,17 +64,18 @@ with st.sidebar:
 
     st.write("Login with your university credentials.")
 
-    # Show input for password.
-    st.text_input(
-        "User", key="username"
-    )
+    with st.form("login-form"):
+        # Show input for password.
+        st.text_input(
+            "User", key="username"
+        )
 
-    # Show input for password.
-    st.text_input(
-        "Password", type="password", key="password"
-    )
+        # Show input for password.
+        st.text_input(
+            "Password", type="password", key="password"
+        )
 
-    st.button("Login", on_click=credentials_entered)
+        st.form_submit_button("Login", on_click=credentials_entered)
 
 
 def check_password():
@@ -91,6 +92,7 @@ st.markdown(
     - Check out the [Impressum]({os.environ['IMPRESSUM']})
 """
 )
+
 
 # First check if there's a session already started
 if not cookies.get("session"):

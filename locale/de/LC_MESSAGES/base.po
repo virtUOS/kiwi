@@ -1,0 +1,50 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2024-02-15 13:39+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: ./pages/app.py:127
+msgid "Use our predefined chatbots"
+msgstr ""
+
+#: ./pages/app.py:200
+msgid "Clear Conversation"
+msgstr "Löschen der Konversation"
+
+#: ./start.py:42
+msgid "# Welcome to the AI Portal of Osnabrück University! 👋"
+msgstr "# Willkommen auf dem KI-Portal der Universität Osnabrück! 👋"
+
+#: ./start.py:91
+msgid ""
+"\n"
+"    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.\n"
+"\n"
+"    **👈 Login on the sidebar** to enter the chat area!\n"
+"    ### Want to learn more about your rights as an user for this app?\n"
+"    - Check out the [Datenschutz]({DATENSCHUTZ})\n"
+"    - Check out the [Impressum]({IMPRESSUM})\n"
+"    \n"
+"\n"
+msgstr ""
+"\n"
+"    Dieses Portal ist eine Open-Source-App, die es den Nutzern ermöglicht, mit mehreren Chatbot-Experten von OpenAI's ChatGPT zu chatten. \n"
+"\n"
+"    **👈 Melden Sie sich in der Seitenleiste** an, um den Chatbereich zu betreten!\n"
+"    ### Möchtest du mehr über deine Rechte als Nutzer dieser App erfahren?\n"
+" - Sehen Sie sich den [Datenschutz]({DATENSCHUTZ})\n"
+" - Sehen Sie sich das [Impressum]({IMPRESSUM})\n"
+"    \n"
+"\n"

@@ -200,6 +200,8 @@ if selected_path:
                 st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
                 ]
 
+            st.markdown("""---""")
+
             with st.expander("Personalized Prompts Controls", expanded=False):
                 st.download_button("Download YAML file with custom prompts",
                                    data=menu_options.load_custom_prompts_for_download(),

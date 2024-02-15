@@ -19,13 +19,16 @@ def translate() :
 
 
 def set_default_language() -> None:
-    if "lang" not in st.experimental_get_query_params():
-        st.experimental_set_query_params(lang="en")
+    if not st.query_params.get("lang", ''):
+        st.query_params["lang"] = "en"
         st.experimental_rerun()
 
+# def set_default_language() -> None:
+#     if "lang" not in st.experimental_get_query_params():
+#         st.experimental_set_query_params(lang="en")
+#         st.experimental_rerun()
+#
 
 def set_language() -> None:
     if "selected_language" in st.session_state:
-        st.experimental_set_query_params(
-            lang=languages.get(st.session_state["selected_language"])
-        )
+        st.query_params["lang"] = languages.get(st.session_state["selected_language"])

@@ -19,32 +19,19 @@ st.set_page_config(
 
 set_default_language()
 
-if "selected_language" in st.session_state:
-    if st.session_state["selected_language"] == "German":
-        _ = translate()
-
-# query_parameters = st.experimental_get_query_params()
-# if "lang" not in query_parameters:
-#     st.experimental_set_query_params(lang="en")
-#     st.experimental_rerun()
-
-
-
-# sel_lang = st.radio(
-#     "Language",
-#     options=languages,
-#     horizontal=True,
-#     on_change=set_language,
-#     key="selected_language",
-# )
-
 
 with st.sidebar:
     st.markdown("# Language")
     selected_language = st.selectbox('Select your language and press Enter:',
                                      list(languages.keys()),
-                                     key="selected_language")
+                                     )
+    st.session_state["selected_language"] = selected_language
     set_language()
+
+
+if "selected_language" in st.session_state:
+    if st.session_state["selected_language"] == "German":
+        _ = translate()
 
 # For session management.
 # TODO: log out. There's a problem deleting cookies: https://github.com/ktosiek/streamlit-cookies-manager/issues/1

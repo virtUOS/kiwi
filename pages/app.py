@@ -12,7 +12,9 @@ USER = 'User'
 
 load_dotenv()
 client = OpenAI()
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="My UOS Chatbot Community",
+                   layout="wide",
+                   page_icon="🥝")
 
 _ = gettext.gettext
 
@@ -36,10 +38,28 @@ if not cookies.ready():
 # if not cookies.get("session"):
 #     st.switch_page("start.py")
 
+st.session_state['open-ai-model-key'] = os.environ['OPENAI_API_KEY']
+
+
+def load_personal_prompts_file():
+    if st.session_state["prompts_file"]:
+        # Disable and deselect custom prompts
+        st.session_state["disable_custom"] = True
+        st.session_state["use_custom_prompts"] = False
+        # Set the prompt options to the uploaded ones
+        st.session_state["prompt_options"] = menu_options.load_dict_from_yaml(
+            st.session_state["prompts_file"])
+    else:
+        # Enable the custom prompts checkbox in case it was disabled
+        st.session_state["disable_custom"] = False
+
 
 def load_prompts():
-    # Only if the checkboxes were already rendered we want to send their values
-    if "use_custom_prompts" in st.session_state:
+    # If a prompts file was uploaded just use those prompts by default
+    if "prompts_file" in st.session_state and st.session_state["prompts_file"]:
+        pass
+    # Only if the checkbox was already rendered we want to load them
+    elif "use_custom_prompts" in st.session_state:
         st.session_state["prompt_options"] = menu_options.load_prompts_from_yaml(
             st.session_state["use_custom_prompts"])
     else:
@@ -60,6 +80,10 @@ def initialize_session_variables():
     # The default are basic prompts
     if 'prompt_options' not in st.session_state:
         st.session_state['prompt_options'] = menu_options.load_prompts_from_yaml()
+
+    # Used to disable the custom prompts checkbox when the user uploads personalized chatbots
+    if 'disable_custom' not in st.session_state:
+        st.session_state["disable_custom"] = False
 
 
 initialize_session_variables()
@@ -106,10 +130,11 @@ with st.sidebar:
                      "chatbots that you might find useful "
                      "or fun to engage with.",
                 on_change=load_prompts,
-                key="use_custom_prompts")
+                key="use_custom_prompts",
+                disabled=st.session_state["disable_custom"])
 
 
-def get_openai_response(prompt_text, description_to_use):
+def get_openai_response(prompt_text, system_prompt):
     """
     Sends a prompt to the OpenAI API including the history of the conversation
     adjusted for the selected description and returns the API's response.
@@ -118,13 +143,13 @@ def get_openai_response(prompt_text, description_to_use):
     navigation and the final selected_path_description).
 
     :param prompt_text: The message text submitted by the user.
-    :param description_to_use: The system message (description) for the chosen expertise area.
+    :param system_prompt: The system message (description) for the chosen expertise area.
     :return: The OpenAI API's response.
     """
     # Building the messages with the "system" message based on expertise area
     messages = [{
         "role": "system",
-        "content": description_to_use
+        "content": system_prompt
     }]
 
     # Add the history of the conversation
@@ -139,7 +164,7 @@ def get_openai_response(prompt_text, description_to_use):
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         stream = client.chat.completions.create(
-            model=os.environ['OPENAI_MODEL'],
+            model=st.session_state['open-ai-model-key'],
             messages=messages,
             stream=True,
         )
@@ -176,6 +201,16 @@ if selected_path:
                 # Clears the current chatbot's conversation history
                 st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
                 ]
+
+            with st.expander("Personalized Prompts Controls", expanded=False):
+                st.download_button("Download YAML file with custom prompts",
+                                   data=menu_options.load_custom_prompts_for_download(),
+                                   file_name="prompts.yaml",
+                                   mime="application/x-yaml")
+                st.file_uploader("Upload YAML file with custom prompts",
+                                 type='yaml',
+                                 key="prompts_file",
+                                 on_change=load_personal_prompts_file)
 
         # If there's already a conversation in the history for this chatbot, display it.
         if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:

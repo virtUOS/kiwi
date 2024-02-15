@@ -71,17 +71,18 @@ with st.sidebar:
 
     st.write("Login with your university credentials.")
 
-    # Show input for password.
-    st.text_input(
-        "User", key="username"
-    )
+    with st.form("login-form"):
+        # Show input for password.
+        st.text_input(
+            "User", key="username"
+        )
 
-    # Show input for password.
-    st.text_input(
-        "Password", type="password", key="password"
-    )
+        # Show input for password.
+        st.text_input(
+            "Password", type="password", key="password"
+        )
 
-    st.button("Login", on_click=credentials_entered)
+        st.form_submit_button("Login", on_click=credentials_entered)
 
 
 def check_password():
@@ -99,18 +100,6 @@ md_msg = _("""
 """
 ).format(DATENSCHUTZ=os.environ['DATENSCHUTZ'], IMPRESSUM=os.environ['IMPRESSUM'])
 
-st.markdown(md_msg)
-
-# st.markdown(
-#     f"""
-#     This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
-#
-#     **👈 Login on the sidebar** to enter the chat area!
-#     ### Want to learn more about your rights as an user for this app?
-#     - Check out the [Datenschutz]({os.environ['DATENSCHUTZ']})
-#     - Check out the [Impressum]({os.environ['IMPRESSUM']})
-# """
-# )
 
 # First check if there's a session already started
 # if not cookies.get("session"):
@@ -119,12 +108,16 @@ st.markdown(md_msg)
 #     if not check_password():
 #         st.stop()
 
+    # If no session, then check password
+    if not check_password():
+        st.stop()
+    else:
+        # When the password is correct create a persistent session
+        # Save cookie for the session. Use username as value, maybe it's useful at some point
+        cookies["session"] = st.session_state.username
+        cookies.save()
+
 st.sidebar.success("Logged in!")
-
-# Save cookie for the session. Use username as value, maybe it's useful at some point
-cookies["session"] = st.session_state.username
-cookies.save()
-
 # Wait a bit before redirecting
 sleep(0.5)
 

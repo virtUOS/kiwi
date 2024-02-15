@@ -1,9 +1,9 @@
 import yaml
+import os
 
 
 # Function to load prompts from a YAML file
 def load_prompts_from_yaml(custom=False):
-
     # Use basic prompts as default
     file_path = 'prompts_config/chat_basic_prompts.yml'
 
@@ -14,6 +14,23 @@ def load_prompts_from_yaml(custom=False):
 
     with open(file_path, 'r', encoding='utf-8') as file:
         return yaml.safe_load(file)
+
+
+def load_dict_from_yaml(file):
+    return yaml.safe_load(file)
+
+
+# Function to load prompts from a YAML file
+def load_custom_prompts_for_download():
+    # Get the prompts file
+    file_path = 'prompts_config/chat_many_prompts.yml'
+
+    if os.path.isfile(file_path):
+        with open(file_path, 'rb') as file:
+            return file.read()
+    else:
+        print("ERROR: file doesn't exist.")
+        return None
 
 
 def get_final_description(selected_path, options):

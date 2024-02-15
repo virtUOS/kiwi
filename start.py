@@ -1,10 +1,10 @@
 import os
 from time import sleep
-
+import gettext
 from dotenv import load_dotenv
 import streamlit as st
 from streamlit_cookies_manager import EncryptedCookieManager
-
+_ = gettext.gettext
 from src import ldap_connector
 
 load_dotenv()
@@ -15,6 +15,12 @@ st.set_page_config(
     layout="wide"
 
 )
+
+# translation
+de = gettext.translation('base', localedir='locale', languages=['de'])
+de.install()
+_ = de.gettext
+
 
 # For session management.
 # TODO: log out. There's a problem deleting cookies: https://github.com/ktosiek/streamlit-cookies-manager/issues/1
@@ -33,8 +39,9 @@ if not cookies.ready():
     st.spinner()
     st.stop()
 
+st.write(_("# Welcome to the AI Portal of Osnabrück University! 👋"))
 
-st.write("# Welcome to the AI Portal of Osnabrück University! 👋")
+# st.write("# Welcome to the AI Portal of Osnabrück University! 👋")
 
 if "password_correct" not in st.session_state:
     st.session_state["password_correct"] = False
@@ -80,24 +87,37 @@ with st.sidebar:
 def check_password():
     return st.session_state["password_correct"]
 
-
-st.markdown(
-    f"""
+md_msg = _("""
     This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
 
     **👈 Login on the sidebar** to enter the chat area!
     ### Want to learn more about your rights as an user for this app?
-    - Check out the [Datenschutz]({os.environ['DATENSCHUTZ']})
-    - Check out the [Impressum]({os.environ['IMPRESSUM']})
+    - Check out the [Datenschutz]({DATENSCHUTZ})
+    - Check out the [Impressum]({IMPRESSUM})
+    
+
 """
-)
+).format(DATENSCHUTZ=os.environ['DATENSCHUTZ'], IMPRESSUM=os.environ['IMPRESSUM'])
+
+st.markdown(md_msg)
+
+# st.markdown(
+#     f"""
+#     This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
+#
+#     **👈 Login on the sidebar** to enter the chat area!
+#     ### Want to learn more about your rights as an user for this app?
+#     - Check out the [Datenschutz]({os.environ['DATENSCHUTZ']})
+#     - Check out the [Impressum]({os.environ['IMPRESSUM']})
+# """
+# )
 
 # First check if there's a session already started
-if not cookies.get("session"):
-
-    # If no session, then check password
-    if not check_password():
-        st.stop()
+# if not cookies.get("session"):
+#
+#     # If no session, then check password
+#     if not check_password():
+#         st.stop()
 
 st.sidebar.success("Logged in!")
 
@@ -109,4 +129,4 @@ cookies.save()
 sleep(0.5)
 
 # Redirect to app
-st.switch_page("pages/app.py")
+# st.switch_page("pages/app.py")

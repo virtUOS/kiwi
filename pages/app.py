@@ -1,5 +1,5 @@
 import os
-
+import gettext
 from dotenv import load_dotenv
 from openai import OpenAI
 import streamlit as st
@@ -13,6 +13,8 @@ USER = 'User'
 load_dotenv()
 client = OpenAI()
 st.set_page_config(layout="wide")
+
+_ = gettext.gettext
 
 # For session management
 
@@ -31,8 +33,8 @@ if not cookies.ready():
     st.stop()
 
 # Check if there's a session already started, if not, redirect to start page
-if not cookies.get("session"):
-    st.switch_page("start.py")
+# if not cookies.get("session"):
+#     st.switch_page("start.py")
 
 
 def load_prompts():
@@ -98,7 +100,7 @@ selected_path = st.session_state.selected_path
 # Add a toggle to select custom prompts
 with st.sidebar:
     st.write("Selected Chatbot: " + " > ".join(selected_path))
-    st.checkbox('Use our predefined chatbots',
+    st.checkbox(_('Use our predefined chatbots'),
                 value=False,
                 help="We predefined prompts for different "
                      "chatbots that you might find useful "
@@ -170,7 +172,7 @@ if selected_path:
         description_to_use = st.session_state.get('edited_description', description)
 
         with st.sidebar:
-            if st.button("Clear Conversation"):
+            if st.button(_("Clear Conversation")):
                 # Clears the current chatbot's conversation history
                 st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
                 ]

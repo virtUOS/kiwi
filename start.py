@@ -6,6 +6,7 @@ import streamlit as st
 from streamlit_cookies_manager import EncryptedCookieManager
 _ = gettext.gettext
 from src import ldap_connector
+from utils.page_language import set_language, set_default_language, translate, languages
 
 load_dotenv()
 
@@ -16,11 +17,34 @@ st.set_page_config(
 
 )
 
-# translation
-de = gettext.translation('base', localedir='locale', languages=['de'])
-de.install()
-_ = de.gettext
+set_default_language()
 
+if "selected_language" in st.session_state:
+    if st.session_state["selected_language"] == "German":
+        _ = translate()
+
+# query_parameters = st.experimental_get_query_params()
+# if "lang" not in query_parameters:
+#     st.experimental_set_query_params(lang="en")
+#     st.experimental_rerun()
+
+
+
+# sel_lang = st.radio(
+#     "Language",
+#     options=languages,
+#     horizontal=True,
+#     on_change=set_language,
+#     key="selected_language",
+# )
+
+
+with st.sidebar:
+    st.markdown("# Language")
+    selected_language = st.selectbox('Select your language and press Enter:',
+                                     list(languages.keys()),
+                                     key="selected_language")
+    set_language()
 
 # For session management.
 # TODO: log out. There's a problem deleting cookies: https://github.com/ktosiek/streamlit-cookies-manager/issues/1
@@ -100,6 +124,7 @@ md_msg = _("""
 """
 ).format(DATENSCHUTZ=os.environ['DATENSCHUTZ'], IMPRESSUM=os.environ['IMPRESSUM'])
 
+st.markdown(md_msg)
 
 # First check if there's a session already started
 # if not cookies.get("session"):
@@ -109,17 +134,17 @@ md_msg = _("""
 #         st.stop()
 
     # If no session, then check password
-    if not check_password():
-        st.stop()
-    else:
-        # When the password is correct create a persistent session
-        # Save cookie for the session. Use username as value, maybe it's useful at some point
-        cookies["session"] = st.session_state.username
-        cookies.save()
+    # if not check_password():
+    #     st.stop()
+    # else:
+    #     # When the password is correct create a persistent session
+    #     # Save cookie for the session. Use username as value, maybe it's useful at some point
+    #     cookies["session"] = st.session_state.username
+    #     cookies.save()
 
 st.sidebar.success("Logged in!")
 # Wait a bit before redirecting
-sleep(0.5)
+sleep(10)
 
 # Redirect to app
-# st.switch_page("pages/app.py")
+st.switch_page("pages/app.py")

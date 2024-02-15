@@ -5,7 +5,7 @@ from openai import OpenAI
 import streamlit as st
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
-
+from utils.page_language import translate
 from src import menu_options
 
 USER = 'User'
@@ -16,7 +16,12 @@ st.set_page_config(page_title="My UOS Chatbot Community",
                    layout="wide",
                    page_icon="🥝")
 
-_ = gettext.gettext
+# change the language
+if "selected_language" in st.session_state:
+    if st.session_state["selected_language"] == "German":
+        _ = translate()
+    else:
+        _ = gettext.gettext
 
 # For session management
 

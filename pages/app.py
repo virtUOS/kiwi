@@ -36,7 +36,7 @@ if not cookies.ready():
 if not cookies.get("session"):
     st.switch_page("start.py")
 
-st.session_state['open-ai-model-key'] = os.environ['OPENAI_API_KEY']
+st.session_state['open-ai-model'] = os.environ['OPENAI_MODEL']
 
 
 def load_personal_prompts_file():
@@ -162,7 +162,7 @@ def get_openai_response(prompt_text, system_prompt):
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         stream = client.chat.completions.create(
-            model=st.session_state['open-ai-model-key'],
+            model=st.session_state['open-ai-model'],
             messages=messages,
             stream=True,
         )

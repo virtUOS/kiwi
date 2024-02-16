@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-02-15 13:39+0100\n"
+"POT-Creation-Date: 2024-02-15 21:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,20 +14,91 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
+#: ./pages/app.py:111
+msgid "Chat Menu"
+msgstr "Chat-Menü"
 
-#: ./pages/app.py:127
+#: ./pages/app.py:131
+msgid "Selected Chatbot:"
+msgstr "Ausgewählter Chatbot:"
+
+#: ./pages/app.py:132
 msgid "Use our predefined chatbots"
-msgstr ""
+msgstr "Nutzen Sie unsere vordefinierten Chatbots"
+
+#: ./pages/app.py:134
+msgid "We predefined prompts for different chatbots that you might find useful or fun to engage with."
+
+msgstr "Wir haben vordefinierte Prompts für verschiedene Chatbots, die Sie nützlich oder unterhaltsam finden könnten."
+
+#: ./pages/app.py:196
+msgid "Chat with:"
+msgstr "Chatte mit:"
+
+#: ./pages/app.py:199
+msgid "System Prompt"
+msgstr "System-Prompt"
+
+#: ./pages/app.py:198
+msgid "Edit Bot Prompt"
+msgstr "Bot-Prompt bearbeiten"
 
 #: ./pages/app.py:200
+msgid "Edit the system prompt for more customized responses."
+msgstr "Bearbeiten Sie den Systemprompt für individuellere Antworten."
+#: ./pages/app.py:208
 msgid "Clear Conversation"
-msgstr "Löschen der Konversation"
+msgstr "Konversation löschen"
 
-#: ./start.py:42
+#: ./pages/app.py:213
+msgid "Personalized Prompts Controls"
+msgstr "Personalisierte Prompts Steuerung"
+
+#: ./pages/app.py:214
+msgid "Download YAML file with custom prompts"
+msgstr "YAML-Datei mit benutzerdefinierten Prompts herunterladen"
+
+#: ./pages/app.py:218
+msgid "Upload YAML file with custom prompts"
+msgstr "YAML-Datei mit benutzerdefinierten Prompts hochladen"
+
+# : ./pages/app.py:220
+msgid "Drop a file here or click to browse."
+msgstr "Legen Sie eine Datei hier ab oder klicken Sie, um zu durchsuchen."
+
+#: ./pages/app.py:221
+msgid "Limit 200MB YAML file."
+msgstr "Begrenzung auf 200MB YAML-Datei."
+
+#: ./pages/app.py:222
+msgid "Browse files"
+msgstr "Dateien durchsuchen"
+
+#: ./start.py:26
+msgid "# Language"
+msgstr "# Sprache"
+
+#: ./start.py:27
+msgid "Select your language:"
+msgstr "Wählen Sie Ihre Sprache:"
+
+#: ./start.py:55
 msgid "# Welcome to the AI Portal of Osnabrück University! 👋"
-msgstr "# Willkommen auf dem KI-Portal der Universität Osnabrück! 👋"
+msgstr "# Wählen Sie Ihre Sprache und drücken Sie die Eingabetaste:"
 
-#: ./start.py:91
+#: ./start.py:85
+msgid "Login with your university credentials."
+msgstr "Melden Sie sich mit Ihren Universitätsdaten an."
+
+#: ./start.py:90
+msgid "User"
+msgstr "Benutzer"
+
+#: ./start.py:95
+msgid "Password"
+msgstr "Passwort"
+
+#: ./start.py:104
 msgid ""
 "\n"
 "    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.\n"
@@ -45,6 +116,10 @@ msgstr ""
 "    **👈 Melden Sie sich in der Seitenleiste** an, um den Chatbereich zu betreten!\n"
 "    ### Möchtest du mehr über deine Rechte als Nutzer dieser App erfahren?\n"
 " - Sehen Sie sich den [Datenschutz]({DATENSCHUTZ})\n"
-" - Sehen Sie sich das [Impressum]({IMPRESSUM})\n"
+" - Schauen Sie sich das [Impressum]({IMPRESSUM})\n"
 "    \n"
 "\n"
+#: ./start.py:134
+msgid "Logged in!"
+msgstr "Eingeloggt!"
+

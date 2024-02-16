@@ -108,7 +108,7 @@ def display_sidebar_menu(options, path=[]):
         next_level = list(options.keys())
 
         with st.sidebar:
-            choice = option_menu("Chat Menu", next_level,
+            choice = option_menu(_("Chat Menu"), next_level,
                                  icons=['chat-dots', 'chat-dots', 'chat-dots',
                                         'chat-dots', 'chat-dots', 'chat-dots'],
                                  menu_icon="cast", default_index=0)
@@ -128,12 +128,12 @@ selected_path = st.session_state.selected_path
 
 # Add a toggle to select custom prompts
 with st.sidebar:
-    st.write("Selected Chatbot: " + " > ".join(selected_path))
+    selected_chat = _("Selected Chatbot:")
+    st.write(f"{selected_chat} " + " > ".join(selected_path))
     st.checkbox(_('Use our predefined chatbots'),
                 value=False,
-                help="We predefined prompts for different "
-                     "chatbots that you might find useful "
-                     "or fun to engage with.",
+                help=_("We predefined prompts for different chatbots that you might find useful or fun to engage with."
+                    ),
                 on_change=load_prompts,
                 key="use_custom_prompts",
                 disabled=st.session_state["disable_custom"])
@@ -191,13 +191,14 @@ if selected_path:
         description = menu_options.get_final_description(selected_path, st.session_state["prompt_options"])
 
         # Interface to chat with selected expert
-        st.title(f"Chat with {expertise_area} :robot_face:")
+        msg = _("Chat with:")
+        st.title(f"{msg} {expertise_area} :robot_face:")
 
         # Allow the user to edit the default prompt for the chatbot
-        with st.expander("Edit Bot Prompt", expanded=False):
-            st.session_state['edited_description'] = st.text_area("System Prompt", value=description,
-                                                                  help="Edit the system prompt "
-                                                                       "for more customized responses.")
+        with st.expander(_("Edit Bot Prompt"), expanded=False):
+            st.session_state['edited_description'] = st.text_area(_("System Prompt"), value=description,
+                                                                  help=_("Edit the system prompt for more customized responses.")
+                                                                       )
         # Use the edited description if available, otherwise use the original one
         description_to_use = st.session_state.get('edited_description', description)
 
@@ -207,15 +208,30 @@ if selected_path:
                 st.session_state['conversation_histories'][st.session_state['selected_path_serialized']] = [
                 ]
 
-            with st.expander("Personalized Prompts Controls", expanded=False):
-                st.download_button("Download YAML file with custom prompts",
+            with st.expander(_("Personalized Prompts Controls"), expanded=False):
+                st.download_button(_("Download YAML file with custom prompts"),
                                    data=menu_options.load_custom_prompts_for_download(),
                                    file_name="prompts.yaml",
                                    mime="application/x-yaml")
-                st.file_uploader("Upload YAML file with custom prompts",
+                st.file_uploader(_("Upload YAML file with custom prompts"),
                                  type='yaml',
                                  key="prompts_file",
                                  on_change=load_personal_prompts_file)
+                drag = _("Drop a file here or click to browse.")
+                limit = _("Limit 200MB YAML file.")
+                buttonText = _("Browse files")
+                css = ("""
+                <style>
+                [data-testid="stFileUploadDropzone"] div div::before {{color:black; content:"{drag}";}}
+                [data-testid="stFileUploadDropzone"] div div span{{display:none;}}
+                [data-testid="stFileUploadDropzone"] div div::after {{color:red; font-size: .8em; content:"{limit}";}}
+                [data-testid="stFileUploadDropzone"] div div small{{display:none;}}
+                
+                [data-testid="stFileUploadDropzone"] div div::before{{background-color: blue; content:"{buttonText}";}}
+                [data-testid="stFileUploadDropzone"] button{{display:none;}}
+                </style>
+                """).format(drag=drag, limit=limit, buttonText=buttonText)
+                st.markdown(css, unsafe_allow_html=True)
 
         # If there's already a conversation in the history for this chatbot, display it.
         if st.session_state['selected_path_serialized'] in st.session_state['conversation_histories']:

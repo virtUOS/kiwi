@@ -17,12 +17,14 @@ st.set_page_config(
 
 )
 
+
+
 set_default_language()
 
 
 with st.sidebar:
-    st.markdown("# Language")
-    selected_language = st.selectbox('Select your language and press Enter:',
+    st.markdown(_("# Language"))
+    selected_language = st.selectbox(_('Select your language:'),
                                      list(languages.keys()),
                                      )
     st.session_state["selected_language"] = selected_language
@@ -80,17 +82,17 @@ with st.sidebar:
                 not st.session_state["password_correct"]):
             st.error("😕 Password incorrect")
 
-    st.write("Login with your university credentials.")
+    st.write(_("Login with your university credentials."))
 
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            "User", key="username"
+            _("User"), key="username"
         )
 
         # Show input for password.
         st.text_input(
-            "Password", type="password", key="password"
+            _("Password"), type="password", key="password"
         )
 
         st.form_submit_button("Login", on_click=credentials_entered)
@@ -129,7 +131,7 @@ st.markdown(md_msg)
     #     cookies["session"] = st.session_state.username
     #     cookies.save()
 
-st.sidebar.success("Logged in!")
+st.sidebar.success(_("Logged in!"))
 # Wait a bit before redirecting
 sleep(10)
 

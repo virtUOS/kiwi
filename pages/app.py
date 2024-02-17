@@ -225,10 +225,11 @@ if selected_path:
                 [data-testid="stFileUploadDropzone"] div div::before {{color:black; content:"{drag}";}}
                 [data-testid="stFileUploadDropzone"] div div span{{display:none;}}
                 [data-testid="stFileUploadDropzone"] div div::after {{color:red; font-size: .8em; content:"{limit}";}}
-                [data-testid="stFileUploadDropzone"] div div small{{display:none;}}
-                
-                [data-testid="stFileUploadDropzone"] div div::before{{background-color: blue; content:"{buttonText}";}}
-                [data-testid="stFileUploadDropzone"] button{{display:none;}}
+                [data-testid="stFileUploadDropzone"] div div small{{display:none;}}  
+                [data-testid="stFileUploadDropzone"] button{{visibility:hidden;}}
+                [data-testid="stFileUploadDropzone"] button:before{{background-color: rgb(249, 249, 251);border-radius: 7px;display:flex;appearance:button;justify-content:center;padding-left: 6px;padding-right:6px;padding-top:4px;padding-bottom:4px; position: absolute;margin-left:20%;visibility: visible;overflow-y:visible;overflow-x:visible; content:"{buttonText}";}}
+               
+              
                 </style>
                 """).format(drag=drag, limit=limit, buttonText=buttonText)
                 st.markdown(css, unsafe_allow_html=True)

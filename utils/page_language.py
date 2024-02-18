@@ -1,11 +1,16 @@
 import streamlit as st
 import gettext
 
-languages = {
-    'English': 'en',
-    'German': 'de',
-}
+# languages = {
+#     'English': 'en',
+#     'Deutsch': 'de',
+# }
 
+languages = {
+    'English': '🇬🇧',
+    'Deutsch': '🇩🇪'
+
+}
 
 
 def translate() :
@@ -31,4 +36,7 @@ def set_default_language() -> None:
 
 def set_language() -> None:
     if "selected_language" in st.session_state:
-        st.query_params["lang"] = languages.get(st.session_state["selected_language"])
+        if st.session_state["selected_language"] == '🇬🇧':
+            st.query_params["lang"] = "en"
+        elif st.session_state["selected_language"] == '🇩🇪':
+            st.query_params["lang"] = "de"

@@ -4,7 +4,6 @@ import gettext
 from dotenv import load_dotenv
 import streamlit as st
 from streamlit_cookies_manager import EncryptedCookieManager
-_ = gettext.gettext
 from src import ldap_connector
 from utils.page_language import set_language, set_default_language, translate, languages
 
@@ -22,18 +21,31 @@ st.set_page_config(
 set_default_language()
 
 
-with st.sidebar:
-    st.markdown(_("# Language"))
-    selected_language = st.selectbox(_('Select your language:'),
-                                     list(languages.keys()),
-                                     )
-    st.session_state["selected_language"] = selected_language
-    set_language()
+# with st.sidebar:
+#     st.markdown(_("# Language"))
+#     selected_language = st.selectbox(_('Select your language:'),
+#                                      list(languages.values()),
+#                                      )
+#     st.session_state["selected_language"] = selected_language
+#     set_language()
 
+
+sel_lang = st.radio(
+'Languages',
+    options=languages.values(),
+    label_visibility='hidden',
+    horizontal=True,
+
+)
+
+st.session_state["selected_language"] = sel_lang
+set_language()
 
 if "selected_language" in st.session_state:
-    if st.session_state["selected_language"] == "German":
+    if st.session_state["selected_language"] == '🇩🇪':
         _ = translate()
+    else:
+        _ = gettext.gettext
 
 # For session management.
 # TODO: log out. There's a problem deleting cookies: https://github.com/ktosiek/streamlit-cookies-manager/issues/1

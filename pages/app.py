@@ -18,7 +18,7 @@ st.set_page_config(page_title="My UOS Chatbot Community",
 
 # change the language
 if "selected_language" in st.session_state:
-    if st.session_state["selected_language"] == "German":
+    if st.session_state["selected_language"] == '🇩🇪':
         _ = translate()
     else:
         _ = gettext.gettext
@@ -222,12 +222,12 @@ if selected_path:
                 buttonText = _("Browse files")
                 css = ("""
                 <style>
-                [data-testid="stFileUploadDropzone"] div div::before {{color:black; content:"{drag}";}}
+                [data-testid="stFileUploadDropzone"] div div::before {{color: rgb(250, 250, 250);; content:"{drag}";}}
                 [data-testid="stFileUploadDropzone"] div div span{{display:none;}}
-                [data-testid="stFileUploadDropzone"] div div::after {{color:red; font-size: .8em; content:"{limit}";}}
+                [data-testid="stFileUploadDropzone"] div div::after {{color: rgb(250, 250, 250); font-size: .8em; content:"{limit}";}}
                 [data-testid="stFileUploadDropzone"] div div small{{display:none;}}  
                 [data-testid="stFileUploadDropzone"] button{{visibility:hidden;}}
-                [data-testid="stFileUploadDropzone"] button:before{{background-color: rgb(249, 249, 251);border-radius: 7px;display:flex;appearance:button;justify-content:center;padding-left: 6px;padding-right:6px;padding-top:4px;padding-bottom:4px; position: absolute;margin-left:20%;visibility: visible;overflow-y:visible;overflow-x:visible; content:"{buttonText}";}}
+                [data-testid="stFileUploadDropzone"] button:before{{background-color: rgb(43, 44, 54);color: rgb(250, 250, 250);border-radius: 7px;display:flex;appearance:button;justify-content:center;padding-left: 6px;padding-right:6px;padding-top:4px;padding-bottom:4px; position: absolute;margin-left:20%;visibility: visible;overflow-y:visible;overflow-x:visible; content:"{buttonText}";}}
                
               
                 </style>

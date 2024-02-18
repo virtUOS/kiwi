@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import streamlit as st
 from streamlit_cookies_manager import EncryptedCookieManager
 from src import ldap_connector
-from utils.page_language import set_language, set_default_language, translate, languages
+from utils.page_language import set_language, translate, languages
 
 load_dotenv()
 
@@ -16,36 +16,60 @@ st.set_page_config(
 
 )
 
+# Check if 'selected_language' already exists in session_state
+# If not, then initialize it
+if 'key' not in st.session_state:
+    st.session_state['selected_language'] = None
 
 
-set_default_language()
+with st.sidebar:
+
+    col1, col2, col3, col4 = st.columns(spec=[0.1,0.1,0.1,0.8], gap='medium'  )
+
+    with col1:
+        english = st.button('🇬🇧')
+    with col3:
+        german = st.button('🇩🇪')
 
 
-# with st.sidebar:
-#     st.markdown(_("# Language"))
-#     selected_language = st.selectbox(_('Select your language:'),
-#                                      list(languages.values()),
-#                                      )
-#     st.session_state["selected_language"] = selected_language
-#     set_language()
+if german:
+    st.session_state["selected_language"] = '🇩🇪'
+    set_language(language='de')
+    _ = translate()
 
-
-sel_lang = st.radio(
-'Languages',
-    options=languages.values(),
-    label_visibility='hidden',
-    horizontal=True,
-
-)
-
-st.session_state["selected_language"] = sel_lang
-set_language()
-
-if "selected_language" in st.session_state:
+elif english:
+    st.session_state["selected_language"] = '🇬🇧'
+    set_language(language='en')
+    _ = gettext.gettext
+else:
     if st.session_state["selected_language"] == '🇩🇪':
+        set_language(language='de')
+        _ = translate()
+    elif st.query_params.get('lang', None) == "de":
+        st.session_state["selected_language"] = '🇩🇪'
         _ = translate()
     else:
+        set_language(language='en')
+        st.session_state["selected_language"] = '🇬🇧'
         _ = gettext.gettext
+
+
+# sel_lang = st.radio(
+# 'Languages',
+#     options=languages.values(),
+#     label_visibility='hidden',
+#     horizontal=True,
+#
+# )
+
+# st.session_state["selected_language"] = sel_lang
+# set_language()
+
+# if "selected_language" in st.session_state:
+#     if st.session_state["selected_language"] == '🇩🇪':
+#         _ = translate()
+#     else:
+#         _ = gettext.gettext
 
 # For session management.
 # TODO: log out. There's a problem deleting cookies: https://github.com/ktosiek/streamlit-cookies-manager/issues/1
@@ -148,4 +172,4 @@ st.sidebar.success(_("Logged in!"))
 sleep(10)
 
 # Redirect to app
-st.switch_page("pages/app.py")
+# st.switch_page("pages/app.py")

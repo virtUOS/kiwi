@@ -5,7 +5,7 @@ from openai import OpenAI
 import streamlit as st
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
-from utils.page_language import translate
+from utils.page_language import translate, set_language
 from src import menu_options
 
 USER = 'User'
@@ -17,13 +17,27 @@ st.set_page_config(page_title="My UOS Chatbot Community",
                    page_icon="🥝")
 
 # change the language
+
 if "selected_language" in st.session_state:
     if st.session_state["selected_language"] == '🇩🇪':
+        set_language(language='de')
         _ = translate()
     else:
+        set_language(language='en')
         _ = gettext.gettext
-
+elif st.query_params.get('lang', None):
+    if st.query_params["lang"] == "de":
+        st.session_state["selected_language"] = '🇩🇪'
+        _ = translate()
+    elif st.query_params["lang"] == "en":
+        st.session_state["selected_language"] = '🇬🇧'
+        _ = gettext.gettext
+else:
+    st.session_state["selected_language"] = '🇬🇧'
+    set_language(language='en')
+    _ = gettext.gettext
 # For session management
+
 
 # This should be on top of your script
 cookies = EncryptedCookieManager(

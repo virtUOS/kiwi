@@ -1,5 +1,4 @@
 import yaml
-import os
 
 
 # Function to load prompts from a YAML file
@@ -20,17 +19,19 @@ def load_dict_from_yaml(file):
     return yaml.safe_load(file)
 
 
-# Function to load prompts from a YAML file
-def load_custom_prompts_for_download():
-    # Get the prompts file
-    file_path = 'prompts_config/chat_many_prompts.yml'
+def dict_to_yaml(dictionary):
+    """Converts a dictionary to a YAML string."""
+    return yaml.dump(dictionary, allow_unicode=True)
 
-    if os.path.isfile(file_path):
-        with open(file_path, 'rb') as file:
-            return file.read()
+
+# Function to load prompts from a YAML file
+def set_prompt_for_path(prompts_dict, path, edited_prompt):
+    """Recursively updates the prompt for a specific path in the prompts dictionary."""
+    if len(path) == 1:
+        prompts_dict[path[0]] = edited_prompt
     else:
-        print("ERROR: file doesn't exist.")
-        return None
+        if path[0] in prompts_dict and isinstance(prompts_dict[path[0]], dict):
+            set_prompt_for_path(prompts_dict[path[0]], path[1:], edited_prompt)
 
 
 def get_final_description(selected_path, options):
@@ -39,6 +40,7 @@ def get_final_description(selected_path, options):
     returning the final description or None if not a final option.
 
     :param selected_path: List of strings representing the selected menu path.
+    :param options: The current prompt options.
     :return: The description string if a final option is reached, None otherwise.
     """
     current_option = options

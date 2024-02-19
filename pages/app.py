@@ -5,7 +5,7 @@ from openai import OpenAI
 import streamlit as st
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
-from utils.page_language import translate, set_language
+from utils.page_language import get_translate, set_language
 from src import menu_options
 
 USER = 'User'
@@ -16,26 +16,10 @@ st.set_page_config(page_title="My UOS Chatbot Community",
                    layout="wide",
                    page_icon="🥝")
 
+_ = get_translate()
 # change the language
 
-if "selected_language" in st.session_state:
-    if st.session_state["selected_language"] == '🇩🇪':
-        set_language(language='de')
-        _ = translate()
-    else:
-        set_language(language='en')
-        _ = gettext.gettext
-elif st.query_params.get('lang', None):
-    if st.query_params["lang"] == "de":
-        st.session_state["selected_language"] = '🇩🇪'
-        _ = translate()
-    elif st.query_params["lang"] == "en":
-        st.session_state["selected_language"] = '🇬🇧'
-        _ = gettext.gettext
-else:
-    st.session_state["selected_language"] = '🇬🇧'
-    set_language(language='en')
-    _ = gettext.gettext
+
 # For session management
 
 
@@ -234,14 +218,16 @@ if selected_path:
                 drag = _("Drop a file here or click to browse.")
                 limit = _("Limit 200MB YAML file.")
                 buttonText = _("Browse files")
+                # Add custom CSS to the file uploader component in order to translate the text (widget does not offer
+                # support for other languages)
                 css = ("""
                 <style>
-                [data-testid="stFileUploadDropzone"] div div::before {{color: rgb(250, 250, 250);; content:"{drag}";}}
+                [data-testid="stFileUploadDropzone"] div div::before {{color: rgb(43, 44, 54); content:"{drag}";}}
                 [data-testid="stFileUploadDropzone"] div div span{{display:none;}}
-                [data-testid="stFileUploadDropzone"] div div::after {{color: rgb(250, 250, 250); font-size: .8em; content:"{limit}";}}
+                [data-testid="stFileUploadDropzone"] div div::after {{color: rgb(43, 44, 54); font-size: .8em; content:"{limit}";}}
                 [data-testid="stFileUploadDropzone"] div div small{{display:none;}}  
                 [data-testid="stFileUploadDropzone"] button{{visibility:hidden;}}
-                [data-testid="stFileUploadDropzone"] button:before{{background-color: rgb(43, 44, 54);color: rgb(250, 250, 250);border-radius: 7px;display:flex;appearance:button;justify-content:center;padding-left: 6px;padding-right:6px;padding-top:4px;padding-bottom:4px; position: absolute;margin-left:20%;visibility: visible;overflow-y:visible;overflow-x:visible; content:"{buttonText}";}}
+                [data-testid="stFileUploadDropzone"] button:before{{background-color:rgb(249, 249, 251);border-color:(49, 51, 63, 0.2);border-width:2px;color: rgb(43, 44, 54);border-radius: 7px;display:flex;appearance:button;justify-content:center;padding-left: 6px;padding-right:6px;padding-top:4px;padding-bottom:4px; position: absolute;margin-left:20%;visibility: visible;overflow-y:visible;overflow-x:visible; content:"{buttonText}";}}
                
               
                 </style>

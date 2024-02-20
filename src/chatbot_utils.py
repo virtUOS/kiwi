@@ -180,8 +180,8 @@ class SidebarManager:
 
 class ChatManager:
 
-    def __init__(_self, user):
-        _self.client = None
+    def __init__(self, user):
+        self.client = None
         ss['USER'] = user
 
     def set_client(self, client):

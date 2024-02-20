@@ -289,7 +289,7 @@ class AIClient:
             # models = ss["client"].models.list()
             # self.model = models.data[0].id
 
-    def get_response(_self, prompt, description_to_use):
+    def get_response(self, prompt, description_to_use):
         """
         Sends a prompt to the OpenAI API and returns the API's response.
 
@@ -302,13 +302,13 @@ class AIClient:
         """
         try:
             # Prepare the full prompt and messages with context or instructions
-            messages = _self._prepare_full_prompt_and_messages(prompt, description_to_use)
+            messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
 
             # Send the request to the OpenAI API
             # Display assistant response in chat message container
             with st.chat_message("assistant"):
-                stream = _self.client.chat.completions.create(
-                    model=_self.model,
+                stream = self.client.chat.completions.create(
+                    model=self.model,
                     messages=messages,
                     stream=True,
                 )

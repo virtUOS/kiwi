@@ -21,7 +21,7 @@ class SidebarManager:
     def initialize_cookies():
         """Initialize cookies for session management."""
         cookies = EncryptedCookieManager(
-            prefix="ktosiek/streamlit-cookies-manager/",
+            prefix="virtuos/ai-portal",
             password=os.getenv("COOKIES_PASSWORD")
         )
 
@@ -273,8 +273,8 @@ class ChatManager:
 
 class AIClient:
 
-    def __init__(self, model_selection):
-        if model_selection == 'OpenAI':
+    def __init__(self):
+        if ss['model_selection'] == 'OpenAI':
 
             @st.cache_resource
             def load_openai_data():

@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit import session_state as ss
 from dotenv import load_dotenv
 from src.chatbot_utils import SidebarManager, ChatManager, AIClient
 
@@ -27,7 +26,7 @@ class ChatbotApplication:
         self.sidebar_manager.display_sidebar_controls()
 
         # Initialize the client
-        client = AIClient(ss['model_selection'])
+        client = AIClient()
 
         # Set and manage chat interface display
         self.chat_manager.set_client(client)

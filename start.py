@@ -111,4 +111,4 @@ st.sidebar.success("Logged in!")
 sleep(0.5)
 
 # Redirect to app
-st.switch_page("pages/app.py")
+st.switch_page("pages/chatbot_app.py")

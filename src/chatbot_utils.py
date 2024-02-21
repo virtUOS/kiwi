@@ -130,7 +130,8 @@ class SidebarManager:
             st.write(f"{selected_chatbot_text} " + " > ".join(ss['selected_chatbot_path']))
             st.checkbox(ss['_']('Use predefined chatbots'),
                         value=False,
-                        help=ss['_']("We predefined prompts for different chatbots that you might find useful or fun to engage with."),
+                        help=ss['_']("We predefined prompts for different chatbots "
+                                     "that you might find useful or fun to engage with."),
                         on_change=self.load_prompts,
                         key="use_custom_prompts",
                         disabled=ss["disable_custom"])
@@ -173,7 +174,8 @@ class SidebarManager:
                 conversation_to_download = ss['conversation_histories'][
                     ss['selected_chatbot_path_serialized']]
 
-                conversation_df = pd.DataFrame(conversation_to_download, columns=[ss['_']('Speaker'), ss['_']('Message')])
+                conversation_df = pd.DataFrame(conversation_to_download,
+                                               columns=[ss['_']('Speaker'), ss['_']('Message')])
                 conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
                 col2.download_button("💽",
                                      data=conversation_csv,

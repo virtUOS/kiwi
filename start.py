@@ -1,13 +1,10 @@
 import os
 from time import sleep
-
 from dotenv import load_dotenv
 import streamlit as st
 from streamlit import session_state as ss
 from streamlit_cookies_manager import EncryptedCookieManager
-
 from src import ldap_connector
-
 from src.language_utils import initialize_language
 
 load_dotenv()
@@ -51,7 +48,6 @@ with st.sidebar:
     with col2:
         st.image("img/logo.svg", width=100)
 
-
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
         user_found = ldap_connector.check_auth(username=ss.username,
@@ -63,7 +59,6 @@ with st.sidebar:
             ss["password_correct"] = False
 
         ss['credentials_checked'] = True
-
 
     st.write(ss['_']("Login with your university credentials."))
 
@@ -113,7 +108,6 @@ if not cookies.get("session"):
         # Save cookie for the session. Use username as value, maybe it's useful at some point
         cookies["session"] = 'in'
         cookies.save()
-
 
 if cookies['session'] == 'in':
     st.sidebar.success(ss['_']("Logged in!"))

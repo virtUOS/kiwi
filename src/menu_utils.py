@@ -3,6 +3,7 @@ import streamlit as st
 
 
 # Function to load prompts from a YAML file
+@st.cache_data
 def load_prompts_from_yaml(custom=False, language='de'):
     # Choose which types of prompts based on the flags. Basic prompts are default
     # If the user explicitly marks the witty prompts option, use this one over the neutral ones

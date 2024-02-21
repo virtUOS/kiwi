@@ -52,29 +52,3 @@ def set_language(language) -> None:
         st.query_params["lang"] = "en"
     elif language == 'de':
         st.query_params["lang"] = "de"
-
-
-def get_translate():
-    """
-    Get the translation function based on the selected language or query parameters.
-    return: The translation function.
-    """
-    if "selected_language" in st.session_state:
-        if st.session_state["selected_language"] == 'en':
-            set_language(language='en')
-            _ = translate()
-        else:
-            set_language(language='de')
-            _ = gettext.gettext
-    elif st.query_params.get('lang', None):
-        if st.query_params["lang"] == "de":
-            st.session_state["selected_language"] = 'de'
-            _ = translate()
-        elif st.query_params["lang"] == "en":
-            st.session_state["selected_language"] = 'en'
-            _ = gettext.gettext
-    else:
-        st.session_state["selected_language"] = 'de'
-        set_language(language='de')
-        _ = gettext.gettext
-    return _

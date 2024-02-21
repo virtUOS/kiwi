@@ -61,6 +61,15 @@ class SidebarManager:
             with col2:
                 st.image("img/logo.svg", width=100)
 
+                hide_img_fs = '''
+                <style>
+                button[title="View fullscreen"]{
+                    visibility: hidden;}
+                </style>
+                '''
+
+                st.markdown(hide_img_fs, unsafe_allow_html=True)
+
     @staticmethod
     def _load_personal_prompts_file():
         if ss["prompts_file"]:

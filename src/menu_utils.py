@@ -3,11 +3,7 @@ import streamlit as st
 
 
 # Function to load prompts from a YAML file
-@st.cache_data
 def load_prompts_from_yaml(custom=False, language='de'):
-    # Use basic prompts as default
-    file_path = 'prompts_config/chat_basic_prompts.yml'
-
     # Choose which types of prompts based on the flags. Basic prompts are default
     # If the user explicitly marks the witty prompts option, use this one over the neutral ones
     if custom:
@@ -15,6 +11,12 @@ def load_prompts_from_yaml(custom=False, language='de'):
             file_path = 'prompts_config/chat_many_prompts_en.yml'
         elif language == 'de':
             file_path = 'prompts_config/chat_many_prompts_de.yml'
+    else:
+        # Use basic prompts as default
+        if language == 'en':
+            file_path = 'prompts_config/chat_basic_prompts_en.yml'
+        elif language == 'de':
+            file_path = 'prompts_config/chat_basic_prompts_de.yml'
 
     with open(file_path, 'r', encoding='utf-8') as file:
         return yaml.safe_load(file)

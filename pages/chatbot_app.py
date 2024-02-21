@@ -2,6 +2,9 @@ import streamlit as st
 from dotenv import load_dotenv
 from src.chatbot_utils import SidebarManager, ChatManager, AIClient
 
+from src.language_utils import initialize_language
+
+
 # Load environment variables
 load_dotenv()
 
@@ -18,6 +21,8 @@ class ChatbotApplication:
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""
+        # Set the language
+        initialize_language()
 
         # Set and manage sidebar interface controls
         self.sidebar_manager.verify_user_session()

@@ -33,7 +33,7 @@ class SidebarManager:
 
     def verify_user_session(self):
         """Verify if a user session is already started; if not, redirect to start page."""
-        if not self.cookies.get("session"):
+        if self.cookies.get("session") != 'in':
             st.switch_page("start.py")
 
     @staticmethod
@@ -76,16 +76,21 @@ class SidebarManager:
             ss["disable_custom"] = False
 
     @staticmethod
-    def _load_prompts():
+    def load_prompts():
+        language = st.query_params.get('lang', False)
+        # Use German language as default
+        if not language:
+            language = "de"
+
         """Load chat prompts based on user selection or file upload."""
         if "prompts_file" in ss and ss["prompts_file"]:
             pass
         # Only if the checkbox was already rendered we want to load them
         elif "use_custom_prompts" in ss:
             ss["prompt_options"] = menu_utils.load_prompts_from_yaml(
-                ss["use_custom_prompts"], language='en')
+                ss["use_custom_prompts"], language=language)
         else:
-            ss["prompt_options"] = menu_utils.load_prompts_from_yaml()
+            ss["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
     def _display_chatbots_menu(self, options, path=[]):
         """Display sidebar menu for chatbot selection."""
@@ -93,7 +98,7 @@ class SidebarManager:
             next_level = list(options.keys())
 
             with st.sidebar:
-                choice = option_menu("Chat Menu", next_level,
+                choice = option_menu(ss['_']("Chat Menu"), next_level,
                                      icons=['chat-dots'] * len(next_level),
                                      menu_icon="cast",
                                      default_index=0)
@@ -107,7 +112,7 @@ class SidebarManager:
         """Display controls and settings in the sidebar."""
 
         # First load prompts
-        self._load_prompts()
+        self.load_prompts()
 
         # Display the menu for chatbots
         self._display_chatbots_menu(ss['prompt_options'])
@@ -121,19 +126,18 @@ class SidebarManager:
 
         # Custom prompt selection
         with st.sidebar:
-            st.write("Selected Chatbot: " + " > ".join(ss['selected_chatbot_path']))
-            st.checkbox('Use predefined chatbots',
+            selected_chatbot_text = ss['_']("Selected Chatbot:")
+            st.write(f"{selected_chatbot_text} " + " > ".join(ss['selected_chatbot_path']))
+            st.checkbox(ss['_']('Use predefined chatbots'),
                         value=False,
-                        help="We predefined prompts for different "
-                             "chatbots that you might find useful "
-                             "or fun to engage with.",
-                        on_change=self._load_prompts,
+                        help=ss['_']("We predefined prompts for different chatbots that you might find useful or fun to engage with."),
+                        on_change=self.load_prompts,
                         key="use_custom_prompts",
                         disabled=ss["disable_custom"])
 
             st.markdown("""---""")
 
-            with st.expander("**Personalized Chatbots Controls**", expanded=False):
+            with st.expander(ss['_']("**Personalized Chatbots Controls**"), expanded=False):
                 # Here we prepare the prompts for download by merging predefined prompts with edited prompts
                 prompts_for_download = ss["prompt_options"].copy()  # Copy the predefined prompts
                 # Update the copied prompts with any changes made by the user
@@ -143,11 +147,11 @@ class SidebarManager:
                 # Convert the merged prompts into a YAML string for download
                 merged_prompts_yaml = menu_utils.dict_to_yaml(prompts_for_download)
 
-                st.download_button("Download YAML file with custom prompts",
+                st.download_button(ss['_']("Download YAML file with custom prompts"),
                                    data=merged_prompts_yaml,
                                    file_name="prompts.yaml",
                                    mime="application/x-yaml")
-                st.file_uploader("Upload YAML file with custom prompts",
+                st.file_uploader(ss['_']("Upload YAML file with custom prompts"),
                                  type='yaml',
                                  key="prompts_file",
                                  on_change=self._load_personal_prompts_file)
@@ -158,9 +162,9 @@ class SidebarManager:
 
                 st.markdown("""---""")
 
-                st.write("**Conversation Controls**")
+                st.write(ss['_']("**Conversation Controls**"))
                 col1, col2 = st.columns([1, 5])
-                if col1.button("🗑️", help="Delete the Current Conversation"):
+                if col1.button("🗑️", help=ss['_']("Delete the Current Conversation")):
                     # Clears the current chatbot's conversation history
                     ss['conversation_histories'][ss['selected_chatbot_path_serialized']] = [
                     ]
@@ -169,13 +173,13 @@ class SidebarManager:
                 conversation_to_download = ss['conversation_histories'][
                     ss['selected_chatbot_path_serialized']]
 
-                conversation_df = pd.DataFrame(conversation_to_download, columns=['Speaker', 'Message'])
+                conversation_df = pd.DataFrame(conversation_to_download, columns=[ss['_']('Speaker'), ss['_']('Message')])
                 conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
                 col2.download_button("💽",
                                      data=conversation_csv,
                                      file_name="conversation.csv",
                                      mime="text/csv",
-                                     help="Download the Current Conversation")
+                                     help=ss['_']("Download the Current Conversation"))
 
 
 class ChatManager:
@@ -193,12 +197,12 @@ class ChatManager:
         current_chatbot_path_serialized = ss['selected_chatbot_path_serialized']
         current_edited_prompt = ss['edited_prompts'].get(current_chatbot_path_serialized, description)
 
-        edited_prompt = st.text_area("Edit Prompt",
+        edited_prompt = st.text_area(ss['_']("Edit Prompt"),
                                      value=current_edited_prompt,
-                                     help="Edit the system prompt for more customized responses.")
+                                     help=ss['_']("Edit the system prompt for more customized responses."))
         ss['edited_prompts'][current_chatbot_path_serialized] = edited_prompt
 
-        if st.button("🔄", help="Restore Original Prompt"):
+        if st.button("🔄", help=ss['_']("Restore Original Prompt")):
             if current_chatbot_path_serialized in ss['edited_prompts']:
                 del ss['edited_prompts'][current_chatbot_path_serialized]
                 st.rerun()
@@ -260,9 +264,10 @@ class ChatManager:
                 description = menu_utils.get_final_description(selected_chatbot_path, ss["prompt_options"])
 
                 # Display title and prompt editing interface
-                st.title(f"Chat with {expertise_area} 🤖")
+                chat_text_msg = ss['_']("Chat with:")
+                st.title(f"{chat_text_msg} {expertise_area} 🤖")
 
-                with st.expander("Edit Bot Prompt", expanded=False):
+                with st.expander(ss['_']("Edit Bot Prompt"), expanded=False):
                     self._display_prompt_editor(description)
 
                 description_to_use = self._get_description_to_use(description)

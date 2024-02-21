@@ -1,0 +1,135 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2024-02-21 10:32+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: src/chatbot_utils.py:112
+msgid "Chat Menu"
+msgstr "Chat-Menü"
+
+#: src/chatbot_utils.py:140
+msgid "Selected Chatbot:"
+msgstr "Ausgewählter Chatbot:"
+
+#: src/chatbot_utils.py:131
+msgid "Use predefined chatbots"
+msgstr "Vordefinierte Chatbots verwenden"
+
+#: src/chatbot_utils.py:144
+msgid "We predefined prompts for different chatbots that you might find useful or fun to engage with."
+msgstr "Wir haben vordefinierte Prompts für verschiedene Chatbots, die Sie nützlich oder unterhaltsam finden könnten."
+
+#: src/chatbot_utils.py:151
+msgid "**Personalized Chatbots Controls**"
+msgstr "**Personalisierte Prompts Steuerung**"
+
+#: src/chatbot_utils.py:161
+msgid "Download YAML file with custom prompts"
+msgstr "YAML-Datei mit benutzerdefinierten Prompts herunterladen"
+
+#: src/chatbot_utils.py:165
+msgid "Upload YAML file with custom prompts"
+msgstr "YAML-Datei mit benutzerdefinierten Prompts hochladen"
+
+#: src/chatbot_utils.py:176
+msgid "**Conversation Controls**"
+msgstr "**Konversationskontrollen**"
+
+#: src/chatbot_utils.py:178
+msgid "Delete the Current Conversation"
+msgstr "Die aktuelle Konversation löschen"
+
+#: src/chatbot_utils.py:187
+msgid "Message"
+msgstr "Nachricht"
+
+#: src/chatbot_utils.py:187
+msgid "Speaker"
+msgstr "Sprecher"
+
+#: src/chatbot_utils.py:193
+msgid "Download the Current Conversation"
+msgstr "Download des aktuellen Gesprächs"
+
+#: src/chatbot_utils.py:211
+msgid "Edit Prompt"
+msgstr "Prompt bearbeiten"
+
+#: src/chatbot_utils.py:213
+msgid "Edit the system prompt for more customized responses."
+msgstr "Bearbeiten Sie den Systemprompt für individuellere Antworten."
+
+#: src/chatbot_utils.py:216
+msgid "Restore Original Prompt"
+msgstr "Ursprünglichen Prompt wiederherstellen"
+
+#: src/chatbot_utils.py:278
+msgid "Chat with:"
+msgstr "Chatte mit:"
+
+#: src/chatbot_utils.py:281
+msgid "Edit Bot Prompt"
+msgstr "Bot-Prompt bearbeiten"
+
+#: start.py:31
+msgid "UOS Welcomes YOU"
+msgstr "UOS begrüßt SIE"
+
+#: start.py:57
+msgid "# Welcome to the AI Portal of Osnabrück University! 👋"
+msgstr "# Willkommen auf dem KI-Portal der Universität Osnabrück! 👋"
+
+#: start.py:85
+msgid "Login with your university credentials."
+msgstr "Melden Sie sich mit Ihren Universitätsdaten an."
+
+#: start.py:90
+msgid "User"
+msgstr "Benutzer"
+
+#: start.py:95
+msgid "Password"
+msgstr "Passwort"
+
+#: start.py:98
+msgid "Login"
+msgstr "Anmelden"
+
+#: start.py:105
+msgid ""
+"\n"
+"    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.\n"
+"\n"
+"    **👈 Login on the sidebar** to enter the chat area!\n"
+"    ### Want to learn more about your rights as an user for this app?\n"
+"    - Check out the [Datenschutz]({DATENSCHUTZ})\n"
+"    - Check out the [Impressum]({IMPRESSUM})\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"    Dieses Portal ist eine Open-Source-App, die es den Nutzern ermöglicht, mit mehreren Chatbot-Experten von OpenAI's ChatGPT zu chatten. \n"
+"\n"
+"    **👈 Melden Sie sich in der Seitenleiste** an, um den Chatbereich zu betreten!\n"
+"    ### Möchtest du mehr über deine Rechte als Nutzer dieser App erfahren?\n"
+"    - Sehen Sie sich den [Datenschutz]({DATENSCHUTZ})\n"
+"    - Schauen Sie sich das [Impressum]({IMPRESSUM})\n"
+"\n"
+"\n"
+
+#: start.py:131
+msgid "Logged in!"
+msgstr "Eingeloggt!"
+

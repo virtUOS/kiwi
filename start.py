@@ -10,23 +10,19 @@ from src.language_utils import initialize_language
 load_dotenv()
 
 st.set_page_config(
-    page_title="UOS Welcomes YOU",
+    page_title="Kiwi Welcomes YOU",
     page_icon="👋",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 initialize_language()
 
-# For session management.
-# TODO: log out. There's a problem deleting cookies: https://github.com/ktosiek/streamlit-cookies-manager/issues/1
-
+# For session management
 # This should be on top of your script
 cookies = EncryptedCookieManager(
-    # This prefix will get added to all your cookie names.
-    # This way you can run your app on Streamlit Cloud without cookie name clashes with other apps.
-    prefix="virtuos/ai-portal",
-    # You should really setup a long COOKIES_PASSWORD secret if you're running on Streamlit Cloud.
-    password=os.environ.get("COOKIES_PASSWORD"),
+    prefix=os.getenv("COOKIES_PREFIX"),
+    password=os.getenv("COOKIES_PASSWORD")
 )
 
 if not cookies.ready():
@@ -76,7 +72,18 @@ with st.sidebar:
         st.form_submit_button(ss['_']("Login"), on_click=credentials_entered)
 
         if 'credentials_checked' in ss and not ss['password_correct']:
-            st.error("😕 Password incorrect")
+            st.error(ss['_']("😕 Password incorrect"))
+
+# Prepare links on legal stuff depending on the language chosen (German sites as default)
+if 'DATENSCHUTZ_DE' in os.environ and 'IMPRESSUM_DE' in os.environ:
+    dantenschutz_link = os.environ['DATENSCHUTZ_DE']
+    impressum_link = os.environ['IMPRESSUM_DE']
+
+# Use sites in english if the language changes and the sites are available
+if st.query_params['lang'] == 'en':
+    if 'DATENSCHUTZ_EN' in os.environ and 'IMPRESSUM_EN' in os.environ:
+        dantenschutz_link = os.environ['DATENSCHUTZ_EN']
+        impressum_link = os.environ['IMPRESSUM_EN']
 
 
 def check_password():
@@ -93,12 +100,12 @@ md_msg = ss['_']("""
 
 
 """
-                 ).format(DATENSCHUTZ=os.environ['DATENSCHUTZ'], IMPRESSUM=os.environ['IMPRESSUM'])
+                 ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link)
 
 st.markdown(md_msg)
 
 # First check if there's a session already started
-if not cookies.get("session"):
+if cookies.get("session") != 'in':
 
     # If no session, then check password
     if not check_password():

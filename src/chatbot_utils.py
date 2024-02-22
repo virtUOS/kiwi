@@ -21,7 +21,7 @@ class SidebarManager:
     def initialize_cookies():
         """Initialize cookies for session management."""
         cookies = EncryptedCookieManager(
-            prefix="virtuos/ai-portal",
+            prefix=os.getenv("COOKIES_PREFIX"),
             password=os.getenv("COOKIES_PASSWORD")
         )
 
@@ -61,6 +61,7 @@ class SidebarManager:
             with col2:
                 st.image("img/logo.svg", width=100)
 
+                # Gets rid of full screen option for logo image
                 hide_img_fs = '''
                 <style>
                 button[title="View fullscreen"]{
@@ -192,6 +193,37 @@ class SidebarManager:
                                      mime="text/csv",
                                      help=ss['_']("Download the Current Conversation"))
 
+            color = st.get_option('theme.secondaryBackgroundColor')
+
+            css = f'''
+            [data-testid="stSidebarNav"] {{
+                position:absolute;
+                bottom: 0;
+                z-index: 1;
+                background: {color};
+            }}
+            [data-testid="stSidebarNav"] > ul {{
+                padding-top: 2rem;
+            }}
+            [data-testid="stSidebarNav"] > div {{
+                position:absolute;
+                top: 0;
+            }}
+            [data-testid="stSidebarNav"] > div > svg {{
+                transform: rotate(180deg) !important;
+            }}
+            [data-testid="stSidebarNav"] + div {{
+                overflow: scroll;
+                max-height: 66vh;
+            }}
+            '''
+
+            if st.button('Logout'):
+                self.cookies["session"] = 'out'
+
+                st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
+                st.switch_page('start.py')
+
 
 class ChatManager:
 
@@ -275,7 +307,7 @@ class ChatManager:
                 description = menu_utils.get_final_description(selected_chatbot_path, ss["prompt_options"])
 
                 # Display title and prompt editing interface
-                chat_text_msg = ss['_']("Chat with:")
+                chat_text_msg = ss['_']("Chat with")
                 st.title(f"{chat_text_msg} {expertise_area} 🤖")
 
                 with st.expander(ss['_']("Edit Bot Prompt"), expanded=False):
@@ -295,6 +327,7 @@ class AIClient:
             @st.cache_resource
             def load_openai_data():
                 return OpenAI(), os.getenv('OPENAI_MODEL')
+
             self.client, self.model = load_openai_data()
         else:
             pass

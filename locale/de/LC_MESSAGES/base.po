@@ -76,8 +76,8 @@ msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
 #: src/chatbot_utils.py:278
-msgid "Chat with:"
-msgstr "Chatte mit:"
+msgid "Chat with"
+msgstr "Chatte mit"
 
 #: src/chatbot_utils.py:281
 msgid "Edit Bot Prompt"
@@ -106,6 +106,10 @@ msgstr "Passwort"
 #: start.py:98
 msgid "Login"
 msgstr "Anmelden"
+
+#: start.py:79
+msgid "😕 Password incorrect"
+msgstr "😕 Passwort falsch"
 
 #: start.py:105
 msgid ""

@@ -1,13 +1,13 @@
 import streamlit as st
 import gettext
 from streamlit import session_state as ss
-from src.chatbot_utils import SidebarManager
 
 
 def initialize_language():
     languages = {"English": "en", "Deutsch": "de"}
 
     def change_language():
+        # ss['changed_language'] = True
         if ss["selected_language"] == 'English':
             set_language(language='en')
             ss['_'] = gettext.gettext
@@ -15,9 +15,10 @@ def initialize_language():
             set_language(language='de')
             ss['_'] = translate()
 
-    if 'selected_language' not in st.session_state:
-        set_language(language='de')
+    # If no language is chosen yet set it to German
+    if 'selected_language' not in st.session_state or 'lang' not in st.query_params:
         ss['_'] = translate()
+        st.query_params['lang'] = 'de'
 
     st.radio(
         "Language",
@@ -29,7 +30,10 @@ def initialize_language():
         label_visibility='hidden'
     )
 
-    SidebarManager.load_prompts()
+    # When changing the language force a rerun to reflect all changes
+#    if ss['changed_language']:
+#        ss['changed_language'] = False
+#        st.rerun()
 
 
 def translate():

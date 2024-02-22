@@ -34,7 +34,8 @@ class SidebarManager:
     def verify_user_session(self):
         """Verify if a user session is already started; if not, redirect to start page."""
         if self.cookies.get("session") != 'in':
-            st.switch_page("start.py")
+            # st.switch_page("start.py")
+            pass
 
     @staticmethod
     def initialize_session_variables():
@@ -322,13 +323,62 @@ class AIClient:
 
             # Send the request to the OpenAI API
             # Display assistant response in chat message container
+            response = ""
             with st.chat_message("assistant"):
                 stream = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     stream=True,
                 )
-                response = st.write_stream(stream)
+                partial_response = []
+                code_block = False
+
+                def generate_response():
+
+                    for chunk in stream:
+                        delta = chunk.choices[0].delta
+                        if delta:
+                            chunk_content = chunk.choices[0].delta.content
+                            yield chunk_content
+
+                gen_stream = generate_response()
+                for chunk_content in gen_stream:
+                    if chunk_content == '```':
+                        partial_response.append(chunk_content)
+                        code_block = True
+                        while code_block:
+                            try:
+                                chunk_content = next(gen_stream)
+                                partial_response.append(chunk_content)
+                                if chunk_content == "`\n\n":
+                                    code_block = False
+                                    # response.extend(partial_response)
+                                    str_response = ""
+                                    for i in partial_response:
+                                        str_response += i
+
+                                    st.markdown(str_response)
+                                    partial_response = []
+                                    response += str_response
+                                    str_response = ""
+
+                            except StopIteration:
+                                break
+
+
+                    else:
+                        partial_response.append(chunk_content)
+                        if chunk_content:
+                            if '\n' in chunk_content:
+                                # response.extend(partial_response)
+                                str_response = str()
+                                for i in partial_response:
+                                    str_response += i
+
+                                st.markdown(str_response)
+                                partial_response = []
+                                response += str_response
+                                str_response = ""
 
             return response
 

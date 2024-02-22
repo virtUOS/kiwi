@@ -29,10 +29,10 @@ cookies = EncryptedCookieManager(
     password=os.environ.get("COOKIES_PASSWORD"),
 )
 
-if not cookies.ready():
-    # Wait for the component to load and send us current cookies.
-    st.spinner()
-    st.stop()
+# if not cookies.ready():
+#     # Wait for the component to load and send us current cookies.
+#     st.spinner()
+#     st.stop()
 
 st.write(ss['_']("# Welcome to the AI Portal of Osnabrück University! 👋"))
 
@@ -98,16 +98,25 @@ md_msg = ss['_']("""
 st.markdown(md_msg)
 
 # First check if there's a session already started
-if not cookies.get("session"):
+# if not cookies.get("session"):
+#
+#     # If no session, then check password
+#     if not check_password():
+#         st.stop()
+#     else:
+#         # When the password is correct create a persistent session
+#         # Save cookie for the session. Use username as value, maybe it's useful at some point
+#         cookies["session"] = st.session_state.username
+#         cookies.save()
 
     # If no session, then check password
-    if not check_password():
-        st.stop()
-    else:
+    # if not check_password():
+    #     st.stop()
+    # else:
         # When the password is correct create a persistent session
         # Save cookie for the session. Use username as value, maybe it's useful at some point
-        cookies["session"] = 'in'
-        cookies.save()
+        # cookies["session"] = 'in'
+        # cookies.save()
 
 if cookies['session'] == 'in':
     st.sidebar.success(ss['_']("Logged in!"))

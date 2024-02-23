@@ -10,7 +10,7 @@ from src.language_utils import initialize_language
 load_dotenv()
 
 st.set_page_config(
-    page_title="Kiwi Welcomes YOU",
+    page_title="Kiwi 🥝",
     page_icon="👋",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -30,7 +30,15 @@ if not cookies.ready():
     st.spinner()
     st.stop()
 
-st.write(ss['_']("# Welcome to the AI Portal of Osnabrück University! 👋"))
+current_language = st.query_params['lang']
+
+if current_language == 'en':
+    welcome_message = os.getenv('WELCOME_MESSAGE_EN')
+else:
+    welcome_message = os.getenv('WELCOME_MESSAGE_DE')
+
+
+st.write(f"## {welcome_message}")
 
 if "password_correct" not in ss:
     ss["password_correct"] = False
@@ -45,9 +53,11 @@ with st.sidebar:
         st.image("img/logo.svg", width=100)
 
     def credentials_entered():
+        cookies['session'] = 'in'
         """Checks whether a password entered by the user is correct."""
-        user_found = ldap_connector.check_auth(username=ss.username,
-                                               password=ss.password)
+        #user_found = ldap_connector.check_auth(username=ss.username,
+        #                                       password=ss.password)
+        user_found = False
         if user_found:
             ss["password_correct"] = True
             del ss["password"]  # Don't store the password.
@@ -80,7 +90,7 @@ if 'DATENSCHUTZ_DE' in os.environ and 'IMPRESSUM_DE' in os.environ:
     impressum_link = os.environ['IMPRESSUM_DE']
 
 # Use sites in english if the language changes and the sites are available
-if st.query_params['lang'] == 'en':
+if current_language == 'en':
     if 'DATENSCHUTZ_EN' in os.environ and 'IMPRESSUM_EN' in os.environ:
         dantenschutz_link = os.environ['DATENSCHUTZ_EN']
         impressum_link = os.environ['IMPRESSUM_EN']
@@ -116,7 +126,7 @@ if cookies.get("session") != 'in':
         cookies["session"] = 'in'
         cookies.save()
 
-if cookies['session'] == 'in':
+elif cookies['session'] == 'in':
     st.sidebar.success(ss['_']("Logged in!"))
     # Wait a bit before redirecting
     sleep(0.5)

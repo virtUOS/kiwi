@@ -121,7 +121,7 @@ class SidebarManager:
 
             # Show the conversation controls only if there's a conversation
             if ss['selected_chatbot_path_serialized'] in ss['conversation_histories'] and ss[
-                    'conversation_histories'][ss['selected_chatbot_path_serialized']]:
+                'conversation_histories'][ss['selected_chatbot_path_serialized']]:
 
                 st.markdown("""---""")
 
@@ -175,8 +175,11 @@ class SidebarManager:
             if st.button('Logout'):
                 self.cookies["session"] = 'out'
 
-                st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
                 st.switch_page('start.py')
+
+            st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
+
+            st.write(f"Version: *Beta*")
 
 
 class ChatManager:

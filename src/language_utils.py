@@ -7,7 +7,6 @@ def initialize_language():
     languages = {"English": "en", "Deutsch": "de"}
 
     def change_language():
-        # ss['changed_language'] = True
         if ss["selected_language"] == 'English':
             set_language(language='en')
             ss['_'] = gettext.gettext
@@ -29,11 +28,6 @@ def initialize_language():
         index=1,
         label_visibility='hidden'
     )
-
-    # When changing the language force a rerun to reflect all changes
-#    if ss['changed_language']:
-#        ss['changed_language'] = False
-#        st.rerun()
 
 
 def translate():

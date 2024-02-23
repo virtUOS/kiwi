@@ -93,14 +93,14 @@ class SidebarManager:
             language = "de"
 
         """Load chat prompts based on user selection or file upload."""
-        if "prompts_file" in ss and ss["prompts_file"]:
-            pass
+        #if "prompts_file" in ss and ss["prompts_file"]:
+        #    pass
         # Only if the checkbox was already rendered we want to load them
-        elif "use_custom_prompts" in ss:
-            ss["prompt_options"] = menu_utils.load_prompts_from_yaml(
-                ss["use_custom_prompts"], language=language)
-        else:
-            ss["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
+        #elif "use_custom_prompts" in ss:
+        #    ss["prompt_options"] = menu_utils.load_prompts_from_yaml(
+        #        ss["use_custom_prompts"], language=language)
+        #else:
+        ss["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
     def _display_chatbots_menu(self, options, path=[]):
         """Display sidebar menu for chatbot selection."""
@@ -136,36 +136,36 @@ class SidebarManager:
 
         # Custom prompt selection
         with st.sidebar:
-            selected_chatbot_text = ss['_']("Selected Chatbot:")
-            st.write(f"{selected_chatbot_text} " + " > ".join(ss['selected_chatbot_path']))
-            st.checkbox(ss['_']('Use predefined chatbots'),
-                        value=False,
-                        help=ss['_']("We predefined prompts for different chatbots "
-                                     "that you might find useful or fun to engage with."),
-                        on_change=self.load_prompts,
-                        key="use_custom_prompts",
-                        disabled=ss["disable_custom"])
+            #selected_chatbot_text = ss['_']("Selected Chatbot:")
+            #st.write(f"{selected_chatbot_text} " + " > ".join(ss['selected_chatbot_path']))
+            #st.checkbox(ss['_']('Use predefined chatbots'),
+            #            value=False,
+            #            help=ss['_']("We predefined prompts for different chatbots "
+            #                         "that you might find useful or fun to engage with."),
+            #            on_change=self.load_prompts,
+            #            key="use_custom_prompts",
+            #            disabled=ss["disable_custom"])
 
-            st.markdown("""---""")
+            #st.markdown("""---""")
 
-            with st.expander(ss['_']("**Personalized Chatbots Controls**"), expanded=False):
+            #with st.expander(ss['_']("**Personalized Chatbots Controls**"), expanded=False):
                 # Here we prepare the prompts for download by merging predefined prompts with edited prompts
-                prompts_for_download = ss["prompt_options"].copy()  # Copy the predefined prompts
+            #    prompts_for_download = ss["prompt_options"].copy()  # Copy the predefined prompts
                 # Update the copied prompts with any changes made by the user
-                for path, edited_prompt in ss['edited_prompts'].items():
-                    menu_utils.set_prompt_for_path(prompts_for_download, path.split('/'), edited_prompt)
+            #    for path, edited_prompt in ss['edited_prompts'].items():
+            #        menu_utils.set_prompt_for_path(prompts_for_download, path.split('/'), edited_prompt)
 
                 # Convert the merged prompts into a YAML string for download
-                merged_prompts_yaml = menu_utils.dict_to_yaml(prompts_for_download)
+            #    merged_prompts_yaml = menu_utils.dict_to_yaml(prompts_for_download)
 
-                st.download_button(ss['_']("Download YAML file with custom prompts"),
-                                   data=merged_prompts_yaml,
-                                   file_name="prompts.yaml",
-                                   mime="application/x-yaml")
-                st.file_uploader(ss['_']("Upload YAML file with custom prompts"),
-                                 type='yaml',
-                                 key="prompts_file",
-                                 on_change=self._load_personal_prompts_file)
+            #    st.download_button(ss['_']("Download YAML file with custom prompts"),
+            #                       data=merged_prompts_yaml,
+            #                       file_name="prompts.yaml",
+            #                       mime="application/x-yaml")
+            #    st.file_uploader(ss['_']("Upload YAML file with custom prompts"),
+            #                     type='yaml',
+            #                     key="prompts_file",
+            #                     on_change=self._load_personal_prompts_file)
 
             # Show the conversation controls only if there's a conversation
             if ss['selected_chatbot_path_serialized'] in ss['conversation_histories'] and ss[

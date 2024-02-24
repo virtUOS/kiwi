@@ -189,15 +189,20 @@ class ChatManager:
         self.client = client
 
     @staticmethod
-    def _display_prompt_editor(description):
+    def update_edited_prompt():
+        ss['edited_prompts'][ss['selected_chatbot_path_serialized']] = ss['edited_prompt']
+
+
+    def _display_prompt_editor(self, description):
         """Allows editing of the chatbot prompt."""
         current_chatbot_path_serialized = ss['selected_chatbot_path_serialized']
         current_edited_prompt = ss['edited_prompts'].get(current_chatbot_path_serialized, description)
 
-        edited_prompt = st.text_area(ss['_']("Edit Prompt"),
-                                     value=current_edited_prompt,
-                                     help=ss['_']("Edit the system prompt for more customized responses."))
-        ss['edited_prompts'][current_chatbot_path_serialized] = edited_prompt
+        st.text_area(ss['_']("Edit Prompt"),
+                     value=current_edited_prompt,
+                     help=ss['_']("Edit the system prompt for more customized responses."),
+                     on_change=self.update_edited_prompt,
+                     key='edited_prompt')
 
         if st.button("🔄", help=ss['_']("Restore Original Prompt")):
             if current_chatbot_path_serialized in ss['edited_prompts']:

@@ -23,6 +23,10 @@ msgstr "Chat-Menü"
 msgid "Model:"
 msgstr "Modell:"
 
+#: src/chatbot_utils.py:175
+msgid "Logout"
+msgstr "Abmelden"
+
 #: src/chatbot_utils.py:176
 msgid "**Conversation Controls**"
 msgstr "**Konversationskontrollen**"

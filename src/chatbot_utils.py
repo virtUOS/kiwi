@@ -172,7 +172,7 @@ class SidebarManager:
 
             st.markdown("""---""")
 
-            if st.button('Logout'):
+            if st.button(ss['_']('Logout')):
                 self.cookies["session"] = 'out'
 
                 st.switch_page('start.py')

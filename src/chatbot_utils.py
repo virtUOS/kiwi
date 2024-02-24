@@ -121,7 +121,7 @@ class SidebarManager:
 
             # Show the conversation controls only if there's a conversation
             if ss['selected_chatbot_path_serialized'] in ss['conversation_histories'] and ss[
-                    'conversation_histories'][ss['selected_chatbot_path_serialized']]:
+                'conversation_histories'][ss['selected_chatbot_path_serialized']]:
 
                 st.markdown("""---""")
 
@@ -191,7 +191,6 @@ class ChatManager:
     @staticmethod
     def update_edited_prompt():
         ss['edited_prompts'][ss['selected_chatbot_path_serialized']] = ss['edited_prompt']
-
 
     def _display_prompt_editor(self, description):
         """Allows editing of the chatbot prompt."""

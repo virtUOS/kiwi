@@ -172,11 +172,12 @@ class SidebarManager:
 
             st.markdown("""---""")
 
-            if st.button('Logout'):
+            if st.button(ss['_']('Logout')):
                 self.cookies["session"] = 'out'
 
-                st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
                 st.switch_page('start.py')
+
+            st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
 
 class ChatManager:

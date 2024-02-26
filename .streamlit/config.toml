@@ -1,2 +1,5 @@
 [client]
-showSidebarNavigation = false
+showSidebarNavigation = true
+
+[browser]
+gatherUsageStats = false

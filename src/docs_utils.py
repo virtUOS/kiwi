@@ -1,7 +1,6 @@
 import os
 import base64
 import re
-import pandas as pd
 
 from dotenv import load_dotenv
 from io import BytesIO
@@ -14,13 +13,10 @@ from typing import Any, Dict, List
 
 import streamlit as st
 from streamlit import session_state
-from streamlit_option_menu import option_menu
-from streamlit_cookies_manager import EncryptedCookieManager
 from streamlit_pdf_viewer import pdf_viewer
 from streamlit_dimensions import st_dimensions
 
 from src import menu_utils
-from src import document_prompt
 
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -31,47 +27,20 @@ from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains.conversational_retrieval.base import _get_chat_history
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 
-from src.document_prompt import STUFF_PROMPT
-
 # Load environment variables
 load_dotenv()
 
 
-class SidebarManager:
+class SidebarDocsControls:
 
     def __init__(self):
-        self.cookies = self.initialize_cookies()
+        pass
 
     @staticmethod
-    def initialize_cookies():
-        """Initialize cookies for session management."""
-        cookies = EncryptedCookieManager(
-            prefix=os.getenv("COOKIES_PREFIX"),
-            password=os.getenv("COOKIES_PASSWORD")
-        )
-
-        if not cookies.ready():
-            st.spinner()
-            st.stop()
-
-        return cookies
-
-    def verify_user_session(self):
-        """Verify if a user session is already started; if not, redirect to start page."""
-        if self.cookies.get("session") != 'in':
-            st.switch_page("start.py")
-
-    @staticmethod
-    def initialize_session_variables():
+    def initialize_docs_session_variables():
         """Initialize essential session variables."""
         required_keys = {
-            'model_selection': "OpenAI",
-            'selected_chatbot_path': [],
-            'conversation_histories': {},
-            'selected_chatbot_path_serialized': "",
-            'prompt_options': menu_utils.load_prompts_from_yaml(),
-            'edited_prompts': {},
-            'disable_custom': False,
+            'prompt_options_doc': menu_utils.load_prompts_from_yaml(typ='doc', prompt_key='document_assistance'),
             'uploaded_pdf_files': [],
             'selected_file_name': None,
             'sources_to_highlight': {},
@@ -81,34 +50,6 @@ class SidebarManager:
         for key, default_value in required_keys.items():
             if key not in session_state:
                 session_state[key] = default_value
-
-    @staticmethod
-    def display_logo():
-        """Display the logo on the sidebar."""
-        with st.sidebar:
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.image("img/logo.svg", width=100)
-
-                # Gets rid of full screen option for logo image
-                hide_img_fs = '''
-                <style>
-                button[title="View fullscreen"]{
-                    visibility: hidden;}
-                </style>
-                '''
-
-                st.markdown(hide_img_fs, unsafe_allow_html=True)
-
-    @staticmethod
-    def load_prompts():
-        language = st.query_params.get('lang', False)
-        # Use German language as default
-        if not language:
-            language = "de"
-
-        """Load chat prompts based on language."""
-        session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
     @staticmethod
     def check_amount_of_uploaded_files_and_set_variables():
@@ -127,113 +68,12 @@ class SidebarManager:
                 else:
                     break
 
-    def _display_chatbots_menu(self, options, path=[]):
-        """Display sidebar menu for chatbot selection."""
-        if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
-            next_level = list(options.keys())
-
-            with st.sidebar:
-                choice = option_menu(session_state['_']("Chat Menu"), next_level,
-                                     icons=['chat-dots'] * len(next_level),
-                                     menu_icon="cast",
-                                     default_index=0)
-
-            if choice:
-                new_path = path + [choice]
-                session_state['selected_chatbot_path'] = new_path
-                self._display_chatbots_menu(options.get(choice, {}), new_path)
-
-    def display_sidebar_controls(self):
-        """Display controls and settings in the sidebar."""
-
-        # First load prompts
-        self.load_prompts()
-
-        # Display the menu for chatbots
-        self._display_chatbots_menu(session_state['prompt_options'])
-
-        # Store the serialized path in session state if different from current path
-        # Do this here to handle conversation controls showing up when changing
-        # chatbot and the conversation exists
-        if menu_utils.path_changed(session_state['selected_chatbot_path'],
-                                   session_state['selected_chatbot_path_serialized']):
-            session_state['selected_chatbot_path_serialized'] = '/'.join(
-                session_state['selected_chatbot_path'])  # Update the serialized path in session state
-
-        # Custom prompt selection
+    def display_docs_sidebar_controls(self):
         with st.sidebar:
-            if session_state['model_selection'] == 'OpenAI':
-                model_text = session_state['_']("Model:")
-                st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
-
-            # Show the conversation controls only if there's a conversation
-            if session_state['selected_chatbot_path_serialized'] in session_state['conversation_histories'] and \
-                    session_state[
-                        'conversation_histories'][session_state['selected_chatbot_path_serialized']]:
-
-                st.markdown("""---""")
-
-                st.write(session_state['_']("**Conversation Controls**"))
-                col1, col2 = st.columns([1, 5])
-                if col1.button("🗑️", help=session_state['_']("Delete the Current Conversation")):
-                    # Clears the current chatbot's conversation history
-                    session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
-                    ]
-                    st.rerun()
-
-                conversation_to_download = session_state['conversation_histories'][
-                    session_state['selected_chatbot_path_serialized']]
-
-                conversation_df = pd.DataFrame(conversation_to_download,
-                                               columns=[session_state['_']('Speaker'), session_state['_']('Message')])
-                conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-                col2.download_button("💽",
-                                     data=conversation_csv,
-                                     file_name="conversation.csv",
-                                     mime="text/csv",
-                                     help=session_state['_']("Download the Current Conversation"))
-
-            color = st.get_option('theme.secondaryBackgroundColor')
-
-            css = f'''
-            [data-testid="stSidebarNav"] {{
-                position:absolute;
-                bottom: 0;
-                z-index: 1;
-                background: {color};
-            }}
-            [data-testid="stSidebarNav"] > ul {{
-                padding-top: 2rem;
-            }}
-            [data-testid="stSidebarNav"] > div {{
-                position:absolute;
-                top: 0;
-            }}
-            [data-testid="stSidebarNav"] > div > svg {{
-                transform: rotate(180deg) !important;
-            }}
-            [data-testid="stSidebarNav"] + div {{
-                overflow: scroll;
-                max-height: 66vh;
-            }}
-            '''
-
             st.markdown("""---""")
 
             st.file_uploader("Upload PDF file(s)", type=['pdf'], accept_multiple_files=True,
                              key='pdf_files', on_change=self.check_amount_of_uploaded_files_and_set_variables)
-
-            st.markdown("""---""")
-
-            if st.button(session_state['_']('Logout')):
-                # Set cookies and password session variables before redirecting.
-                # Delete credentials session variable
-                self.cookies["session"] = 'out'
-                session_state["password_correct"] = False
-                del session_state['credentials_checked']
-                st.switch_page('start.py')
-
-            st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
 
 class DocsManager:
@@ -258,55 +98,15 @@ class DocsManager:
     def set_client(self, client):
         self.client = client
 
-    @staticmethod
-    def update_edited_prompt():
-        session_state['edited_prompts'][session_state['selected_chatbot_path_serialized']] = session_state[
-            'edited_prompt']
-
-    def _display_prompt_editor(self, description):
-        """Allows editing of the chatbot prompt."""
-        current_chatbot_path_serialized = session_state['selected_chatbot_path_serialized']
-        current_edited_prompt = session_state['edited_prompts'].get(current_chatbot_path_serialized, description)
-
-        st.text_area(session_state['_']("Edit Prompt"),
-                     value=current_edited_prompt,
-                     help=session_state['_']("Edit the system prompt for more customized responses."),
-                     on_change=self.update_edited_prompt,
-                     key='edited_prompt')
-
-        if st.button("🔄", help=session_state['_']("Restore Original Prompt")):
-            if current_chatbot_path_serialized in session_state['edited_prompts']:
-                del session_state['edited_prompts'][current_chatbot_path_serialized]
-                st.rerun()
-
-    @staticmethod
-    def _get_description_to_use(default_description):
-        """Retrieves the prompt description to use, whether edited or default."""
-        return session_state['edited_prompts'].get(session_state['selected_chatbot_path_serialized'],
-                                                   default_description)
-
-    @staticmethod
-    def _display_conversation():
-        """Displays the conversation history for the selected path."""
-        conversation_history = session_state['conversation_histories'].get(
-            session_state['selected_chatbot_path_serialized'], [])
-
-        if conversation_history:
-            for speaker, message in conversation_history:
-                if speaker == session_state['USER']:
-                    st.chat_message("user").write(message)
-                else:
-                    st.chat_message("assistant").write(message)
-
     def _handle_user_input(self, description_to_use):
         """Handles user input, sending it to OpenAI and displaying the response."""
         if user_message := st.chat_input(session_state['USER']):
             # Ensure there's a key for this conversation in the history
-            if session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories']:
-                session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
+            if 'docs' not in session_state['conversation_histories']:
+                self._create_empty_history()
 
             # Get the current conversation history
-            current_history = session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']]
+            current_history = session_state['conversation_histories']['docs']
 
             # Prevent re-running the query on refresh or navigating back by checking
             # if the last stored message is not from the User or the history is empty
@@ -325,8 +125,7 @@ class DocsManager:
                 current_history.append(('Assistant', response))
 
                 # Update the conversation history in the session state
-                session_state['conversation_histories'][
-                    session_state['selected_chatbot_path_serialized']] = current_history
+                session_state['conversation_histories']['docs'] = current_history
 
                 st.rerun()
 
@@ -368,8 +167,8 @@ class DocsManager:
 
         doc_chunks = []
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=20,
+            chunk_size=session_state['chunk_size'],
+            chunk_overlap=session_state['chunk_size'] * 0.05,  # Overlap is 5% of the chunk size
             separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
             length_function=len,
         )
@@ -434,7 +233,7 @@ class DocsManager:
         doc_chain = load_qa_with_sources_chain(
             llm=llm,
             chain_type="stuff",
-            prompt=STUFF_PROMPT,
+            prompt=session_state['prompt_options_doc'],
         )
 
         answer = doc_chain(
@@ -458,6 +257,19 @@ class DocsManager:
         # Populate the dropdown box with the file names without extension
         self.column_uploaded_files.selectbox("Select a file to display:", file_names_without_extension,
                                              key='selected_file_name')
+
+        self.column_uploaded_files.number_input(label='Input chunk size',
+                                                min_value=1,
+                                                max_value=4000,
+                                                value=300,
+                                                key='chunk_size',
+                                                help="The chunk size specifies the amount of characters each chunk"
+                                                     " of text has. A small chunk size can be better to search for"
+                                                     " more specific information, like definitions, while a bigger"
+                                                     " chunk size can help search for information that is spread"
+                                                     " more widely on the text. Be aware that the chunk size is"
+                                                     " limited by the amount of context a model allows at a time"
+                                                     " (usually around 4000 for mid-sized models)")
 
         # To display images horizontally, calculate the number of columns
         num_files = len(files_set)
@@ -502,8 +314,6 @@ class DocsManager:
 
     def load_doc_to_display(self):
 
-        self.container_pdf = st.container()
-
         if session_state['uploaded_pdf_files']:
             self.display_thumbnails()
 
@@ -512,11 +322,11 @@ class DocsManager:
             for file in session_state['uploaded_pdf_files']:
                 filename = file.name
 
-                fileroot = os.path.splitext(filename)[0]
+                file_stem = os.path.splitext(filename)[0]
 
-                self.doc_binary_data[fileroot] = file.getvalue()
+                self.doc_binary_data[file_stem] = file.getvalue()
 
-                base64_pdf = base64.b64encode(self.doc_binary_data[fileroot]).decode('utf-8')
+                base64_pdf = base64.b64encode(self.doc_binary_data[file_stem]).decode('utf-8')
 
                 # self.doc_binary_data = self.doc_binary_data.decode('utf-8')
 
@@ -536,6 +346,9 @@ class DocsManager:
                 text.extend(self.text_split(data_dict, filename))
 
             self.vector_store = self.get_embeddings(text)
+        else:
+            with self.column_pdf:
+                st.header("Please upload your documents on the sidebar.")
 
     @staticmethod
     def get_doc(binary_data):
@@ -551,306 +364,176 @@ class DocsManager:
             st.write(f"Files with sources: {files_with_sources}")
             st.header(f"Sources for file {file}:")
             for i, source in enumerate(st.session_state['sources_to_display'][file]):
-                st.markdown(f"{i+1}) {source}")
+                st.markdown(f"{i + 1}) {source}")
+
+    def display_chat_title(self):
+        with self.column_chat:
+            # Interface to chat with selected expert
+            st.title(f"What do you want to know about your documents?")
+
+    @staticmethod
+    def _has_conversation_history():
+        if ('docs' in session_state['conversation_histories']
+                and session_state['uploaded_pdf_files']):
+            return True
+        return False
+
+    @staticmethod
+    def _create_empty_history():
+        # If no conversation in history for this chatbot, then create an empty one
+        session_state['conversation_histories']['docs'] = [
+        ]
+        return session_state['conversation_histories']['docs']
+
+    def _display_conversation(self):
+        """Displays the conversation history for the selected path."""
+        conversation_history = session_state['conversation_histories'].get(
+            'docs', [])
+
+        if conversation_history:
+            for speaker, message in conversation_history:
+                if speaker == session_state['USER']:
+                    with self.column_chat:
+                        st.chat_message("user").write(message)
+                else:
+                    with self.column_chat:
+                        st.chat_message("assistant").write(message)
+
+        return conversation_history
+
+    def _collect_user_input(self, conversation, repeat=False):
+        with self.column_chat:
+
+            # Set style of chat input so that it shows up at the bottom of the column
+            chat_input_style = f"""
+            <style>
+                .stChatInput {{
+                  position: fixed;
+                  bottom: 3rem;
+                }}
+            </style>
+            """
+            st.markdown(chat_input_style, unsafe_allow_html=True)
+
+            # Accept user input
+            if user_message := st.chat_input("Ask something about your PDFs",
+                                             disabled=not session_state['uploaded_pdf_files']):
+
+                # Prevent re-running the query on refresh or navigating back to the page by checking
+                # if the last stored message is not from the User
+                if not conversation or conversation[-1] != (session_state['USER'], user_message) or repeat:
+                    st.session_state['sources_to_highlight'] = {}
+                    st.session_state['sources_to_display'] = {}
+                    return user_message
+
+        return None
+
+    def _user_message_processing(self, conversation, user_message):
+        if user_message:
+            # Add user message to the conversation
+            session_state['conversation_histories']['docs'].append((session_state['USER'], user_message))
+
+            # Generate tuples with the chat history
+            # We iterate with a step of 2 and always take
+            # the current and next item assuming USER follows by Assistant
+            chat_history_tuples = [
+                (conversation[i][1], conversation[i + 1][1])
+                # Extract just the messages, ignoring the labels
+                for i in range(0, len(conversation) - 1, 2)
+                # We use len(conversation)-1 to avoid out-of-range errors
+            ]
+
+            with self.column_chat:
+                with st.spinner():
+                    condensed_question = self.get_condensed_question(
+                        user_message, chat_history_tuples, os.getenv('OPENAI_MODEL')
+                    )
+
+                    sources = self.get_sources(self.vector_store, condensed_question)
+                    all_output = self.get_answer(sources, condensed_question)
+
+                    ai_response = all_output['output_text']
+
+                    with st.chat_message("assistant"):
+                        st.markdown(ai_response)
+                        # Store docs to extract all sources the first time
+                        docs = {}
+                        for source in sources:
+                            # Collect the references to relevant sources and their first 150 characters
+                            source_reference = source.metadata['source']
+                            # Only add it if the source appears referenced in the response
+                            if source_reference in ai_response:
+                                content = source.page_content
+
+                                page_data = source_reference.split('|')
+                                page_file = page_data[0]
+                                page_source = page_data[1]
+                                # Without this condition, it can lead to error due to deleting a
+                                # file from uploads that was already inserted in the VD.
+                                # Not ideal because it finds the source in the VD and
+                                # references it in the answer
+                                if page_file in self.doc_binary_data:
+                                    if page_file not in docs:
+                                        docs[page_file] = self.get_doc(self.doc_binary_data[page_file])
+                                        st.session_state['sources_to_highlight'][page_file] = []
+                                        st.session_state['sources_to_display'][page_file] = []
+                                    st.session_state['sources_to_display'][page_file].append(
+                                        f"{source_reference} - {content[:150]}")
+                                    page_number = int(page_source.split('-')[0])
+                                    page = docs[page_file][page_number - 1]
+                                    rects = page.search_for(
+                                        content)  # Maybe use flags here for better search??
+                                    for rect in rects:
+                                        st.session_state['sources_to_highlight'][page_file].append(
+                                            {'page': page_number,
+                                             'x': rect.x0,
+                                             'y': rect.y0,
+                                             'width': rect.width,
+                                             'height': rect.height,
+                                             'color': "red"})
+
+            # Add AI response to the conversation
+            st.session_state['conversation_histories']['docs'].append(('Assistant', ai_response))
+        pass
 
     def display_chat_interface(self):
-        # Variable to store the current conversation and simplify some code
-        conversation = []
 
         if session_state['selected_chatbot_path']:
 
-            # Store the serialized path in session state if different from current path
-            if menu_utils.path_changed(session_state['selected_chatbot_path'],
-                                       session_state['selected_chatbot_path_serialized']):
-                session_state['selected_chatbot_path_serialized'] = '/'.join(
-                    session_state['selected_chatbot_path'])  # Update the serialized path in session state
-
-            doc_prompt = document_prompt.STUFF_PROMPT
+            doc_prompt = session_state['prompt_options_doc']
             # Checking if the prompt exists
             if doc_prompt:
 
-                with self.column_chat:
-                    # Interface to chat with selected expert
-                    st.title(f"What do you want to know about your documents?")
+                self.display_chat_title()
 
                 # If there's already a conversation in the history for this chatbot, display it.
-                if (session_state['selected_chatbot_path_serialized'] in session_state['conversation_histories']
-                        and session_state['uploaded_pdf_files']):
-                    conversation = session_state['conversation_histories'][
-                        session_state['selected_chatbot_path_serialized']]
-                    # Display conversation
-                    for speaker, message in conversation:
-
-                        with self.column_chat:
-                            if speaker == session_state['USER']:
-                                st.chat_message("user").write(message)
-                            else:
-                                st.chat_message("assistant").write(message)
+                if self._has_conversation_history():
+                    conversation = self._display_conversation()
                 else:
-                    # If no conversation in history for this chatbot, then create an empty one
-                    session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
-                    ]
+                    conversation = self._create_empty_history()
 
+                file_stem = st.session_state['selected_file_name']
+
+                user_message = self._collect_user_input(conversation)
+
+                # Print user message immediately after
+                # getting entered because we're streaming the chatbot output
                 with self.column_chat:
+                    if user_message:
+                        with st.chat_message("user"):
+                            st.markdown(user_message)
 
-                    fileroot = st.session_state['selected_file_name']
-                    styl = f"""
-                    <style>
-                        .stChatInput {{
-                          position: fixed;
-                          bottom: 3rem;
-                        }}
-                    </style>
-                    """
-                    st.markdown(styl, unsafe_allow_html=True)
-                    # Accept user input
-                    if user_message := st.chat_input("Ask something about your PDFs",
-                                                     disabled=not session_state['uploaded_pdf_files']):
+                self._user_message_processing(conversation, user_message)
 
-                        st.session_state['sources_to_highlight'] = {}
-                        st.session_state['sources_to_display'] = {}
-
-                        # Prevent re-running the query on refresh or navigating back to the page by checking
-                        # if the last stored message is not from the User
-                        if not conversation or conversation[-1] != (session_state['USER'], user_message):
-                            # Add user message to the conversation
-                            session_state['conversation_histories'][session_state[
-                                'selected_chatbot_path_serialized']].append((session_state['USER'], user_message))
-
-                            # Print user message immediately after
-                            # getting entered because we're streaming the chatbot output
-                            with st.chat_message("user"):
-                                st.markdown(user_message)
-
-                            # Generate tuples with the chat history
-                            # We iterate with a step of 2 and always take
-                            # the current and next item assuming USER follows by Assistant
-                            chat_history_tuples = [
-                                (conversation[i][1], conversation[i + 1][1])
-                                # Extract just the messages, ignoring the labels
-                                for i in range(0, len(conversation) - 1, 2)
-                                # We use len(conversation)-1 to avoid out-of-range errors
-                            ]
-
-                            with st.spinner():
-                                condensed_question = self.get_condensed_question(
-                                    user_message, chat_history_tuples, os.getenv('OPENAI_MODEL')
-                                )
-
-                                sources = self.get_sources(self.vector_store, condensed_question)
-                                all_output = self.get_answer(sources, condensed_question)
-
-                                ai_response = all_output['output_text']
-
-                                with st.chat_message("assistant"):
-                                    st.markdown(ai_response)
-                                    # Store docs to extract all sources the first time
-                                    docs = {}
-                                    for source in sources:
-                                        # Collect the references to relevant sources and their first 150 characters
-                                        source_reference = source.metadata['source']
-                                        # Only add it if the source appears referenced in the response
-                                        if source_reference in ai_response:
-                                            content = source.page_content
-
-                                            page_data = source_reference.split('|')
-                                            page_file = page_data[0]
-                                            page_source = page_data[1]
-                                            # Without this condition, it can lead to error due to deleting a
-                                            # file from uploads that was already inserted in the VD.
-                                            # Not ideal because it finds the source in the VD and
-                                            # references it in the answer
-                                            if page_file in self.doc_binary_data:
-                                                if page_file not in docs:
-                                                    docs[page_file] = self.get_doc(self.doc_binary_data[page_file])
-                                                    st.session_state['sources_to_highlight'][page_file] = []
-                                                    st.session_state['sources_to_display'][page_file] = []
-                                                st.session_state['sources_to_display'][page_file].append(
-                                                    f"{source_reference} - {content[:150]}")
-                                                page_number = int(page_source.split('-')[0])
-                                                page = docs[page_file][page_number - 1]
-                                                rects = page.search_for(content)  # Maybe use flags here for better search??
-                                                for rect in rects:
-                                                    st.session_state['sources_to_highlight'][page_file].append(
-                                                        {'page': page_number,
-                                                         'x': rect.x0,
-                                                         'y': rect.y0,
-                                                         'width': rect.width,
-                                                         'height': rect.height,
-                                                         'color': "red"})
-
-                            # Add AI response to the conversation
-                            st.session_state['conversation_histories'][st.session_state[
-                                'selected_chatbot_path_serialized']].append(('Assistant', ai_response))
-
-                if fileroot in st.session_state['sources_to_highlight']:
-                    self.annotations = st.session_state['sources_to_highlight'][fileroot]
+                if file_stem in st.session_state['sources_to_highlight']:
+                    self.annotations = st.session_state['sources_to_highlight'][file_stem]
                 else:
                     self.annotations = []
 
-                if fileroot in self.doc_binary_data:
+                if file_stem in self.doc_binary_data:
                     self.display_pdf()
-                    if fileroot in st.session_state['sources_to_display']:
-                        self.display_sources(fileroot)
+                    if file_stem in st.session_state['sources_to_display']:
+                        self.display_sources(file_stem)
 
-
-class AIClient:
-
-    def __init__(self):
-        if session_state['model_selection'] == 'OpenAI':
-
-            @st.cache_resource
-            def load_openai_data():
-                return OpenAI(), os.getenv('OPENAI_MODEL')
-
-            self.client, self.model = load_openai_data()
-        else:
-            pass
-            # Add here client initialization for local model
-            # For example using OpenLLM as inference server
-            # session_state["inference_server_url"] = "http://localhost:3000/v1"
-            # self.client = OpenAI(base_url=session_state['inference_server_url'])
-            # models = session_state["client"].models.list()
-            # self.model = models.data[0].id
-
-    @staticmethod
-    def _generate_response(stream):
-        """
-        Extracts the content from the stream of responses from the OpenAI API.
-        Parameters:
-            stream: The stream of responses from the OpenAI API.
-
-        """
-
-        for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta:
-                chunk_content = chunk.choices[0].delta.content
-                yield chunk_content
-
-    @staticmethod
-    def _concatenate_partial_response(partial_response):
-        """
-        Concatenates the partial response into a single string.
-
-        Parameters:
-            partial_response (list): The chunks of the response from the OpenAI API.
-
-        Returns:
-            str: The concatenated response.
-        """
-        str_response = ""
-        for i in partial_response:
-            if isinstance(i, str):
-                str_response += i
-
-        st.markdown(str_response)
-
-        return str_response
-
-    def get_response(self, prompt, description_to_use):
-        """
-        Sends a prompt to the OpenAI API and returns the API's response.
-
-        Parameters:
-            prompt (str): The user's message or question.
-            description_to_use (str): Additional context or instructions to provide to the model.
-
-        Returns:
-            str: The response from the chatbot.
-        """
-        try:
-            # Prepare the full prompt and messages with context or instructions
-            messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
-
-            # Send the request to the OpenAI API
-            # Display assistant response in chat message container
-            response = ""
-            with st.chat_message("assistant"):
-                with st.spinner(session_state['_']("Writing response...")):
-                    stream = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=messages,
-                        stream=True,
-                    )
-                    partial_response = []
-
-                    gen_stream = self._generate_response(stream)
-                    for chunk_content in gen_stream:
-                        # check if the chunk is a code block
-                        if chunk_content == '```':
-                            partial_response.append(chunk_content)
-                            code_block = True
-                            while code_block:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    partial_response.append(chunk_content)
-                                    if chunk_content == "`\n\n":
-                                        code_block = False
-                                        str_response = self._concatenate_partial_response(partial_response)
-                                        partial_response = []
-                                        response += str_response
-
-                                except StopIteration:
-                                    break
-
-                        else:
-                            # If the chunk is not a code block, append it to the partial response
-                            partial_response.append(chunk_content)
-                            if chunk_content:
-                                if '\n' in chunk_content:
-                                    str_response = self._concatenate_partial_response(partial_response)
-                                    partial_response = []
-                                    response += str_response
-                # If there is a partial response left, concatenate it and render it
-                if partial_response:
-                    str_response = self._concatenate_partial_response(partial_response)
-                    response += str_response
-
-            return response
-
-        except Exception as e:
-            print(f"An error occurred while fetching the OpenAI response: {e}")
-            # Optionally, return a default error message or handle the error appropriately.
-            return "Sorry, I couldn't process that request."
-
-    @staticmethod
-    def _prepare_full_prompt_and_messages(user_prompt, description_to_use):
-        """
-        Prepares the full prompt and messages combining user input and additional descriptions.
-
-        Parameters:
-            user_prompt (str): The original prompt from the user.
-            description_to_use (str): Additional context or instructions to provide to the model.
-
-        Returns:
-            list: List of dictionaries containing messages for the chat completion.
-        """
-
-        if session_state["model_selection"] == 'OpenAI':
-            messages = [{
-                'role': "system",
-                'content': description_to_use
-            }]
-        else:  # Add here conditions for different types of models
-            messages = []
-
-        # Add the history of the conversation
-        for speaker, message in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
-            role = 'user' if speaker == session_state['USER'] else 'assistant'
-            messages.append({'role': role, 'content': message})
-
-        # Building the messages with the "system" message based on expertise area
-        if session_state["model_selection"] == 'OpenAI':
-            messages.append({"role": "user", "content": user_prompt})
-        else:
-            # Add the description to the current user message to simulate a system prompt.
-            # This is for models that were trained with no system prompt: LLaMA/Mistral/Mixtral.
-            # Source: https://github.com/huggingface/transformers/issues/28366
-            # Maybe find a better solution or avoid any system prompt for these models
-            messages.append({"role": "user", "content": description_to_use + "\n\n" + user_prompt})
-
-        # This method can be expanded based on how you want to structure the prompt
-        # For example, you might prepend the description_to_use before the user_prompt
-        return messages
+            else:
+                st.warning("No defined prompt was found. Please define a prompt before using the chat.")

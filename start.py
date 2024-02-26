@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import os
 from time import sleep
 from dotenv import load_dotenv
@@ -10,8 +12,8 @@ from src.language_utils import initialize_language
 load_dotenv()
 
 st.set_page_config(
-    page_title="Kiwi 🥝",
-    page_icon="👋",
+    page_title="kiwi 🥝",
+    page_icon="🥝",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -32,14 +34,6 @@ if not cookies.ready():
 
 current_language = st.query_params['lang']
 
-if current_language == 'en':
-    welcome_message = os.getenv('WELCOME_MESSAGE_EN')
-else:
-    welcome_message = os.getenv('WELCOME_MESSAGE_DE')
-
-
-st.write(f"## {welcome_message}")
-
 if "password_correct" not in session_state:
     session_state["password_correct"] = False
 
@@ -55,6 +49,7 @@ with st.sidebar:
     with col2:
         st.image("img/logo.svg", width=100)
 
+
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
         #user_found = ldap_connector.check_auth(username=session_state.username,
@@ -68,12 +63,22 @@ with st.sidebar:
 
         session_state['credentials_checked'] = True
 
+
     st.write(session_state['_']("Login with your university credentials."))
+
+    hide_submit_text = """
+    <style>
+    div[data-testid="InputInstructions"] > span:nth-child(1) {
+        visibility: hidden;
+    }
+    </style>
+    """
+    st.markdown(hide_submit_text, unsafe_allow_html=True)
 
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            session_state['_']("User"), key="username"
+            session_state['_']("User name"), key="username"
         )
 
         # Show input for password.
@@ -84,7 +89,7 @@ with st.sidebar:
         st.form_submit_button(session_state['_']("Login"), on_click=credentials_entered)
 
         if session_state['credentials_checked'] and not session_state['password_correct']:
-            st.error(session_state['_']("😕 Password incorrect"))
+            st.error(session_state['_']("Password incorrect"))
 
 # Prepare links on legal stuff depending on the language chosen (German sites as default)
 if 'DATENSCHUTZ_DE' in os.environ and 'IMPRESSUM_DE' in os.environ:
@@ -99,20 +104,26 @@ if current_language == 'en':
 
 
 def check_password():
-    return session_state["password_correct"]
+    return st.session_state["password_correct"]
 
+
+if current_language == 'en':
+    institution_name = os.getenv('INSTITUTION_EN')
+else:
+    institution_name = os.getenv('INSTITUTION_DE')
 
 md_msg = session_state['_']("""
-    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
 
-    **👈 Login on the sidebar** to enter the chat area!
-    ### Want to learn more about your rights as an user for this app?
-    - Check out the [Datenschutz]({DATENSCHUTZ})
-    - Check out the [Impressum]({IMPRESSUM})
+# Welcome to kiwi!
 
+##### kiwi is an open source-portal of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
 
+##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}) of {INSTITUTION}.
+
+##### **Login on the sidebar** to enter the chat area.
 """
-                 ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link)
+                            ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link,
+                                     INSTITUTION=institution_name)
 
 st.markdown(md_msg)
 
@@ -134,4 +145,4 @@ if cookies['session'] == 'in':
     sleep(0.5)
 
     # Redirect to app
-    st.switch_page("pages/docs_app.py")
+    st.switch_page("pages/chatbot_app.py")

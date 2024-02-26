@@ -25,10 +25,10 @@ cookies = EncryptedCookieManager(
     password=os.getenv("COOKIES_PASSWORD")
 )
 
-# if not cookies.ready():
-#     # Wait for the component to load and send us current cookies.
-#     st.spinner()
-#     st.stop()
+if not cookies.ready():
+    # Wait for the component to load and send us current cookies.
+    st.spinner()
+    st.stop()
 
 current_language = st.query_params['lang']
 
@@ -114,10 +114,6 @@ st.markdown(md_msg)
 
 # First check if there's a session already started
 if cookies.get("session") != 'in':
-
-    # If no session, then check password
-    if not check_password():
-        st.stop()
 
     # If no session, then check password
     if not check_password():

@@ -1,24 +1,15 @@
 import yaml
-import os
 import streamlit as st
 
 
 # Function to load prompts from a YAML file
-def load_prompts_from_yaml(custom=False):
-    # Use basic prompts as default
-    language = st.session_state.get('selected_language', False) or st.query_params.get('lang', False)
-    if language == 'de':
-        file_path = 'prompts_config/chat_basic_prompts_de.yml'
-    else:
-        file_path = 'prompts_config/chat_basic_prompts.yml'
+@st.cache_data
+def load_prompts_from_yaml(language='de'):
 
-    # Choose which types of prompts based on the flags. Basic prompts are default
-    # If the user explicitly marks the witty prompts option, use this one over the neutral ones
-    if custom:
-        if language == 'de':
-            file_path = 'prompts_config/chat_many_prompts_de.yml'
-        else:
-            file_path = 'prompts_config/chat_many_prompts.yml'
+    if language == 'en':
+        file_path = 'prompts_config/chat_basic_prompts_en.yml'
+    else:
+        file_path = 'prompts_config/chat_basic_prompts_de.yml'
 
     with open(file_path, 'r', encoding='utf-8') as file:
         return yaml.safe_load(file)
@@ -28,25 +19,28 @@ def load_dict_from_yaml(file):
     return yaml.safe_load(file)
 
 
-# Function to load prompts from a YAML file
-def load_custom_prompts_for_download():
-    # Get the prompts file
-    file_path = 'prompts_config/chat_many_prompts.yml'
+def dict_to_yaml(dictionary):
+    """Converts a dictionary to a YAML string."""
+    return yaml.dump(dictionary, allow_unicode=True)
 
-    if os.path.isfile(file_path):
-        with open(file_path, 'rb') as file:
-            return file.read()
+
+def set_prompt_for_path(prompts_dict, path, edited_prompt):
+    """Recursively updates the prompt for a specific path in the prompts dictionary."""
+    if len(path) == 1:
+        prompts_dict[path[0]] = edited_prompt
     else:
-        print("ERROR: file doesn't exist.")
-        return None
+        if path[0] in prompts_dict and isinstance(prompts_dict[path[0]], dict):
+            set_prompt_for_path(prompts_dict[path[0]], path[1:], edited_prompt)
 
 
+@st.cache_data
 def get_final_description(selected_path, options):
     """
     Navigate through the options based on the selected path,
     returning the final description or None if not a final option.
 
     :param selected_path: List of strings representing the selected menu path.
+    :param options: The current prompt options.
     :return: The description string if a final option is reached, None otherwise.
     """
     current_option = options
@@ -62,6 +56,7 @@ def get_final_description(selected_path, options):
     return None
 
 
+@st.cache_data
 def path_changed(current_path, previous_path_serialized):
     """
     Check if the current selected path has changed compared to the previously serialized path.

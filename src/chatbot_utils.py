@@ -299,6 +299,41 @@ class AIClient:
             # models = ss["client"].models.list()
             # self.model = models.data[0].id
 
+    @staticmethod
+    def generate_response(stream):
+        """
+        Extracts the content from the stream of responses from the OpenAI API.
+        Parameters:
+            stream: The stream of responses from the OpenAI API.
+
+        """
+
+        for chunk in stream:
+            delta = chunk.choices[0].delta
+            if delta:
+                chunk_content = chunk.choices[0].delta.content
+                yield chunk_content
+
+    @staticmethod
+    def concatenate_partial_response(partial_response):
+        """
+        Concatenates the partial response into a single string.
+
+        Parameters:
+            partial_response (list): The chunks of the response from the OpenAI API.
+
+        Returns:
+            str: The concatenated response.
+        """
+        str_response = ""
+        for i in partial_response:
+            if isinstance(i, str):
+                str_response += i
+
+        st.markdown(str_response)
+
+        return str_response
+
     def get_response(self, prompt, description_to_use):
         """
         Sends a prompt to the OpenAI API and returns the API's response.
@@ -316,13 +351,49 @@ class AIClient:
 
             # Send the request to the OpenAI API
             # Display assistant response in chat message container
+            response = ""
             with st.chat_message("assistant"):
                 stream = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     stream=True,
                 )
-                response = st.write_stream(stream)
+                partial_response = []
+                code_block = False
+
+                gen_stream = AIClient.generate_response(stream)
+                for chunk_content in gen_stream:
+                    # check if the chunk is a code block
+                    if chunk_content == '```':
+                        partial_response.append(chunk_content)
+                        code_block = True
+                        while code_block:
+                            try:
+                                chunk_content = next(gen_stream)
+                                partial_response.append(chunk_content)
+                                if chunk_content == "`\n\n":
+                                    code_block = False
+                                    str_response = AIClient.concatenate_partial_response(partial_response)
+                                    partial_response = []
+                                    response += str_response
+
+
+                            except StopIteration:
+                                break
+
+                    else:
+                        # If the chunk is not a code block, append it to the partial response
+                        partial_response.append(chunk_content)
+                        if chunk_content:
+                            if '\n' in chunk_content:
+                                str_response = AIClient.concatenate_partial_response(partial_response)
+                                partial_response = []
+                                response += str_response
+            # If there is a partial response left, concatenate it and render it
+            if partial_response:
+                str_response = AIClient.concatenate_partial_response(partial_response)
+                response += str_response
+
 
             return response
 

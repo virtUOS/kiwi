@@ -118,10 +118,6 @@ if cookies.get("session") != 'in':
     # If no session, then check password
     if not check_password():
         st.stop()
-
-    # If no session, then check password
-    if not check_password():
-        st.stop()
     else:
         # When the password is correct create a persistent session
         # Save cookie for the session. Use username as value, maybe it's useful at some point

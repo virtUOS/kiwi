@@ -35,7 +35,6 @@ class SidebarManager:
         """Verify if a user session is already started; if not, redirect to start page."""
         if self.cookies.get("session") != 'in':
             st.switch_page("start.py")
-            pass
 
     @staticmethod
     def initialize_session_variables():

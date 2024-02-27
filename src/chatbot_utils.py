@@ -368,45 +368,46 @@ class AIClient:
             # Display assistant response in chat message container
             response = ""
             with st.chat_message("assistant"):
-                stream = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    stream=True,
-                )
-                partial_response = []
-                code_block = False
+                with st.spinner(session_state['_']("Writing response...")):
+                    stream = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        stream=True,
+                    )
+                    partial_response = []
+                    code_block = False
 
-                gen_stream = self._generate_response(stream)
-                for chunk_content in gen_stream:
-                    # check if the chunk is a code block
-                    if chunk_content == '```':
-                        partial_response.append(chunk_content)
-                        code_block = True
-                        while code_block:
-                            try:
-                                chunk_content = next(gen_stream)
-                                partial_response.append(chunk_content)
-                                if chunk_content == "`\n\n":
-                                    code_block = False
+                    gen_stream = self._generate_response(stream)
+                    for chunk_content in gen_stream:
+                        # check if the chunk is a code block
+                        if chunk_content == '```':
+                            partial_response.append(chunk_content)
+                            code_block = True
+                            while code_block:
+                                try:
+                                    chunk_content = next(gen_stream)
+                                    partial_response.append(chunk_content)
+                                    if chunk_content == "`\n\n":
+                                        code_block = False
+                                        str_response = self._concatenate_partial_response(partial_response)
+                                        partial_response = []
+                                        response += str_response
+
+                                except StopIteration:
+                                    break
+
+                        else:
+                            # If the chunk is not a code block, append it to the partial response
+                            partial_response.append(chunk_content)
+                            if chunk_content:
+                                if '\n' in chunk_content:
                                     str_response = self._concatenate_partial_response(partial_response)
                                     partial_response = []
                                     response += str_response
-
-                            except StopIteration:
-                                break
-
-                    else:
-                        # If the chunk is not a code block, append it to the partial response
-                        partial_response.append(chunk_content)
-                        if chunk_content:
-                            if '\n' in chunk_content:
-                                str_response = self._concatenate_partial_response(partial_response)
-                                partial_response = []
-                                response += str_response
-            # If there is a partial response left, concatenate it and render it
-            if partial_response:
-                str_response = self._concatenate_partial_response(partial_response)
-                response += str_response
+                # If there is a partial response left, concatenate it and render it
+                if partial_response:
+                    str_response = self._concatenate_partial_response(partial_response)
+                    response += str_response
 
             return response
 

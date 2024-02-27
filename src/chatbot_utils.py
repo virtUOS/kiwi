@@ -269,8 +269,8 @@ class ChatManager:
                 description = menu_utils.get_final_description(selected_chatbot_path, ss["prompt_options"])
 
                 # Display title and prompt editing interface
-                chat_text_msg = ss['_']("Chat with")
-                st.title(f"{chat_text_msg} {expertise_area} 🤖")
+                # chat_text_msg = ss['_']("Chat with")
+                # st.title(f"{chat_text_msg} {expertise_area} 🤖")
 
                 with st.expander(ss['_']("Edit Bot Prompt"), expanded=False):
                     self._display_prompt_editor(description)

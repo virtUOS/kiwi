@@ -299,8 +299,9 @@ class AIClient:
             # models = ss["client"].models.list()
             # self.model = models.data[0].id
 
+
     @staticmethod
-    def generate_response(stream):
+    def _generate_response(stream):
         """
         Extracts the content from the stream of responses from the OpenAI API.
         Parameters:
@@ -315,7 +316,7 @@ class AIClient:
                 yield chunk_content
 
     @staticmethod
-    def concatenate_partial_response(partial_response):
+    def _concatenate_partial_response(partial_response):
         """
         Concatenates the partial response into a single string.
 
@@ -361,7 +362,7 @@ class AIClient:
                 partial_response = []
                 code_block = False
 
-                gen_stream = self.generate_response(stream)
+                gen_stream = self._generate_response(stream)
                 for chunk_content in gen_stream:
                     # check if the chunk is a code block
                     if chunk_content == '```':
@@ -373,7 +374,7 @@ class AIClient:
                                 partial_response.append(chunk_content)
                                 if chunk_content == "`\n\n":
                                     code_block = False
-                                    str_response = self.concatenate_partial_response(partial_response)
+                                    str_response = self._concatenate_partial_response(partial_response)
                                     partial_response = []
                                     response += str_response
 
@@ -386,12 +387,12 @@ class AIClient:
                         partial_response.append(chunk_content)
                         if chunk_content:
                             if '\n' in chunk_content:
-                                str_response = self.concatenate_partial_response(partial_response)
+                                str_response = self._concatenate_partial_response(partial_response)
                                 partial_response = []
                                 response += str_response
             # If there is a partial response left, concatenate it and render it
             if partial_response:
-                str_response = self.concatenate_partial_response(partial_response)
+                str_response = self._concatenate_partial_response(partial_response)
                 response += str_response
 
 

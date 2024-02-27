@@ -173,10 +173,11 @@ class SidebarManager:
             st.markdown("""---""")
 
             if st.button(ss['_']('Logout')):
-                # Set cookies and credentials session variables before redirecting
+                # Set cookies and password session variables before redirecting.
+                # Delete credentials session variable
                 self.cookies["session"] = 'out'
                 ss["password_correct"] = False
-                ss['credentials_checked'] = False
+                del ss['credentials_checked']
                 st.switch_page('start.py')
 
             st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)

@@ -278,10 +278,11 @@ class ChatManager:
                         or not session_state['conversation_histories'][
                             session_state['selected_chatbot_path_serialized']]):
 
-                    st.header("How can I help you today? 🤖")
+                    st.header(session_state['_']("How can I help you today? 🤖"))
                     if session_state['model_selection'] == 'OpenAI':
-                        st.write(f"You're using OpenAI's model: **{os.getenv('OPENAI_MODEL')}**."
-                                 f" Remember **not** to send any personal information.")
+                        using_text = session_state['_']("You're using OpenAI's model:")
+                        st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**.")
+                        st.write(session_state['_']("Remember **not** to send any personal information."))
 
                     st.markdown("""---""")
 

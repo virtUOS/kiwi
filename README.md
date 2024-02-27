@@ -57,6 +57,9 @@ services:
     volumes:
       # Here you can override the default logo of the app
       - './logo.svg:/kiwi/img/logo.svg'
+      # You could do the same for the promtps:
+      # - './chat_basic_prompts_de.yml:/kiwi/prompts_config/chat_basic_prompts_de.yml
+      # - './chat_basic_prompts_en.yml:/kiwi/prompts_config/chat_basic_prompts_en.yml
 ```
 
 ## Development

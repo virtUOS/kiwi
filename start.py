@@ -124,7 +124,7 @@ if cookies.get("session") != 'in':
         cookies["session"] = 'in'
         cookies.save()
 
-elif cookies['session'] == 'in':
+if cookies['session'] == 'in':
     st.sidebar.success(ss['_']("Logged in!"))
     # Wait a bit before redirecting
     sleep(0.5)

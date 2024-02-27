@@ -274,8 +274,9 @@ class ChatManager:
 
                 st.markdown("""---""")
 
-                if session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories'] or not session_state[
-                        'conversation_histories'][session_state['selected_chatbot_path_serialized']]:
+                if (session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories']
+                        or not session_state['conversation_histories'][
+                            session_state['selected_chatbot_path_serialized']]):
 
                     st.header("How can I help you today? 🤖")
                     if session_state['model_selection'] == 'OpenAI':

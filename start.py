@@ -53,11 +53,10 @@ with st.sidebar:
         st.image("img/logo.svg", width=100)
 
     def credentials_entered():
-        cookies['session'] = 'in'
         """Checks whether a password entered by the user is correct."""
         #user_found = ldap_connector.check_auth(username=ss.username,
         #                                       password=ss.password)
-        user_found = False
+        user_found = True
         if user_found:
             ss["password_correct"] = True
             del ss["password"]  # Don't store the password.

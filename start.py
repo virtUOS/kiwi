@@ -2,7 +2,7 @@ import os
 from time import sleep
 from dotenv import load_dotenv
 import streamlit as st
-from streamlit import session_state as ss
+from streamlit import session_state
 from streamlit_cookies_manager import EncryptedCookieManager
 from src import ldap_connector
 from src.language_utils import initialize_language
@@ -40,8 +40,8 @@ else:
 
 st.write(f"## {welcome_message}")
 
-if "password_correct" not in ss:
-    ss["password_correct"] = False
+if "password_correct" not in session_state:
+    session_state["password_correct"] = False
 
 with st.sidebar:
     # Display the logo on the sidebar
@@ -54,33 +54,33 @@ with st.sidebar:
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        user_found = ldap_connector.check_auth(username=ss.username,
-                                               password=ss.password)
+        user_found = ldap_connector.check_auth(username=session_state.username,
+                                               password=session_state.password)
         if user_found:
-            ss["password_correct"] = True
-            del ss["password"]  # Don't store the password.
+            session_state["password_correct"] = True
+            del session_state["password"]  # Don't store the password.
         else:
-            ss["password_correct"] = False
+            session_state["password_correct"] = False
 
-        ss['credentials_checked'] = True
+        session_state['credentials_checked'] = True
 
-    st.write(ss['_']("Login with your university credentials."))
+    st.write(session_state['_']("Login with your university credentials."))
 
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            ss['_']("User"), key="username"
+            session_state['_']("User"), key="username"
         )
 
         # Show input for password.
         st.text_input(
-            ss['_']("Password"), type="password", key="password"
+            session_state['_']("Password"), type="password", key="password"
         )
 
-        st.form_submit_button(ss['_']("Login"), on_click=credentials_entered)
+        st.form_submit_button(session_state['_']("Login"), on_click=credentials_entered)
 
-        if 'credentials_checked' in ss and not ss['password_correct']:
-            st.error(ss['_']("😕 Password incorrect"))
+        if 'credentials_checked' in session_state and not session_state['password_correct']:
+            st.error(session_state['_']("😕 Password incorrect"))
 
 # Prepare links on legal stuff depending on the language chosen (German sites as default)
 if 'DATENSCHUTZ_DE' in os.environ and 'IMPRESSUM_DE' in os.environ:
@@ -98,7 +98,7 @@ def check_password():
     return st.session_state["password_correct"]
 
 
-md_msg = ss['_']("""
+md_msg = session_state['_']("""
     This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
 
     **👈 Login on the sidebar** to enter the chat area!
@@ -125,7 +125,7 @@ if cookies.get("session") != 'in':
         cookies.save()
 
 if cookies['session'] == 'in':
-    st.sidebar.success(ss['_']("Logged in!"))
+    st.sidebar.success(session_state['_']("Logged in!"))
     # Wait a bit before redirecting
     sleep(0.5)
 

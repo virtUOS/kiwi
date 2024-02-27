@@ -276,12 +276,22 @@ class ChatManager:
 
             if isinstance(menu_utils.get_final_description(selected_chatbot_path,
                                                            session_state["prompt_options"]), str):
-                expertise_area = selected_chatbot_path[-1]
+
                 description = menu_utils.get_final_description(selected_chatbot_path, session_state["prompt_options"])
 
-                # Display title and prompt editing interface
-                chat_text_msg = session_state['_']("Chat with")
-                st.title(f"{chat_text_msg} {expertise_area} 🤖")
+                st.markdown("""---""")
+
+                if (session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories']
+                        or not session_state['conversation_histories'][
+                            session_state['selected_chatbot_path_serialized']]):
+
+                    st.header(session_state['_']("How can I help you today? 🤖"))
+                    if session_state['model_selection'] == 'OpenAI':
+                        using_text = session_state['_']("You're using OpenAI's model:")
+                        st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**.")
+                        st.write(session_state['_']("Remember **not** to send any personal information."))
+
+                    st.markdown("""---""")
 
                 with st.expander(session_state['_']("Edit Bot Prompt"), expanded=False):
                     self._display_prompt_editor(description)

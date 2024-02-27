@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from openai import OpenAI
 import streamlit as st
-from streamlit import session_state as ss
+from streamlit import session_state
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
 from src import menu_utils
@@ -50,8 +50,8 @@ class SidebarManager:
         }
 
         for key, default_value in required_keys.items():
-            if key not in ss:
-                ss[key] = default_value
+            if key not in session_state:
+                session_state[key] = default_value
 
     @staticmethod
     def display_logo():
@@ -79,7 +79,7 @@ class SidebarManager:
             language = "de"
 
         """Load chat prompts based on language."""
-        ss["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
+        session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
     def _display_chatbots_menu(self, options, path=[]):
         """Display sidebar menu for chatbot selection."""
@@ -87,14 +87,14 @@ class SidebarManager:
             next_level = list(options.keys())
 
             with st.sidebar:
-                choice = option_menu(ss['_']("Chat Menu"), next_level,
+                choice = option_menu(session_state['_']("Chat Menu"), next_level,
                                      icons=['chat-dots'] * len(next_level),
                                      menu_icon="cast",
                                      default_index=0)
 
             if choice:
                 new_path = path + [choice]
-                ss['selected_chatbot_path'] = new_path
+                session_state['selected_chatbot_path'] = new_path
                 self._display_chatbots_menu(options.get(choice, {}), new_path)
 
     def display_sidebar_controls(self):
@@ -104,46 +104,46 @@ class SidebarManager:
         self.load_prompts()
 
         # Display the menu for chatbots
-        self._display_chatbots_menu(ss['prompt_options'])
+        self._display_chatbots_menu(session_state['prompt_options'])
 
         # Store the serialized path in session state if different from current path
         # Do this here to handle conversation controls showing up when changing
         # chatbot and the conversation exists
-        if menu_utils.path_changed(ss['selected_chatbot_path'], ss['selected_chatbot_path_serialized']):
-            ss['selected_chatbot_path_serialized'] = '/'.join(
-                ss['selected_chatbot_path'])  # Update the serialized path in session state
+        if menu_utils.path_changed(session_state['selected_chatbot_path'], session_state['selected_chatbot_path_serialized']):
+            session_state['selected_chatbot_path_serialized'] = '/'.join(
+                session_state['selected_chatbot_path'])  # Update the serialized path in session state
 
         # Custom prompt selection
         with st.sidebar:
-            if ss['model_selection'] == 'OpenAI':
-                model_text = ss['_']("Model:")
+            if session_state['model_selection'] == 'OpenAI':
+                model_text = session_state['_']("Model:")
                 st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
 
             # Show the conversation controls only if there's a conversation
-            if ss['selected_chatbot_path_serialized'] in ss['conversation_histories'] and ss[
-                'conversation_histories'][ss['selected_chatbot_path_serialized']]:
+            if session_state['selected_chatbot_path_serialized'] in session_state['conversation_histories'] and session_state[
+                'conversation_histories'][session_state['selected_chatbot_path_serialized']]:
 
                 st.markdown("""---""")
 
-                st.write(ss['_']("**Conversation Controls**"))
+                st.write(session_state['_']("**Conversation Controls**"))
                 col1, col2 = st.columns([1, 5])
-                if col1.button("🗑️", help=ss['_']("Delete the Current Conversation")):
+                if col1.button("🗑️", help=session_state['_']("Delete the Current Conversation")):
                     # Clears the current chatbot's conversation history
-                    ss['conversation_histories'][ss['selected_chatbot_path_serialized']] = [
+                    session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
                     ]
                     st.rerun()
 
-                conversation_to_download = ss['conversation_histories'][
-                    ss['selected_chatbot_path_serialized']]
+                conversation_to_download = session_state['conversation_histories'][
+                    session_state['selected_chatbot_path_serialized']]
 
                 conversation_df = pd.DataFrame(conversation_to_download,
-                                               columns=[ss['_']('Speaker'), ss['_']('Message')])
+                                               columns=[session_state['_']('Speaker'), session_state['_']('Message')])
                 conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
                 col2.download_button("💽",
                                      data=conversation_csv,
                                      file_name="conversation.csv",
                                      mime="text/csv",
-                                     help=ss['_']("Download the Current Conversation"))
+                                     help=session_state['_']("Download the Current Conversation"))
 
             color = st.get_option('theme.secondaryBackgroundColor')
 
@@ -172,12 +172,12 @@ class SidebarManager:
 
             st.markdown("""---""")
 
-            if st.button(ss['_']('Logout')):
+            if st.button(session_state['_']('Logout')):
                 # Set cookies and password session variables before redirecting.
                 # Delete credentials session variable
                 self.cookies["session"] = 'out'
-                ss["password_correct"] = False
-                del ss['credentials_checked']
+                session_state["password_correct"] = False
+                del session_state['credentials_checked']
                 st.switch_page('start.py')
 
             st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
@@ -187,63 +187,63 @@ class ChatManager:
 
     def __init__(self, user):
         self.client = None
-        ss['USER'] = user
+        session_state['USER'] = user
 
     def set_client(self, client):
         self.client = client
 
     @staticmethod
     def update_edited_prompt():
-        ss['edited_prompts'][ss['selected_chatbot_path_serialized']] = ss['edited_prompt']
+        session_state['edited_prompts'][session_state['selected_chatbot_path_serialized']] = session_state['edited_prompt']
 
     def _display_prompt_editor(self, description):
         """Allows editing of the chatbot prompt."""
-        current_chatbot_path_serialized = ss['selected_chatbot_path_serialized']
-        current_edited_prompt = ss['edited_prompts'].get(current_chatbot_path_serialized, description)
+        current_chatbot_path_serialized = session_state['selected_chatbot_path_serialized']
+        current_edited_prompt = session_state['edited_prompts'].get(current_chatbot_path_serialized, description)
 
-        st.text_area(ss['_']("Edit Prompt"),
+        st.text_area(session_state['_']("Edit Prompt"),
                      value=current_edited_prompt,
-                     help=ss['_']("Edit the system prompt for more customized responses."),
+                     help=session_state['_']("Edit the system prompt for more customized responses."),
                      on_change=self.update_edited_prompt,
                      key='edited_prompt')
 
-        if st.button("🔄", help=ss['_']("Restore Original Prompt")):
-            if current_chatbot_path_serialized in ss['edited_prompts']:
-                del ss['edited_prompts'][current_chatbot_path_serialized]
+        if st.button("🔄", help=session_state['_']("Restore Original Prompt")):
+            if current_chatbot_path_serialized in session_state['edited_prompts']:
+                del session_state['edited_prompts'][current_chatbot_path_serialized]
                 st.rerun()
 
     @staticmethod
     def _get_description_to_use(default_description):
         """Retrieves the prompt description to use, whether edited or default."""
-        return ss['edited_prompts'].get(ss['selected_chatbot_path_serialized'], default_description)
+        return session_state['edited_prompts'].get(session_state['selected_chatbot_path_serialized'], default_description)
 
     @staticmethod
     def _display_conversation():
         """Displays the conversation history for the selected path."""
-        conversation_history = ss['conversation_histories'].get(ss['selected_chatbot_path_serialized'], [])
+        conversation_history = session_state['conversation_histories'].get(session_state['selected_chatbot_path_serialized'], [])
 
         if conversation_history:
             for speaker, message in conversation_history:
-                if speaker == ss['USER']:
+                if speaker == session_state['USER']:
                     st.chat_message("user").write(message)
                 else:
                     st.chat_message("assistant").write(message)
 
     def _handle_user_input(self, description_to_use):
         """Handles user input, sending it to OpenAI and displaying the response."""
-        if user_message := st.chat_input(ss['USER']):
+        if user_message := st.chat_input(session_state['USER']):
             # Ensure there's a key for this conversation in the history
-            if ss['selected_chatbot_path_serialized'] not in ss['conversation_histories']:
-                ss['conversation_histories'][ss['selected_chatbot_path_serialized']] = []
+            if session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories']:
+                session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
             # Get the current conversation history
-            current_history = ss['conversation_histories'][ss['selected_chatbot_path_serialized']]
+            current_history = session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']]
 
             # Prevent re-running the query on refresh or navigating back by checking
             # if the last stored message is not from the User or the history is empty
-            if not current_history or current_history[-1][0] != ss['USER'] or current_history[-1][1] != user_message:
+            if not current_history or current_history[-1][0] != session_state['USER'] or current_history[-1][1] != user_message:
                 # Add user message to the conversation
-                current_history.append((ss['USER'], user_message))
+                current_history.append((session_state['USER'], user_message))
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
@@ -255,24 +255,36 @@ class ChatManager:
                 current_history.append(('Assistant', response))
 
                 # Update the conversation history in the session state
-                ss['conversation_histories'][ss['selected_chatbot_path_serialized']] = current_history
+                session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = current_history
 
                 st.rerun()
 
     def display_chat_interface(self):
         """Displays the chat interface and manages conversation display and input."""
-        if 'selected_chatbot_path' in ss and ss["selected_chatbot_path"]:
-            selected_chatbot_path = ss["selected_chatbot_path"]
+        if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
+            selected_chatbot_path = session_state["selected_chatbot_path"]
 
-            if isinstance(menu_utils.get_final_description(selected_chatbot_path, ss["prompt_options"]), str):
+            if isinstance(menu_utils.get_final_description(selected_chatbot_path, session_state["prompt_options"]), str):
                 expertise_area = selected_chatbot_path[-1]
-                description = menu_utils.get_final_description(selected_chatbot_path, ss["prompt_options"])
+                description = menu_utils.get_final_description(selected_chatbot_path, session_state["prompt_options"])
 
                 # Display title and prompt editing interface
-                # chat_text_msg = ss['_']("Chat with")
+                # chat_text_msg = session_state['_']("Chat with")
                 # st.title(f"{chat_text_msg} {expertise_area} 🤖")
 
-                with st.expander(ss['_']("Edit Bot Prompt"), expanded=False):
+                st.markdown("""---""")
+
+                if session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories'] or not session_state[
+                        'conversation_histories'][session_state['selected_chatbot_path_serialized']]:
+
+                    st.header("How can I help you today? 🤖")
+                    if session_state['model_selection'] == 'OpenAI':
+                        st.write(f"You're using OpenAI's model: **{os.getenv('OPENAI_MODEL')}**."
+                                 f" Remember **not** to send any personal information.")
+
+                    st.markdown("""---""")
+
+                with st.expander(session_state['_']("Edit Bot Prompt"), expanded=False):
                     self._display_prompt_editor(description)
 
                 description_to_use = self._get_description_to_use(description)
@@ -284,7 +296,7 @@ class ChatManager:
 class AIClient:
 
     def __init__(self):
-        if ss['model_selection'] == 'OpenAI':
+        if session_state['model_selection'] == 'OpenAI':
 
             @st.cache_resource
             def load_openai_data():
@@ -295,9 +307,9 @@ class AIClient:
             pass
             # Add here client initialization for local model
             # For example using OpenLLM as inference server
-            # ss["inference_server_url"] = "http://localhost:3000/v1"
-            # self.client = OpenAI(base_url=ss['inference_server_url'])
-            # models = ss["client"].models.list()
+            # session_state["inference_server_url"] = "http://localhost:3000/v1"
+            # self.client = OpenAI(base_url=session_state['inference_server_url'])
+            # models = session_state["client"].models.list()
             # self.model = models.data[0].id
 
     def get_response(self, prompt, description_to_use):
@@ -345,7 +357,7 @@ class AIClient:
             list: List of dictionaries containing messages for the chat completion.
         """
 
-        if ss["model_selection"] == 'OpenAI':
+        if session_state["model_selection"] == 'OpenAI':
             messages = [{
                 'role': "system",
                 'content': description_to_use
@@ -354,12 +366,12 @@ class AIClient:
             messages = []
 
         # Add the history of the conversation
-        for speaker, message in ss['conversation_histories'][ss['selected_chatbot_path_serialized']]:
-            role = 'user' if speaker == ss['USER'] else 'assistant'
+        for speaker, message in session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']]:
+            role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 
         # Building the messages with the "system" message based on expertise area
-        if ss["model_selection"] == 'OpenAI':
+        if session_state["model_selection"] == 'OpenAI':
             messages.append({"role": "user", "content": user_prompt})
         else:
             # Add the description to the current user message to simulate a system prompt.

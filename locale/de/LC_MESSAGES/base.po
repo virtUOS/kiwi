@@ -59,9 +59,18 @@ msgstr "Bearbeiten Sie den Systemprompt für individuellere Antworten."
 msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
-#: src/chatbot_utils.py:278
-msgid "Chat with"
-msgstr "Chatte mit"
+#: src/chatbot_utils.py:288
+msgid "How can I help you today? 🤖"
+msgstr "Wie kann ich Ihnen heute helfen? 🤖"
+
+#: src/chatbot_utils.py:290
+msgid "You're using OpenAI's model:"
+msgstr "Sie benutzen das Modell von OpenAI:"
+
+#: src/chatbot_utils.py:292
+msgid "Remember **not** to send any personal information."
+msgstr "Denken Sie daran, **keine** persönlichen Informationen zu senden."
+
 
 #: src/chatbot_utils.py:281
 msgid "Edit Bot Prompt"

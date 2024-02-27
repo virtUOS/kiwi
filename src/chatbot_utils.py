@@ -361,7 +361,7 @@ class AIClient:
                 partial_response = []
                 code_block = False
 
-                gen_stream = AIClient.generate_response(stream)
+                gen_stream = self.generate_response(stream)
                 for chunk_content in gen_stream:
                     # check if the chunk is a code block
                     if chunk_content == '```':
@@ -373,7 +373,7 @@ class AIClient:
                                 partial_response.append(chunk_content)
                                 if chunk_content == "`\n\n":
                                     code_block = False
-                                    str_response = AIClient.concatenate_partial_response(partial_response)
+                                    str_response = self.concatenate_partial_response(partial_response)
                                     partial_response = []
                                     response += str_response
 
@@ -386,12 +386,12 @@ class AIClient:
                         partial_response.append(chunk_content)
                         if chunk_content:
                             if '\n' in chunk_content:
-                                str_response = AIClient.concatenate_partial_response(partial_response)
+                                str_response = self.concatenate_partial_response(partial_response)
                                 partial_response = []
                                 response += str_response
             # If there is a partial response left, concatenate it and render it
             if partial_response:
-                str_response = AIClient.concatenate_partial_response(partial_response)
+                str_response = self.concatenate_partial_response(partial_response)
                 response += str_response
 
 

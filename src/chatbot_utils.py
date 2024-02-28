@@ -382,7 +382,6 @@ class AIClient:
                         stream=True,
                     )
                     partial_response = []
-                    code_block = False
 
                     gen_stream = self._generate_response(stream)
                     for chunk_content in gen_stream:

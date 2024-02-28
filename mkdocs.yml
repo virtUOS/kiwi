@@ -2,10 +2,27 @@
 site_name: Kiwi
 site_description: 'Kiwi portal to LLMs'
 site_author: 'virtUOS'
-docs_dir: docs/
+docs_dir: ./docs
 repo_name: 'virtuos/kiwi'
 repo_url: 'https://github.com/virtuos/kiwi'
 nav:
-    - Home: index.md
+  - Home: index.md
 theme:
   name: 'material'
+  logo: assets/kiwi.svg
+  palette:
+    # - primary: 'light-green'
+    # - accent: 'deep-orange'
+    - scheme: default
+      primary: 'light-green'
+      accent: 'deep-orange'
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: 'light-green'
+      accent: 'deep-orange'
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode

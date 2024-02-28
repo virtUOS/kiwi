@@ -1,17 +1,12 @@
 # Kiwi 🥝
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Kiwi is a proxy to unify access to large language models for universities, currently tailored towards Open AI's chat models.
 
-## Commands
+![screenshot.png](assets/screenshot.png)
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+Some of its features are:
+- Multi-language support (currently English and German)
+- Simple interface to Open AI's chat models
+- LDAP-Support
+- Modifiable chatbot prompts
+- Saving and deleting conversations

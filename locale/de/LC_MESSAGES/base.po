@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-02-21 10:32+0100\n"
+"POT-Creation-Date: 2024-02-28 13:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,53 +15,49 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: src/chatbot_utils.py:112
+#: src/chatbot_utils.py:90
 msgid "Chat Menu"
 msgstr "Chat-Menü"
 
-#: src/chatbot_utils.py:140
+#: src/chatbot_utils.py:120
 msgid "Model:"
 msgstr "Modell:"
 
-#: src/chatbot_utils.py:175
-msgid "Logout"
-msgstr "Abmelden"
-
-#: src/chatbot_utils.py:176
+#: src/chatbot_utils.py:130
 msgid "**Conversation Controls**"
 msgstr "**Konversationskontrollen**"
 
-#: src/chatbot_utils.py:178
+#: src/chatbot_utils.py:132
 msgid "Delete the Current Conversation"
 msgstr "Die aktuelle Konversation löschen"
 
-#: src/chatbot_utils.py:187
+#: src/chatbot_utils.py:142
 msgid "Message"
 msgstr "Nachricht"
 
-#: src/chatbot_utils.py:187
+#: src/chatbot_utils.py:142
 msgid "Speaker"
 msgstr "Sprecher"
 
-#: src/chatbot_utils.py:193
+#: src/chatbot_utils.py:148
 msgid "Download the Current Conversation"
 msgstr "Download des aktuellen Gesprächs"
 
-#: src/chatbot_utils.py:211
+#: src/chatbot_utils.py:177
+msgid "Logout"
+msgstr "Abmelden"
+
+#: src/chatbot_utils.py:209
 msgid "Edit Prompt"
 msgstr "Prompt bearbeiten"
 
-#: src/chatbot_utils.py:213
+#: src/chatbot_utils.py:211
 msgid "Edit the system prompt for more customized responses."
 msgstr "Bearbeiten Sie den Systemprompt für individuellere Antworten."
 
-#: src/chatbot_utils.py:216
+#: src/chatbot_utils.py:215
 msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
-
-#: src/chatbot_utils.py:281
-msgid "Edit Bot Prompt"
-msgstr "Bot-Prompt bearbeiten"
 
 #: src/chatbot_utils.py:288
 msgid "How can I help you today? 🤖"
@@ -71,57 +67,61 @@ msgstr "Wie kann ich Ihnen heute helfen? 🤖"
 msgid "You're using OpenAI's model:"
 msgstr "Sie benutzen das Modell von OpenAI:"
 
-#: src/chatbot_utils.py:292
+#: src/chatbot_utils.py:291
 msgid "Remember **not** to send any personal information."
 msgstr "Denken Sie daran, **keine** persönlichen Informationen zu senden."
+
+#: src/chatbot_utils.py:296
+msgid "Edit Bot Prompt"
+msgstr "Bot-Prompt bearbeiten"
 
 #: src/chatbot_utils.py:378
 msgid "Writing response..."
 msgstr "Antwort schreiben..."
 
-#: start.py:85
+#: start.py:67
 msgid "Login with your university credentials."
 msgstr "Melden Sie sich mit Ihren Universitätsdaten an."
 
-#: start.py:90
-msgid "User"
-msgstr "Benutzer"
+#: start.py:72
+msgid "User name"
+msgstr "Benutzername"
 
-#: start.py:95
+#: start.py:77
 msgid "Password"
 msgstr "Passwort"
 
-#: start.py:98
+#: start.py:80
 msgid "Login"
 msgstr "Anmelden"
 
-#: start.py:79
+#: start.py:83
 msgid "😕 Password incorrect"
 msgstr "😕 Passwort falsch"
 
-#: start.py:105
+#: start.py:101
 msgid ""
 "\n"
-"    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.\n"
 "\n"
-"    **👈 Login on the sidebar** to enter the chat area!\n"
-"    ### Want to learn more about your rights as an user for this app?\n"
-"    - Check out the [Datenschutz]({DATENSCHUTZ})\n"
-"    - Check out the [Impressum]({IMPRESSUM})\n"
+"This portal is an open source app allowing users to chat with OpenAI's GPT models\n"
+" without submitting personal data to OpenAI during the login process. Users should\n"
+"  be aware that all information they enter, is submitted to OpenAI.\n"
 "\n"
+"**👈 Login on the sidebar** to enter the chat area!\n"
+"### Learn more about your rights as an user of this app in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}).\n"
 "\n"
 msgstr ""
 "\n"
-"    Dieses Portal ist eine Open-Source-App, die es den Nutzern ermöglicht, mit mehreren Chatbot-Experten von OpenAI's ChatGPT zu chatten. \n"
 "\n"
-"    **👈 Melden Sie sich in der Seitenleiste** an, um den Chatbereich zu betreten!\n"
-"    ### Möchtest du mehr über deine Rechte als Nutzer dieser App erfahren?\n"
-"    - Sehen Sie sich den [Datenschutz]({DATENSCHUTZ})\n"
-"    - Schauen Sie sich das [Impressum]({IMPRESSUM})\n"
+"Dieses Portal ist eine Open-Source-App, die es Nutzern ermöglicht, mit den GPT-Modellen von OpenAI zu chatten\n"
+"ohne persönliche Daten an OpenAI während des Anmeldevorgangs zu übermitteln. Benutzer sollten"
+"sich bewusst sein, dass alle von ihnen eingegebenen Informationen an OpenAI übermittelt werden.\n"
 "\n"
+"**👈 Melden Sie sich in der Seitenleiste** an, um den Chat-Bereich zu betreten!\n"
+"### Mehr über Ihre Rechte als Nutzende dieser App erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}).\n"
 "\n"
 
-#: start.py:131
+#: start.py:128
 msgid "Logged in!"
 msgstr "Eingeloggt!"
 

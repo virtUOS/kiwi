@@ -288,8 +288,8 @@ class ChatManager:
                     st.header(session_state['_']("How can I help you today? 🤖"))
                     if session_state['model_selection'] == 'OpenAI':
                         using_text = session_state['_']("You're using OpenAI's model:")
-                        st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**.")
-                        st.write(session_state['_']("Remember **not** to send any personal information."))
+                        remember_text = session_state['_']("Remember **not** to send any personal information.")
+                        st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
 
                     st.markdown("""---""")
 

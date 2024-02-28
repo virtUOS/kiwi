@@ -9,7 +9,7 @@ from src.language_utils import initialize_language
 load_dotenv()
 
 # Streamlit page config
-st.set_page_config(page_title="My UOS Chatbot Community", layout="wide", page_icon="🥝")
+st.set_page_config(page_title="Kiwi", layout="wide", page_icon="🥝")
 
 
 # Main Application Class

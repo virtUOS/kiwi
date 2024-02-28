@@ -69,7 +69,7 @@ with st.sidebar:
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            session_state['_']("User"), key="username"
+            session_state['_']("User name"), key="username"
         )
 
         # Show input for password.
@@ -99,13 +99,13 @@ def check_password():
 
 
 md_msg = session_state['_']("""
-    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
 
-    **👈 Login on the sidebar** to enter the chat area!
-    ### Want to learn more about your rights as an user for this app?
-    - Check out the [Datenschutz]({DATENSCHUTZ})
-    - Check out the [Impressum]({IMPRESSUM})
+This portal is an open source app allowing users to chat with OpenAI's GPT models
+ without submitting personal data to OpenAI during the login process. Users should
+  be aware that all information they enter, is submitted to OpenAI.
 
+**👈 Login on the sidebar** to enter the chat area!
+### Learn more about your rights as an user of this app in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}).
 
 """
                             ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link)

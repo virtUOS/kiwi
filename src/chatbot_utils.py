@@ -408,6 +408,28 @@ class AIClient:
                     str_response = self._concatenate_partial_response(partial_response)
                     response += str_response
 
+                # gen_stream = self._generate_response(stream)
+                # partial_response = []  # Accumulates chunks of the response
+                # code_block = False  # True if the current chunk is part of a code block
+                #
+                # for chunk_content in gen_stream:
+                #     partial_response.append(chunk_content)
+                #
+                #     # Opening or closing a code block
+                #     if chunk_content == '```' or chunk_content == "`\n\n":
+                #         code_block = not code_block
+                #
+                #     # Check if it's time to concatenate if not in a code block, or if closing a code block.
+                #     if not code_block or chunk_content == "`\n\n":
+                #         str_response = self._concatenate_partial_response(partial_response)
+                #         partial_response = []  # Clear the partial response after concatenation
+                #         response += str_response
+                #
+                # # If there is a partial response left, concatenate it and render it
+                # if partial_response:
+                #     str_response = self._concatenate_partial_response(partial_response)
+                #     response += str_response
+
             return response
 
         except Exception as e:

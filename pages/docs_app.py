@@ -1,6 +1,6 @@
 import streamlit as st
 from dotenv import load_dotenv
-from src.chatbot_utils import SidebarManager, ChatManager, AIClient
+from src.docs_utils import SidebarManager, DocsManager, AIClient
 
 from src.language_utils import initialize_language
 
@@ -9,15 +9,15 @@ from src.language_utils import initialize_language
 load_dotenv()
 
 # Streamlit page config
-st.set_page_config(page_title="My UOS Chatbot Community", layout="wide", page_icon="🥝")
+st.set_page_config(page_title="Chat with your document", layout="wide", page_icon="📖")
 
 
 # Main Application Class
-class ChatbotApplication:
+class DocsApplication:
 
     def __init__(self, USER):
         self.sidebar_manager = SidebarManager()
-        self.chat_manager = ChatManager(user=USER)
+        self.docs_manager = DocsManager(user=USER)
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""
@@ -34,8 +34,9 @@ class ChatbotApplication:
         client = AIClient()
 
         # Set and manage chat interface display
-        self.chat_manager.set_client(client)
-        self.chat_manager.display_chat_interface()
+        self.docs_manager.set_client(client)
+        self.docs_manager.display_doc_interface()
+        self.docs_manager.display_chat_interface()
 
     def run(self):
         """Runs the main application."""
@@ -45,5 +46,5 @@ class ChatbotApplication:
 # Main entry point
 if __name__ == "__main__":
     USER = "User"
-    app = ChatbotApplication(USER)
+    app = DocsApplication(USER)
     app.run()

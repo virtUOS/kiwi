@@ -35,7 +35,7 @@ class DocsApplication:
 
         # Set and manage chat interface display
         self.docs_manager.set_client(client)
-        self.docs_manager.display_doc_interface()
+        self.docs_manager.load_doc_to_display()
         self.docs_manager.display_chat_interface()
 
     def run(self):

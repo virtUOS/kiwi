@@ -111,6 +111,7 @@ class SidebarManager:
     def check_amount_of_uploaded_files_and_set_variables():
         max_files = 5
         session_state['uploaded_pdf_files'] = []
+        session_state['uploaded_pdf_files'] = []
 
         if len(session_state['pdf_files']) > max_files:
             st.sidebar.warning(f"Maximum number of files reached. Only the first {max_files} files will be processed.")
@@ -346,7 +347,7 @@ class DocsManager:
         return output
 
     @staticmethod
-    def text_split(text: str) -> List[Document]:
+    def text_split(text: str, filename: str) -> List[Document]:
         """Converts a string to a list of Documents (chunks of fixed size)
         and returns this along with the following metadata:
             - page number
@@ -374,7 +375,7 @@ class DocsManager:
             chunks = text_splitter.split_text(doc.page_content)
             for i, chunk in enumerate(chunks):
                 doc = Document(
-                    page_content=chunk, metadata={"page": doc.metadata["page"], "chunk": i}
+                    page_content=chunk, metadata={"page": doc.metadata["page"], "chunk": i, "file": filename}
                 )
                 # Add sources a metadata
                 doc.metadata["source"] = f"{doc.metadata['page']}-{doc.metadata['chunk']}"
@@ -387,10 +388,13 @@ class DocsManager:
         """Given as input a document, this function returns the indexed version,
         leveraging the Chroma database"""
 
+        for doc in docs:
+            print(doc.metadata)
+
         vectorstore = Chroma.from_documents(
             docs,
             OpenAIEmbeddings(openai_api_key=os.getenv('OPENAI_API_KEY')),
-            ids=[doc.metadata["source"] for doc in docs],
+            ids=[doc.metadata["source"] for doc in docs]
         )
 
         return vectorstore
@@ -482,7 +486,7 @@ class DocsManager:
             pdf_viewer(input=self.doc_binary_data, annotations=self.annotations, height=1000,
                        width=int(self.screen_width*0.4))
 
-    def display_doc_interface(self):
+    def load_doc_to_display(self):
 
         self.container_pdf = st.container()
 
@@ -490,6 +494,8 @@ class DocsManager:
             self.display_thumbnails()
 
             self.doc_binary_data = session_state['uploaded_pdf_files'][0].getvalue()
+
+            filename = session_state['uploaded_pdf_files'][0].name
 
             base64_pdf = base64.b64encode(self.doc_binary_data).decode('utf-8')
 
@@ -508,7 +514,7 @@ class DocsManager:
             data_dict = self.parse_pdf(session_state['uploaded_pdf_files'][0])
 
             # Get text data
-            text = self.text_split(data_dict)
+            text = self.text_split(data_dict, filename)
 
             self.vector_store = self.get_embeddings(text)
 

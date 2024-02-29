@@ -177,7 +177,7 @@ class SidebarManager:
                 # Delete credentials session variable
                 self.cookies["session"] = 'out'
                 session_state["password_correct"] = False
-                del session_state['credentials_checked']
+                session_state['credentials_checked'] = False
                 st.switch_page('start.py')
 
             st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)

@@ -20,20 +20,16 @@ def initialize_language():
         session_state['_'] = translate()
         st.query_params['lang'] = 'de'
 
-    st.radio(
-        "Language",
-        options=languages,
-        horizontal=True,
-        key="selected_language",
-        on_change=change_language,
-        index=1,
-        label_visibility='hidden'
-    )
-
-    # When changing the language force a rerun to reflect all changes
-#    if session_state['changed_language']:
-#        session_state['changed_language'] = False
-#        st.rerun()
+    with st.sidebar:
+        st.radio(
+            "Language",
+            options=languages,
+            horizontal=True,
+            key="selected_language",
+            on_change=change_language,
+            index=1,
+            label_visibility='hidden'
+        )
 
 
 def translate():

@@ -45,6 +45,9 @@ st.write(f"## {welcome_message}")
 if "password_correct" not in session_state:
     session_state["password_correct"] = False
 
+if 'credentials_checked' not in session_state:
+    session_state['credentials_checked'] = False
+
 with st.sidebar:
     # Display the logo on the sidebar
     # Create three columns
@@ -81,7 +84,7 @@ with st.sidebar:
 
         st.form_submit_button(session_state['_']("Login"), on_click=credentials_entered)
 
-        if 'credentials_checked' in session_state and not session_state['password_correct']:
+        if session_state['credentials_checked'] and not session_state['password_correct']:
             st.error(session_state['_']("😕 Password incorrect"))
 
 # Prepare links on legal stuff depending on the language chosen (German sites as default)

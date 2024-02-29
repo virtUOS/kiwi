@@ -81,6 +81,13 @@ class SidebarManager:
         """Load chat prompts based on language."""
         session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
+    def logout_and_redirect(self):
+        # Set cookies and session variables before redirecting.
+        self.cookies["session"] = 'out'
+        session_state["password_correct"] = False
+        session_state['credentials_checked'] = False
+        st.switch_page('start.py')
+
     def _display_chatbots_menu(self, options, path=[]):
         """Display sidebar menu for chatbot selection."""
         if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
@@ -175,12 +182,7 @@ class SidebarManager:
             st.markdown("""---""")
 
             if st.button(session_state['_']('Logout')):
-                # Set cookies and password session variables before redirecting.
-                # Delete credentials session variable
-                self.cookies["session"] = 'out'
-                session_state["password_correct"] = False
-                del session_state['credentials_checked']
-                st.switch_page('start.py')
+                self.logout_and_redirect()
 
             st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 

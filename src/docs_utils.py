@@ -17,7 +17,7 @@ from streamlit import session_state
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
 from streamlit_pdf_viewer import pdf_viewer
-from streamlit_js_eval import streamlit_js_eval
+from streamlit_dimensions import st_dimensions
 
 from src import menu_utils
 from src import document_prompt
@@ -240,7 +240,8 @@ class DocsManager:
         self.client = None
         session_state['USER'] = user
         # Columns to display pdf and chat
-        self.column_uploaded_files, self.column_pdf, space, self.column_chat = st.columns([10, 42.5, 5, 42.5])
+        self.column_uploaded_files, self.column_pdf, self.column_chat = st.columns([0.10, 0.425, 0.425],
+                                                                                   gap="medium")
         # The vector store
         self.vector_store = None
         # Current document
@@ -250,7 +251,7 @@ class DocsManager:
         # Empty container to display pdf
         self.empty_container = st.empty()
         # Get the screen width of the device to display thumbnails
-        self.screen_width = streamlit_js_eval(js_expressions='screen.width', key='SCR')
+        self.main_dim = st_dimensions(key="main")
 
     def set_client(self, client):
         self.client = client
@@ -444,7 +445,7 @@ class DocsManager:
     def display_thumbnails(self):
 
         # Get dimensions of thumbnails relative to screen size
-        thumbnail_dim = int(self.screen_width * 0.05)
+        thumbnail_dim = int(self.main_dim['width'] * 0.05)
         thumbnail_size = (thumbnail_dim, thumbnail_dim)
 
         # Avoid repeating files by adding them to a set
@@ -484,7 +485,7 @@ class DocsManager:
     def display_pdf(self):
         with self.column_pdf:
             pdf_viewer(input=self.doc_binary_data, annotations=self.annotations, height=1000,
-                       width=int(self.screen_width*0.4))
+                       width=int(self.main_dim['width'] * 0.4))
 
     def load_doc_to_display(self):
 

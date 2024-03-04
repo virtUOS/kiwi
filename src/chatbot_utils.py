@@ -8,6 +8,8 @@ from streamlit_cookies_manager import EncryptedCookieManager
 from src import menu_utils
 from dotenv import load_dotenv
 
+from src.language_utils import initialize_language
+
 # Load environment variables
 load_dotenv()
 
@@ -15,6 +17,8 @@ load_dotenv()
 class SidebarManager:
 
     def __init__(self):
+        # Set the language
+        initialize_language()
         self.cookies = self.initialize_cookies()
 
     @staticmethod
@@ -94,9 +98,9 @@ class SidebarManager:
             next_level = list(options.keys())
 
             with st.sidebar:
-                choice = option_menu(session_state['_']("Chat Menu"), next_level,
-                                     icons=['chat-dots'] * len(next_level),
-                                     menu_icon="cast",
+                choice = option_menu("", next_level,
+                                     # icons=['chat-dots'] * len(next_level),
+                                     # menu_icon="cast",
                                      default_index=0)
 
             if choice:
@@ -134,9 +138,9 @@ class SidebarManager:
 
                 st.markdown("""---""")
 
-                st.write(session_state['_']("**Conversation Controls**"))
+                st.write(session_state['_']("**Options**"))
                 col1, col2 = st.columns([1, 5])
-                if col1.button("🗑️", help=session_state['_']("Delete the Current Conversation")):
+                if col1.button("🗑️", help=session_state['_']("Delete the Conversation")):
                     # Clears the current chatbot's conversation history
                     session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
                     ]
@@ -148,11 +152,11 @@ class SidebarManager:
                 conversation_df = pd.DataFrame(conversation_to_download,
                                                columns=[session_state['_']('Speaker'), session_state['_']('Message')])
                 conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-                col2.download_button("💽",
+                col2.download_button("📂",
                                      data=conversation_csv,
                                      file_name="conversation.csv",
                                      mime="text/csv",
-                                     help=session_state['_']("Download the Current Conversation"))
+                                     help=session_state['_']("Download the Conversation"))
 
             color = st.get_option('theme.secondaryBackgroundColor')
 
@@ -210,9 +214,9 @@ class ChatManager:
 
         st.text_area(session_state['_']("Edit Prompt"),
                      value=current_edited_prompt,
-                     help=session_state['_']("Edit the system prompt for more customized responses."),
                      on_change=self.update_edited_prompt,
-                     key='edited_prompt')
+                     key='edited_prompt',
+                     label_visibility='hidden')
 
         if st.button("🔄", help=session_state['_']("Restore Original Prompt")):
             if current_chatbot_path_serialized in session_state['edited_prompts']:
@@ -287,16 +291,20 @@ class ChatManager:
                         or not session_state['conversation_histories'][
                             session_state['selected_chatbot_path_serialized']]):
 
-                    st.header(session_state['_']("How can I help you today? 🤖"))
+                    st.header(session_state['_']("How can I help you?"))
                     if session_state['model_selection'] == 'OpenAI':
-                        using_text = session_state['_']("You're using OpenAI's model:")
-                        remember_text = session_state['_']("Remember **not** to send any personal information.")
+                        using_text = session_state['_']("You're using the following OpenAI model:")
+                        remember_text = session_state['_']("Remember **not** to enter any "
+                                                           "personal information or copyrighted material.")
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
 
-                    st.markdown("""---""")
-
-                with st.expander(session_state['_']("Edit Bot Prompt"), expanded=False):
+                st.markdown(session_state['_']("Edit System Prompt"), help=session_state['_'](
+                        "The system prompt is transmitted with each of your entries. "
+                        "You can edit the system prompt in the text field."))
+                with st.expander(label="", expanded=False):
                     self._display_prompt_editor(description)
+
+                st.markdown("""---""")
 
                 description_to_use = self._get_description_to_use(description)
 
@@ -377,7 +385,7 @@ class AIClient:
             # Display assistant response in chat message container
             response = ""
             with st.chat_message("assistant"):
-                with st.spinner(session_state['_']("Writing response...")):
+                with st.spinner(session_state['_']("Generating response...")):
                     stream = self.client.chat.completions.create(
                         model=self.model,
                         messages=messages,
@@ -447,7 +455,7 @@ class AIClient:
 
         # Add the history of the conversation
         for speaker, message in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

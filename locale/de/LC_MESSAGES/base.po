@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-02-28 13:51+0100\n"
+"POT-Creation-Date: 2024-03-01 15:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,113 +15,113 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: src/chatbot_utils.py:90
-msgid "Chat Menu"
-msgstr "Chat-Menü"
+#: pages/chatbot_app.py:18
+msgid "User"
+msgstr "Eingabe"
 
-#: src/chatbot_utils.py:120
+#: src/chatbot_utils.py:131
 msgid "Model:"
 msgstr "Modell:"
 
-#: src/chatbot_utils.py:130
-msgid "**Conversation Controls**"
-msgstr "**Konversationskontrollen**"
+#: src/chatbot_utils.py:141
+msgid "**Options**"
+msgstr "**Optionen**"
 
-#: src/chatbot_utils.py:132
-msgid "Delete the Current Conversation"
-msgstr "Die aktuelle Konversation löschen"
+#: src/chatbot_utils.py:143
+msgid "Delete the Conversation"
+msgstr "Löschen der Konversation"
 
-#: src/chatbot_utils.py:142
+#: src/chatbot_utils.py:153
 msgid "Message"
 msgstr "Nachricht"
 
-#: src/chatbot_utils.py:142
+#: src/chatbot_utils.py:153
 msgid "Speaker"
 msgstr "Sprecher"
 
-#: src/chatbot_utils.py:148
-msgid "Download the Current Conversation"
-msgstr "Download des aktuellen Gesprächs"
+#: src/chatbot_utils.py:159
+msgid "Download the Conversation"
+msgstr "Download der Konversation"
 
-#: src/chatbot_utils.py:177
+#: src/chatbot_utils.py:188
 msgid "Logout"
 msgstr "Abmelden"
 
-#: src/chatbot_utils.py:209
+#: src/chatbot_utils.py:215
 msgid "Edit Prompt"
 msgstr "Prompt bearbeiten"
 
-#: src/chatbot_utils.py:211
-msgid "Edit the system prompt for more customized responses."
-msgstr "Bearbeiten Sie den Systemprompt für individuellere Antworten."
-
-#: src/chatbot_utils.py:215
+#: src/chatbot_utils.py:221
 msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
-#: src/chatbot_utils.py:288
-msgid "How can I help you today? 🤖"
-msgstr "Wie kann ich Ihnen heute helfen? 🤖"
-
-#: src/chatbot_utils.py:290
-msgid "You're using OpenAI's model:"
-msgstr "Sie benutzen das Modell von OpenAI:"
-
-#: src/chatbot_utils.py:291
-msgid "Remember **not** to send any personal information."
-msgstr "Denken Sie daran, **keine** persönlichen Informationen zu senden."
+#: src/chatbot_utils.py:294
+msgid "How can I help you?"
+msgstr "Wie kann ich Ihnen helfen?"
 
 #: src/chatbot_utils.py:296
-msgid "Edit Bot Prompt"
-msgstr "Bot-Prompt bearbeiten"
+msgid "You're using the following OpenAI model:"
+msgstr "Sie benutzen das folgende Modell von OpenAI:"
 
-#: src/chatbot_utils.py:378
-msgid "Writing response..."
-msgstr "Antwort schreiben..."
+#: src/chatbot_utils.py:297
+msgid "Remember **not** to enter any personal information or copyrighted material."
+msgstr "Denken Sie daran, **keine** persönlichen Informationen und urheberrechtlich geschützten Materialien einzugeben."
+
+#: src/chatbot_utils.py:301
+msgid "Edit System Prompt"
+msgstr "System-Prompt bearbeiten"
+
+#: src/chatbot_utils.py:301
+msgid "The system prompt is transmitted with each of your entries. You can edit the system prompt in the text field."
+msgstr "Der System-Prompt wird bei jeder Ihrer Eingaben mit übermittelt. Sie können den System-Prompt im Textfeld bearbeiten."
+
+#: src/chatbot_utils.py:388
+msgid "Generating response..."
+msgstr "Antwort wird generiert..."
 
 #: start.py:67
 msgid "Login with your university credentials."
-msgstr "Melden Sie sich mit Ihren Universitätsdaten an."
+msgstr "Melden Sie sich mit Ihren Benutzerdaten an."
 
-#: start.py:72
+#: start.py:81
 msgid "User name"
 msgstr "Benutzername"
 
-#: start.py:77
+#: start.py:86
 msgid "Password"
 msgstr "Passwort"
 
-#: start.py:80
+#: start.py:89
 msgid "Login"
 msgstr "Anmelden"
 
-#: start.py:83
-msgid "😕 Password incorrect"
-msgstr "😕 Passwort falsch"
+#: start.py:92
+msgid "Password incorrect"
+msgstr "Passwort falsch"
 
-#: start.py:101
+#: start.py:115
 msgid ""
 "\n"
 "\n"
-"This portal is an open source app allowing users to chat with OpenAI's GPT models\n"
-" without submitting personal data to OpenAI during the login process. Users should\n"
-"  be aware that all information they enter, is submitted to OpenAI.\n"
+"# Welcome to kiwi!\n"
 "\n"
-"**👈 Login on the sidebar** to enter the chat area!\n"
-"### Learn more about your rights as an user of this app in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}).\n"
+"##### kiwi is an open source-portal of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.\n"
 "\n"
+"##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}) of {INSTITUTION}.\n"
+"\n"
+"##### **Login on the sidebar** to enter the chat area.\n"
 msgstr ""
 "\n"
 "\n"
-"Dieses Portal ist eine Open-Source-App, die es Nutzern ermöglicht, mit den GPT-Modellen von OpenAI zu chatten\n"
-"ohne persönliche Daten an OpenAI während des Anmeldevorgangs zu übermitteln. Benutzer sollten"
-"sich bewusst sein, dass alle von ihnen eingegebenen Informationen an OpenAI übermittelt werden.\n"
+"# Herzlich Willkommen bei kiwi!\n"
 "\n"
-"**👈 Melden Sie sich in der Seitenleiste** an, um den Chat-Bereich zu betreten!\n"
-"### Mehr über Ihre Rechte als Nutzende dieser App erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}).\n"
+"##### kiwi ist ein Open Source-Portal der {INSTITUTION}: Es ermöglicht Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden.\n"
 "\n"
+"##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}) der {INSTITUTION}.\n"
+"\n"
+"##### Um den Chat-Bereich zu betreten, **melden Sie sich in der Seitenleiste an**.\n"
 
-#: start.py:128
+#: start.py:143
 msgid "Logged in!"
 msgstr "Eingeloggt!"
 

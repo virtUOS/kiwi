@@ -42,9 +42,9 @@ services:
       # English service sites
       DATENSCHUTZ_EN: 'https://www.example.org/en/privacy/'
       IMPRESSUM_EN: 'https://www.example.org/en/legal/'
-      # Welcome Messages
-      WELCOME_MESSAGE_EN: "Welcome to the Kiwi portal of your University! 👋"
-      WELCOME_MESSAGE_DE: "Willkommen auf dem Kiwi-Portal deiner Universität! 👋"
+      # Your Institution
+      INSTITUTION_EN: "Osnabrück University"
+      INSTITUTION_DE: "Universität Osnabrück"
       # LDAP settings:
       LDAP_SERVER: 'ldap.example.org'
       LDAP_PORT: 636

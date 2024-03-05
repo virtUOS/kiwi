@@ -72,7 +72,10 @@ class SidebarManager:
             'prompt_options': menu_utils.load_prompts_from_yaml(),
             'edited_prompts': {},
             'disable_custom': False,
-            'uploaded_pdf_files': []
+            'uploaded_pdf_files': [],
+            'selected_file_name': None,
+            'sources_to_highlight': {},
+            'sources_to_display': {}
         }
 
         for key, default_value in required_keys.items():
@@ -110,7 +113,6 @@ class SidebarManager:
     @staticmethod
     def check_amount_of_uploaded_files_and_set_variables():
         max_files = 5
-        session_state['uploaded_pdf_files'] = []
         session_state['uploaded_pdf_files'] = []
 
         if len(session_state['pdf_files']) > max_files:
@@ -218,7 +220,7 @@ class SidebarManager:
 
             st.markdown("""---""")
 
-            st.file_uploader("Upload PDF file", type=['pdf'], accept_multiple_files=True,
+            st.file_uploader("Upload PDF file(s)", type=['pdf'], accept_multiple_files=True,
                              key='pdf_files', on_change=self.check_amount_of_uploaded_files_and_set_variables)
 
             st.markdown("""---""")
@@ -244,13 +246,13 @@ class DocsManager:
                                                                                    gap="medium")
         # The vector store
         self.vector_store = None
-        # Current document
-        self.doc_binary_data = None
-        # Annotation for current documents
+        # Current documents list
+        self.doc_binary_data = {}
+        # Annotations for current documents
         self.annotations = []
         # Empty container to display pdf
         self.empty_container = st.empty()
-        # Get the screen width of the device to display thumbnails
+        # Get the main component width of streamlit to display thumbnails and pdf
         self.main_dim = st_dimensions(key="main")
 
     def set_client(self, client):
@@ -379,7 +381,8 @@ class DocsManager:
                     page_content=chunk, metadata={"page": doc.metadata["page"], "chunk": i, "file": filename}
                 )
                 # Add sources a metadata
-                doc.metadata["source"] = f"{doc.metadata['page']}-{doc.metadata['chunk']}"
+                doc.metadata["source"] = (f"{doc.metadata['file'].split('.pdf')[0]}|"
+                                          f"{doc.metadata['page']}-{doc.metadata['chunk']}")
                 doc_chunks.append(doc)
 
         return doc_chunks
@@ -389,12 +392,13 @@ class DocsManager:
         """Given as input a document, this function returns the indexed version,
         leveraging the Chroma database"""
 
-        for doc in docs:
-            print(doc.metadata)
+        # for doc in docs:
+        #    print(doc.metadata)
 
         vectorstore = Chroma.from_documents(
             docs,
             OpenAIEmbeddings(openai_api_key=os.getenv('OPENAI_API_KEY')),
+            # Generate unique ids
             ids=[doc.metadata["source"] for doc in docs]
         )
 
@@ -451,6 +455,13 @@ class DocsManager:
         # Avoid repeating files by adding them to a set
         files_set = {file.name for file in session_state['uploaded_pdf_files']}
 
+        # Extract file names without the '.pdf' extension
+        file_names_without_extension = [os.path.splitext(file_name)[0] for file_name in files_set]
+
+        # Populate the dropdown box with the file names without extension
+        self.column_uploaded_files.selectbox("Select a file to display:", file_names_without_extension,
+                                             key='selected_file_name')
+
         # To display images horizontally, calculate the number of columns
         num_files = len(files_set)
 
@@ -480,12 +491,17 @@ class DocsManager:
                         thumbnail_images[filename] = thumbnail
                         with self.column_uploaded_files:
                             st.image(thumbnail)
-                            st.write(f"File name: {filename}")
+                            if os.path.splitext(filename)[0] == st.session_state['selected_file_name']:
+                                st.write(f"File: **{filename}** ✅")
+                            else:
+                                st.write(f"File: {filename}")
 
     def display_pdf(self):
         with self.column_pdf:
-            pdf_viewer(input=self.doc_binary_data, annotations=self.annotations, height=1000,
-                       width=int(self.main_dim['width'] * 0.4))
+            if st.session_state['selected_file_name']:
+                pdf_viewer(input=self.doc_binary_data[st.session_state['selected_file_name']],
+                           annotations=self.annotations, height=1000,
+                           width=int(self.main_dim['width'] * 0.4))
 
     def load_doc_to_display(self):
 
@@ -494,28 +510,33 @@ class DocsManager:
         if session_state['uploaded_pdf_files']:
             self.display_thumbnails()
 
-            self.doc_binary_data = session_state['uploaded_pdf_files'][0].getvalue()
+            text = []
 
-            filename = session_state['uploaded_pdf_files'][0].name
+            for file in session_state['uploaded_pdf_files']:
+                filename = file.name
 
-            base64_pdf = base64.b64encode(self.doc_binary_data).decode('utf-8')
+                fileroot = os.path.splitext(filename)[0]
 
-            # self.doc_binary_data = self.doc_binary_data.decode('utf-8')
+                self.doc_binary_data[fileroot] = file.getvalue()
 
-            # Embed PDF in HTML
-            pdf_display = (F'<iframe src="data:application/pdf;base64,{base64_pdf}" '
-                           F'width="100%" height="1000" type="application/pdf"></iframe>')
+                base64_pdf = base64.b64encode(self.doc_binary_data[fileroot]).decode('utf-8')
 
-            # Display file
-            # pdf_container.markdown(pdf_display, unsafe_allow_html=True)
+                # self.doc_binary_data = self.doc_binary_data.decode('utf-8')
 
-            # self.display_pdf()
+                # Embed PDF in HTML
+                pdf_display = (F'<iframe src="data:application/pdf;base64,{base64_pdf}" '
+                               F'width="100%" height="1000" type="application/pdf"></iframe>')
 
-            # Parse the pdf
-            data_dict = self.parse_pdf(session_state['uploaded_pdf_files'][0])
+                # Display file
+                # pdf_container.markdown(pdf_display, unsafe_allow_html=True)
 
-            # Get text data
-            text = self.text_split(data_dict, filename)
+                # self.display_pdf()
+
+                # Parse the pdf
+                data_dict = self.parse_pdf(file)
+
+                # Get text data
+                text.extend(self.text_split(data_dict, filename))
 
             self.vector_store = self.get_embeddings(text)
 
@@ -527,26 +548,17 @@ class DocsManager:
             doc = None
         return doc
 
+    def display_sources(self, file):
+        files_with_sources = ','.join(list(st.session_state['sources_to_display']))
+        with self.column_pdf:
+            st.write(f"Files with sources: {files_with_sources}")
+            st.header(f"Sources for file {file}:")
+            for i, source in enumerate(st.session_state['sources_to_display'][file]):
+                st.markdown(f"{i+1}) {source}")
+
     def display_chat_interface(self):
         # Variable to store the current conversation and simplify some code
         conversation = []
-
-        # If there's already a conversation in the history for this chatbot, display it.
-        if (session_state['selected_chatbot_path_serialized'] in session_state['conversation_histories']
-                and session_state['uploaded_pdf_files']):
-            conversation = session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']]
-            # Display conversation
-            for speaker, message in conversation:
-
-                with self.column_chat:
-                    if speaker == session_state['USER']:
-                        st.chat_message("user").write(message)
-                    else:
-                        st.chat_message("assistant").write(message)
-        else:
-            # If no conversation in history for this chatbot, then create an empty one
-            session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
-            ]
 
         if session_state['selected_chatbot_path']:
 
@@ -562,18 +574,44 @@ class DocsManager:
 
                 with self.column_chat:
                     # Interface to chat with selected expert
-                    st.title(f"What do you want to know about your documents? :robot_face:")
+                    st.title(f"What do you want to know about your documents?")
+
+                # If there's already a conversation in the history for this chatbot, display it.
+                if (session_state['selected_chatbot_path_serialized'] in session_state['conversation_histories']
+                        and session_state['uploaded_pdf_files']):
+                    conversation = session_state['conversation_histories'][
+                        session_state['selected_chatbot_path_serialized']]
+                    # Display conversation
+                    for speaker, message in conversation:
+
+                        with self.column_chat:
+                            if speaker == session_state['USER']:
+                                st.chat_message("user").write(message)
+                            else:
+                                st.chat_message("assistant").write(message)
+                else:
+                    # If no conversation in history for this chatbot, then create an empty one
+                    session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
+                    ]
 
                 with self.column_chat:
 
-                    # container_chat = self.column_chat.container(border=True)
-
-                    # with container_chat:
-
-                    sources_to_highlight = []
+                    fileroot = st.session_state['selected_file_name']
+                    styl = f"""
+                    <style>
+                        .stChatInput {{
+                          position: fixed;
+                          bottom: 3rem;
+                        }}
+                    </style>
+                    """
+                    st.markdown(styl, unsafe_allow_html=True)
                     # Accept user input
-                    if user_message := st.chat_input("Ask something about the PDFs",
+                    if user_message := st.chat_input("Ask something about your PDFs",
                                                      disabled=not session_state['uploaded_pdf_files']):
+
+                        st.session_state['sources_to_highlight'] = {}
+                        st.session_state['sources_to_display'] = {}
 
                         # Prevent re-running the query on refresh or navigating back to the page by checking
                         # if the last stored message is not from the User
@@ -597,7 +635,6 @@ class DocsManager:
                                 # We use len(conversation)-1 to avoid out-of-range errors
                             ]
 
-                            doc = self.get_doc(self.doc_binary_data)
                             with st.spinner():
                                 condensed_question = self.get_condensed_question(
                                     user_message, chat_history_tuples, os.getenv('OPENAI_MODEL')
@@ -608,55 +645,51 @@ class DocsManager:
 
                                 ai_response = all_output['output_text']
 
-                                # Print user message immediately after getting entered
-                                # because we're streaming the chatbot output
                                 with st.chat_message("assistant"):
                                     st.markdown(ai_response)
-                                    sources_to_display = []
-                                    sources_to_highlight = []
+                                    # Store docs to extract all sources the first time
+                                    docs = {}
                                     for source in sources:
                                         # Collect the references to relevant sources and their first 150 characters
                                         source_reference = source.metadata['source']
                                         # Only add it if the source appears referenced in the response
                                         if source_reference in ai_response:
                                             content = source.page_content
-                                            sources_to_display.append(f"{source_reference} - {content[:150]}")
-                                            page_number = int(source_reference.split('-')[0])
-                                            page = doc[page_number - 1]
-                                            rects = page.search_for(content)
+
+                                            page_data = source_reference.split('|')
+                                            page_file = page_data[0]
+                                            page_source = page_data[1]
+                                            if page_file not in docs:
+                                                docs[page_file] = self.get_doc(self.doc_binary_data[page_file])
+                                                st.session_state['sources_to_highlight'][page_file] = []
+                                                st.session_state['sources_to_display'][page_file] = []
+                                            st.session_state['sources_to_display'][page_file].append(
+                                                f"{source_reference} - {content[:150]}")
+                                            page_number = int(page_source.split('-')[0])
+                                            page = docs[page_file][page_number - 1]
+                                            rects = page.search_for(content)  # Maybe use flags here for better search??
                                             for rect in rects:
-                                                sources_to_highlight.append({'page': page_number,
-                                                                             'x': rect.x0,
-                                                                             'y': rect.y0,
-                                                                             'width': rect.width,
-                                                                             'height': rect.height,
-                                                                             'color': "red"})
-
-                                    # Display the sources list if there are relevant sources
-                                    if sources_to_display:
-                                        st.markdown("Sources:")
-                                        for source in sources_to_display:
-                                            st.markdown(source)
-
-                                # base64_pdf = base64.b64encode(doc).decode('utf-8')
-
-                                # Embed PDF in HTML
-                                # pdf_display = (F'<iframe src="data:application/pdf;base64,{base64_pdf}" '
-                                #               F'width="100%" height="1000" type="application/pdf"></iframe>')
-
-                                # pdf_container.markdown(pdf_display)
-
-                            # Get response from OpenAI API
-                            # ai_response = get_openai_response(user_message, description_to_use)
+                                                st.session_state['sources_to_highlight'][page_file].append(
+                                                    {'page': page_number,
+                                                     'x': rect.x0,
+                                                     'y': rect.y0,
+                                                     'width': rect.width,
+                                                     'height': rect.height,
+                                                     'color': "red"})
 
                             # Add AI response to the conversation
                             st.session_state['conversation_histories'][st.session_state[
                                 'selected_chatbot_path_serialized']].append(('Assistant', ai_response))
 
-        self.annotations = sources_to_highlight
+                if fileroot in st.session_state['sources_to_highlight']:
+                    self.annotations = st.session_state['sources_to_highlight'][fileroot]
+                else:
+                    self.annotations = []
 
-        if self.doc_binary_data:
-            self.display_pdf()
+                if fileroot in self.doc_binary_data:
+                    self.display_pdf()
+                    if fileroot in st.session_state['sources_to_display']:
+                        self.display_sources(fileroot)
 
 
 class AIClient:

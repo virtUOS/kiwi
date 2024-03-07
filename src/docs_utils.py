@@ -392,12 +392,9 @@ class DocsManager:
         """Given as input a document, this function returns the indexed version,
         leveraging the Chroma database"""
 
-        # for doc in docs:
-        #    print(doc.metadata)
-
         vectorstore = Chroma.from_documents(
             docs,
-            OpenAIEmbeddings(openai_api_key=os.getenv('OPENAI_API_KEY')),
+            OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=os.getenv('OPENAI_API_KEY')),
             # Generate unique ids
             ids=[doc.metadata["source"] for doc in docs]
         )
@@ -549,7 +546,7 @@ class DocsManager:
         return doc
 
     def display_sources(self, file):
-        files_with_sources = ','.join(list(st.session_state['sources_to_display']))
+        files_with_sources = ', '.join(list(st.session_state['sources_to_display']))
         with self.column_pdf:
             st.write(f"Files with sources: {files_with_sources}")
             st.header(f"Sources for file {file}:")
@@ -659,23 +656,28 @@ class DocsManager:
                                             page_data = source_reference.split('|')
                                             page_file = page_data[0]
                                             page_source = page_data[1]
-                                            if page_file not in docs:
-                                                docs[page_file] = self.get_doc(self.doc_binary_data[page_file])
-                                                st.session_state['sources_to_highlight'][page_file] = []
-                                                st.session_state['sources_to_display'][page_file] = []
-                                            st.session_state['sources_to_display'][page_file].append(
-                                                f"{source_reference} - {content[:150]}")
-                                            page_number = int(page_source.split('-')[0])
-                                            page = docs[page_file][page_number - 1]
-                                            rects = page.search_for(content)  # Maybe use flags here for better search??
-                                            for rect in rects:
-                                                st.session_state['sources_to_highlight'][page_file].append(
-                                                    {'page': page_number,
-                                                     'x': rect.x0,
-                                                     'y': rect.y0,
-                                                     'width': rect.width,
-                                                     'height': rect.height,
-                                                     'color': "red"})
+                                            # Without this condition, it can lead to error due to deleting a
+                                            # file from uploads that was already inserted in the VD.
+                                            # Not ideal because it finds the source in the VD and
+                                            # references it in the answer
+                                            if page_file in self.doc_binary_data:
+                                                if page_file not in docs:
+                                                    docs[page_file] = self.get_doc(self.doc_binary_data[page_file])
+                                                    st.session_state['sources_to_highlight'][page_file] = []
+                                                    st.session_state['sources_to_display'][page_file] = []
+                                                st.session_state['sources_to_display'][page_file].append(
+                                                    f"{source_reference} - {content[:150]}")
+                                                page_number = int(page_source.split('-')[0])
+                                                page = docs[page_file][page_number - 1]
+                                                rects = page.search_for(content)  # Maybe use flags here for better search??
+                                                for rect in rects:
+                                                    st.session_state['sources_to_highlight'][page_file].append(
+                                                        {'page': page_number,
+                                                         'x': rect.x0,
+                                                         'y': rect.y0,
+                                                         'width': rect.width,
+                                                         'height': rect.height,
+                                                         'color': "red"})
 
                             # Add AI response to the conversation
                             st.session_state['conversation_histories'][st.session_state[

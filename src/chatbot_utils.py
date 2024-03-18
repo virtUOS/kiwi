@@ -212,6 +212,10 @@ class ChatManager:
         current_chatbot_path_serialized = session_state['selected_chatbot_path_serialized']
         current_edited_prompt = session_state['edited_prompts'].get(current_chatbot_path_serialized, description)
 
+        st.markdown(session_state['_']("Edit System Prompt"), help=session_state['_'](
+            "The system prompt is transmitted with each of your entries. "
+            "You can edit the system prompt in the text field."))
+
         st.text_area(session_state['_']("Edit Prompt"),
                      value=current_edited_prompt,
                      on_change=self.update_edited_prompt,
@@ -298,9 +302,9 @@ class ChatManager:
                                                            "personal information or copyrighted material.")
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
 
-                st.markdown(session_state['_']("Edit System Prompt"), help=session_state['_'](
-                        "The system prompt is transmitted with each of your entries. "
-                        "You can edit the system prompt in the text field."))
+                # st.markdown(session_state['_']("Edit System Prompt"), help=session_state['_'](
+                #         "The system prompt is transmitted with each of your entries. "
+                #         "You can edit the system prompt in the text field."))
                 with st.expander(label="", expanded=False):
                     self._display_prompt_editor(description)
 

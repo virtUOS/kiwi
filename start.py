@@ -1,8 +1,10 @@
+# flake8: noqa
+
 import os
 from time import sleep
 from dotenv import load_dotenv
 import streamlit as st
-from streamlit import session_state as ss
+from streamlit import session_state
 from streamlit_cookies_manager import EncryptedCookieManager
 from src import ldap_connector
 from src.language_utils import initialize_language
@@ -10,8 +12,8 @@ from src.language_utils import initialize_language
 load_dotenv()
 
 st.set_page_config(
-    page_title="Kiwi 🥝",
-    page_icon="👋",
+    page_title="kiwi 🥝",
+    page_icon="🥝",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -32,16 +34,11 @@ if not cookies.ready():
 
 current_language = st.query_params['lang']
 
-if current_language == 'en':
-    welcome_message = os.getenv('WELCOME_MESSAGE_EN')
-else:
-    welcome_message = os.getenv('WELCOME_MESSAGE_DE')
+if "password_correct" not in session_state:
+    session_state["password_correct"] = False
 
-
-st.write(f"## {welcome_message}")
-
-if "password_correct" not in ss:
-    ss["password_correct"] = False
+if 'credentials_checked' not in session_state:
+    session_state['credentials_checked'] = False
 
 with st.sidebar:
     # Display the logo on the sidebar
@@ -52,35 +49,46 @@ with st.sidebar:
     with col2:
         st.image("img/logo.svg", width=100)
 
+
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        user_found = ldap_connector.check_auth(username=ss.username,
-                                               password=ss.password)
+        user_found = ldap_connector.check_auth(username=session_state.username,
+                                               password=session_state.password)
         if user_found:
-            ss["password_correct"] = True
-            del ss["password"]  # Don't store the password.
+            session_state["password_correct"] = True
+            del session_state["password"]  # Don't store the password.
         else:
-            ss["password_correct"] = False
+            session_state["password_correct"] = False
 
-        ss['credentials_checked'] = True
+        session_state['credentials_checked'] = True
 
-    st.write(ss['_']("Login with your university credentials."))
+
+    st.write(session_state['_']("Login with your university credentials."))
+
+    hide_submit_text = """
+    <style>
+    div[data-testid="InputInstructions"] > span:nth-child(1) {
+        visibility: hidden;
+    }
+    </style>
+    """
+    st.markdown(hide_submit_text, unsafe_allow_html=True)
 
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            ss['_']("User"), key="username"
+            session_state['_']("User name"), key="username"
         )
 
         # Show input for password.
         st.text_input(
-            ss['_']("Password"), type="password", key="password"
+            session_state['_']("Password"), type="password", key="password"
         )
 
-        st.form_submit_button(ss['_']("Login"), on_click=credentials_entered)
+        st.form_submit_button(session_state['_']("Login"), on_click=credentials_entered)
 
-        if 'credentials_checked' in ss and not ss['password_correct']:
-            st.error(ss['_']("😕 Password incorrect"))
+        if session_state['credentials_checked'] and not session_state['password_correct']:
+            st.error(session_state['_']("Password incorrect"))
 
 # Prepare links on legal stuff depending on the language chosen (German sites as default)
 if 'DATENSCHUTZ_DE' in os.environ and 'IMPRESSUM_DE' in os.environ:
@@ -98,17 +106,23 @@ def check_password():
     return st.session_state["password_correct"]
 
 
-md_msg = ss['_']("""
-    This portal is an open-source app to allow users to chat with several chatbot experts from OpenAI's ChatGPT.
+if current_language == 'en':
+    institution_name = os.getenv('INSTITUTION_EN')
+else:
+    institution_name = os.getenv('INSTITUTION_DE')
 
-    **👈 Login on the sidebar** to enter the chat area!
-    ### Want to learn more about your rights as an user for this app?
-    - Check out the [Datenschutz]({DATENSCHUTZ})
-    - Check out the [Impressum]({IMPRESSUM})
+md_msg = session_state['_']("""
 
+# Welcome to kiwi!
 
+##### kiwi is an open source-portal of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
+
+##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}) of {INSTITUTION}.
+
+##### **Login on the sidebar** to enter the chat area.
 """
-                 ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link)
+                            ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link,
+                                     INSTITUTION=institution_name)
 
 st.markdown(md_msg)
 
@@ -124,8 +138,8 @@ if cookies.get("session") != 'in':
         cookies["session"] = 'in'
         cookies.save()
 
-elif cookies['session'] == 'in':
-    st.sidebar.success(ss['_']("Logged in!"))
+if cookies['session'] == 'in':
+    st.sidebar.success(session_state['_']("Logged in!"))
     # Wait a bit before redirecting
     sleep(0.5)
 

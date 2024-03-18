@@ -17,6 +17,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# Application's name. E.g. "kiwi"
+APP_NAME = os.getenv('APP_NAME')
 
 initialize_language()
 
@@ -113,15 +115,15 @@ else:
 
 md_msg = session_state['_']("""
 
-# Welcome to ChatUOS!
+# Welcome to {APP_NAME}!
 
-##### ChatUOS is an open source-portal of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
+##### {APP_NAME} is an open source-portal of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
 
 ##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}) of {INSTITUTION}.
 
 ##### **Login on the sidebar** to enter the chat area.
 """
-                            ).format(DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link,
+                            ).format(APP_NAME=APP_NAME,DATENSCHUTZ=dantenschutz_link, IMPRESSUM=impressum_link,
                                      INSTITUTION=institution_name)
 
 st.markdown(md_msg)

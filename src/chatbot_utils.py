@@ -302,9 +302,7 @@ class ChatManager:
                                                            "personal information or copyrighted material.")
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
 
-                # st.markdown(session_state['_']("Edit System Prompt"), help=session_state['_'](
-                #         "The system prompt is transmitted with each of your entries. "
-                #         "You can edit the system prompt in the text field."))
+
                 with st.expander(label="", expanded=False):
                     self._display_prompt_editor(description)
 

@@ -207,25 +207,23 @@ class ChatManager:
         session_state['edited_prompts'][session_state[
             'selected_chatbot_path_serialized']] = session_state['edited_prompt']
 
+    @staticmethod
+    def restore_prompt():
+        if session_state['selected_chatbot_path_serialized'] in session_state['edited_prompts']:
+            del session_state['edited_prompts'][session_state['selected_chatbot_path_serialized']]
+
     def _display_prompt_editor(self, description):
         """Allows editing of the chatbot prompt."""
         current_chatbot_path_serialized = session_state['selected_chatbot_path_serialized']
         current_edited_prompt = session_state['edited_prompts'].get(current_chatbot_path_serialized, description)
 
-        st.markdown(session_state['_']("Edit System Prompt"), help=session_state['_'](
-            "The system prompt is transmitted with each of your entries. "
-            "You can edit the system prompt in the text field."))
-
-        st.text_area(session_state['_']("Edit Prompt"),
+        st.text_area(session_state['_']("System prompt"),
                      value=current_edited_prompt,
                      on_change=self.update_edited_prompt,
                      key='edited_prompt',
                      label_visibility='hidden')
 
-        if st.button("🔄", help=session_state['_']("Restore Original Prompt")):
-            if current_chatbot_path_serialized in session_state['edited_prompts']:
-                del session_state['edited_prompts'][current_chatbot_path_serialized]
-                st.rerun()
+        st.button("🔄", help=session_state['_']("Restore Original Prompt"), on_click=self.restore_prompt)
 
     @staticmethod
     def _get_description_to_use(default_description):
@@ -298,11 +296,12 @@ class ChatManager:
                     st.header(session_state['_']("How can I help you?"))
                     if session_state['model_selection'] == 'OpenAI':
                         using_text = session_state['_']("You're using the following OpenAI model:")
-                        remember_text = session_state['_']("Remember **not** to enter any "
-                                                           "personal information or copyrighted material.")
+                        remember_text = session_state['_']("Remember **not** to enter any personal information or "
+                                          "copyrighted material. Each time you enter information, "
+                                          "a system prompt is sent to the chat model by default.")
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
 
-                with st.expander(label="", expanded=False):
+                with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
                     self._display_prompt_editor(description)
 
                 st.markdown("""---""")

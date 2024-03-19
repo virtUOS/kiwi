@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-03-01 15:36+0100\n"
+"POT-Creation-Date: 2024-03-19 15:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,7 +13,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-
 
 #: pages/chatbot_app.py:18
 msgid "User"
@@ -48,8 +47,8 @@ msgid "Logout"
 msgstr "Abmelden"
 
 #: src/chatbot_utils.py:215
-msgid "Edit Prompt"
-msgstr "Prompt bearbeiten"
+msgid "System prompt"
+msgstr "System-Prompt"
 
 #: src/chatbot_utils.py:221
 msgid "Restore Original Prompt"
@@ -64,42 +63,38 @@ msgid "You're using the following OpenAI model:"
 msgstr "Sie benutzen das folgende Modell von OpenAI:"
 
 #: src/chatbot_utils.py:297
-msgid "Remember **not** to enter any personal information or copyrighted material."
-msgstr "Denken Sie daran, **keine** persönlichen Informationen und urheberrechtlich geschützten Materialien einzugeben."
+msgid "Remember **not** to enter any personal information or copyrighted material. Each time you enter information, a system prompt is sent to the chat model by default."
+msgstr "Denken Sie daran, **keine** persönlichen Informationen und urheberrechtlich geschützten Materialien einzugeben. Bei jeder Ihrer Eingaben wird standardmäßig ein System-Prompt mit an das Chat-Modell übermittelt."
 
-#: src/chatbot_utils.py:301
-msgid "Edit System Prompt"
-msgstr "System-Prompt bearbeiten"
+#: src/chatbot_utils.py:302
+msgid "View or edit system prompt"
+msgstr "System-Prompt einsehen und/oder bearbeiten"
 
-#: src/chatbot_utils.py:301
-msgid "The system prompt is transmitted with each of your entries. You can edit the system prompt in the text field."
-msgstr "Der System-Prompt wird bei jeder Ihrer Eingaben mit übermittelt. Sie können den System-Prompt im Textfeld bearbeiten."
-
-#: src/chatbot_utils.py:388
+#: src/chatbot_utils.py:386
 msgid "Generating response..."
 msgstr "Antwort wird generiert..."
 
-#: start.py:67
+#: start.py:68
 msgid "Login with your university credentials."
 msgstr "Melden Sie sich mit Ihren Benutzerdaten an."
 
-#: start.py:81
+#: start.py:82
 msgid "User name"
 msgstr "Benutzername"
 
-#: start.py:86
+#: start.py:87
 msgid "Password"
 msgstr "Passwort"
 
-#: start.py:89
+#: start.py:90
 msgid "Login"
 msgstr "Anmelden"
 
-#: start.py:92
+#: start.py:93
 msgid "Password incorrect"
 msgstr "Passwort falsch"
 
-#: start.py:115
+#: start.py:116
 msgid ""
 "\n"
 "\n"
@@ -121,7 +116,7 @@ msgstr ""
 "\n"
 "##### Um den Chat-Bereich zu betreten, **melden Sie sich in der Seitenleiste an**.\n"
 
-#: start.py:143
+#: start.py:144
 msgid "Logged in!"
 msgstr "Eingeloggt!"
 

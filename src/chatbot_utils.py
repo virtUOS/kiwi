@@ -297,9 +297,10 @@ class ChatManager:
                     if session_state['model_selection'] == 'OpenAI':
                         using_text = session_state['_']("You're using the following OpenAI model:")
                         remember_text = session_state['_']("Remember **not** to enter any personal information or "
-                                          "copyrighted material. Each time you enter information, "
-                                          "a system prompt is sent to the chat model by default.")
+                                                           "copyrighted material.")
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
+                        st.write(session_state['_']("Each time you enter information, "
+                                                    "a system prompt is sent to the chat model by default."))
 
                 with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
                     self._display_prompt_editor(description)

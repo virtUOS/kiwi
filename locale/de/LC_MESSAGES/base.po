@@ -72,7 +72,7 @@ msgstr "Bei jeder Ihrer Eingaben wird standardmäßig ein System-Prompt mit an d
 
 #: src/chatbot_utils.py:302
 msgid "View or edit system prompt"
-msgstr "System-Prompt einsehen und/oder bearbeiten"
+msgstr "System-Prompt einsehen oder bearbeiten"
 
 #: src/chatbot_utils.py:386
 msgid "Generating response..."

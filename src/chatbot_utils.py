@@ -302,7 +302,6 @@ class ChatManager:
                                                            "personal information or copyrighted material.")
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
 
-
                 with st.expander(label="", expanded=False):
                     self._display_prompt_editor(description)
 

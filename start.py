@@ -116,7 +116,7 @@ else:
 
 md_msg = session_state['_']("""
 
-# Welcome to {APP_NAME}!
+# Welcome to the {APP_NAME}!
 
 ##### {APP_NAME} is an open source-portal of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
 

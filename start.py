@@ -17,8 +17,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# Application's name. E.g. "kiwi"
-APP_NAME = os.getenv('APP_NAME')
+
 
 initialize_language()
 
@@ -110,8 +109,10 @@ def check_password():
 
 if current_language == 'en':
     institution_name = os.getenv('INSTITUTION_EN')
+    APP_NAME = os.getenv('APP_NAME_EN')
 else:
     institution_name = os.getenv('INSTITUTION_DE')
+    APP_NAME = os.getenv('APP_NAME_DE')
 
 md_msg = session_state['_']("""
 

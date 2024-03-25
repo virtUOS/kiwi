@@ -32,8 +32,6 @@ services:
     ports:
       - '127.0.0.1:8501:8501'
     environment:
-      # App Path
-      APP_PATH: "http://localhost:8503"
       # App name (english, german):
       APP_NAME_EN: "Kiwi"
       APP_NAME_DE: "Kiwi"

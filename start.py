@@ -156,7 +156,7 @@ else:
 
                 ##### Dies ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden.
 
-                ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den <a href="{app_path}/{datenschutz_page}" target="_self">Datenschutzhinweisen</a> und im <a href="{app_path}/{impressum_page}" target="_self">Impressum</a> der {institution_name}.
+                ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den <a href="{datenschutz_page}" target="_self">Datenschutzhinweisen</a> und im <a href="{impressum_page}" target="_self">Impressum</a> der {institution_name}.
 
                 ##### Um den Chat-Bereich zu betreten, **melden Sie sich in der Seitenleiste an**.
                 """

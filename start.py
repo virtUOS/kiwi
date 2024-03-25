@@ -120,7 +120,7 @@ if current_language == 'en':
 
                 ##### {APP_NAME} is an open source app of {institution_name}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
 
-                ##### General legal information can be found in the <a href="{datenschutz_page}" target="_self">Privacy Policy</a> and <a href="{impressum_page}" target="_self">Legal Notice</a> of {institution_name}.
+                ##### General legal information can be found in the <a href="{datenschutz_page}" target="_self">Privacy Policy</a> and <a href="{impressum_page}" target="_self">Legal Notice</a>.
 
                 ##### **Login on the sidebar** to enter the chat area.
                 """
@@ -132,7 +132,7 @@ if current_language == 'en':
     
         ##### {APP_NAME} is an open source app of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
     
-        ##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}) of {INSTITUTION}.
+        ##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}).
     
         ##### **Login on the sidebar** to enter the chat area.
         """
@@ -156,7 +156,7 @@ else:
 
                 ##### Dies ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden.
 
-                ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den <a href="{datenschutz_page}" target="_self">Datenschutzhinweisen</a> und im <a href="{impressum_page}" target="_self">Impressum</a> der {institution_name}.
+                ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den <a href="{datenschutz_page}" target="_self">Datenschutzhinweisen</a> und im <a href="{impressum_page}" target="_self">Impressum</a>.
 
                 ##### Um den Chat-Bereich zu betreten, **melden Sie sich in der Seitenleiste an**.
                 """
@@ -167,7 +167,7 @@ else:
     
         ##### Dies ist eine Open Source-Anwendung der {INSTITUTION}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden.
     
-        ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}) der {INSTITUTION}.
+        ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}).
         
         ##### Um den Chat-Bereich zu betreten, **melden Sie sich in der Seitenleiste an**.
         """

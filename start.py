@@ -120,7 +120,7 @@ if current_language == 'en':
 
                 ##### {APP_NAME} is an open source app of {institution_name}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI.
 
-                ##### General legal information can be found in the <a href="{app_path}/{datenschutz_page}" target="_self">Privacy Policy</a> and <a href="{app_path}/{impressum_page}" target="_self">Legal Notice</a> of {institution_name}.
+                ##### General legal information can be found in the <a href="{datenschutz_page}" target="_self">Privacy Policy</a> and <a href="{impressum_page}" target="_self">Legal Notice</a> of {institution_name}.
 
                 ##### **Login on the sidebar** to enter the chat area.
                 """

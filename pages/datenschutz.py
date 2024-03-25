@@ -20,7 +20,7 @@ st.subheader("Datenerfassung auf unserer Website")
 
 st.markdown("**Wer ist verantwortlich für die Datenerfassung auf dieser Website?**")
 st.markdown("Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können "
-            "Sie dem Impressum dieser Website entnehmen.")
+            "Sie dem Impressum dieser Website entnehmen.")
 st.markdown("**Wie erfassen wir Ihre Daten?**")
 st.markdown("Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich zum "
             "Beispiel um Daten handeln, die Sie in ein Kontaktformular eingeben.")
@@ -34,7 +34,7 @@ st.markdown("**Welche Rechte haben Sie bezüglich Ihrer Daten?**")
 st.markdown("Sie haben jederzeit das Recht unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer "
             "gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung, "
             "Sperrung oder Löschung dieser Daten zu verlangen. Hierzu sowie zu weiteren Fragen zum Thema Datenschutz "
-            "können Sie sich jederzeit unter der im Impressum angegebenen Adresse an uns wenden. Des Weiteren "
+            "können Sie sich jederzeit unter der im Impressum angegebenen Adresse an uns wenden. Des Weiteren "
             "steht Ihnen ein Beschwerderecht bei der zuständigen Aufsichtsbehörde zu.")
 st.markdown('Außerdem haben Sie das Recht, unter bestimmten Umständen die Einschränkung der Verarbeitung Ihrer '
             'personenbezogenen Daten zu verlangen. Details hierzu entnehmen Sie der Datenschutzerklärung unter '
@@ -49,16 +49,15 @@ st.subheader("Datenschutz")
 st.markdown("Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre "
             "personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie "
             "dieser Datenschutzerklärung.")
-st.markdown("Wenn Sie diese Website benutzen, werden **keine** personenbezogene Daten erhoben. Personenbezogene Daten "
-            "sind Daten, mit denen Sie persönlich identifiziert werden können. Die vorliegende Datenschutzerklärung "
-            "erläutert, welche Daten wir erheben und wofür wir sie nutzen. Sie erläutert auch, wie und zu welchem "
-            "Zweck das geschieht.")
+st.markdown("Personenbezogene Daten sind Daten, mit denen Sie persönlich identifiziert werden können. Die vorliegende "
+            "Datenschutzerklärung erläutert, welche Daten wir erheben und wofür wir sie nutzen. Sie erläutert auch, "
+            "wie und zu welchem Zweck das geschieht.")
 st.markdown("Für die Nutzung des UOS KI-Portal werden folgende Daten abgefragt und gespeichert:")
 st.markdown("-  Statusgruppe und Heimateinrichtung im LDAP\n"
             "-  In einer Session verbrauchte Tokens (Abrechnungseinheiten) von OpenAI")
 st.markdown("Diese Daten werden systematisch ausgewertet und genutzt, um Prognosen über die künftige Nutzung zu "
-            "erhalten und Budgets den Lehreinheiten zuweisen zu können. ")
-st.markdown("Wir weisen darauf hin, dass die Datenübertragung im Internet (zum Beispiel) bei der Kommunikation per "
+            "erhalten und Budgets den Lehreinheiten zuweisen zu können.")
+st.markdown("Wir weisen darauf hin, dass die Datenübertragung im Internet (zum Beispiel bei der Kommunikation per "
             "E-Mail) Sicherheitslücken aufweisen kann. Ein lückenloser Schutz der Daten vor dem Zugriff durch Dritte "
             "ist nicht möglich.")
 st.markdown("Das UOS KI-Portal nutzt eingebettete Dienste anderer Anbieter. Diese werden ggf. außerhalb der "

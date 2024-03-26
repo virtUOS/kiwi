@@ -1,19 +1,37 @@
 import yaml
 import streamlit as st
 
+from langchain.prompts import PromptTemplate
+
 
 # Function to load prompts from a YAML file
 @st.cache_data
-def load_prompts_from_yaml(language='de'):
+def load_prompts_from_yaml(language='de', typ='chat', prompt_key=None):
+    if typ == 'chat':
+        # Use basic prompts
+        if language == 'en':
+            file_path = 'prompts_config/chat_basic_prompts_en.yml'
+        else:
+            file_path = 'prompts_config/chat_basic_prompts_de.yml'
 
-    if language == 'en':
-        file_path = 'prompts_config/chat_basic_prompts_en.yml'
-    else:
-        file_path = 'prompts_config/chat_basic_prompts_de.yml'
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return yaml.safe_load(file)
 
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return yaml.safe_load(file)
+    elif typ == 'doc':
+        # Use basic prompts
+        if language == 'en':
+            file_path = 'prompts_config/doc_basic_prompts_en.yml'
+        else:
+            file_path = 'prompts_config/doc_basic_prompts_en.yml'
 
+        with open(file_path, 'r', encoding='utf-8') as file:
+            prompt_templates = yaml.safe_load(file)
+
+        template_info = prompt_templates['prompt_templates'][prompt_key]
+
+        # Create the PromptTemplate instance with the loaded template and input_variables
+        return PromptTemplate(template=template_info['template'],
+                              input_variables=template_info['input_variables'])
 
 def load_dict_from_yaml(file):
     return yaml.safe_load(file)

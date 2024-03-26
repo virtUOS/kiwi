@@ -5,6 +5,8 @@ import streamlit as st
 from streamlit import session_state
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
+import extra_streamlit_components as stx
+
 from src import menu_utils
 from dotenv import load_dotenv
 
@@ -48,6 +50,8 @@ class SidebarManager:
             'conversation_histories': {},
             'selected_chatbot_path': [],
             'selected_chatbot_path_serialized': "",
+            'chosen_tab_id': "1",
+            'current_tab_id': "1",
         }
 
         for key, default_value in required_keys.items():
@@ -118,7 +122,7 @@ class SidebarManager:
         # Do this here to handle conversation controls showing up when changing
         # chatbot and the conversation exists
         if menu_utils.path_changed(session_state['selected_chatbot_path'], session_state[
-                'selected_chatbot_path_serialized']):
+            'selected_chatbot_path_serialized']):
             session_state['selected_chatbot_path_serialized'] = '/'.join(
                 session_state['selected_chatbot_path'])  # Update the serialized path in session state
 
@@ -162,6 +166,29 @@ class SidebarManager:
                 self.logout_and_redirect()
 
             st.write(f"Version: *Beta*")
+
+
+class PagesManager:
+
+    def __init__(self, default_id):
+        self._display_pages_tabs(default_id)
+
+    @staticmethod
+    def _display_pages_tabs(default_id):
+        session_state['chosen_tab_id'] = stx.tab_bar(data=[
+            stx.TabBarItemData(id=1, title="Chatbot", description=""),
+            stx.TabBarItemData(id=2, title="Chat with Documents", description=""),
+            stx.TabBarItemData(id=3, title="Chat with Videos", description=""),
+        ], default=default_id)
+
+        if 'current_tab_id' not in session_state:
+            session_state['current_tab_id'] = session_state['chosen_tab_id']
+        elif session_state['chosen_tab_id'] == '1' and session_state['current_tab_id'] != '1':
+            session_state['current_tab_id'] = '1'
+            st.switch_page("pages/chatbot_app.py")
+        elif session_state['chosen_tab_id'] == '2' and session_state['current_tab_id'] != '2':
+            session_state['current_tab_id'] = '2'
+            st.switch_page("pages/docs_app.py")
 
 
 class AIClient:

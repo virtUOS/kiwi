@@ -3,7 +3,7 @@ from streamlit import session_state
 
 from dotenv import load_dotenv
 from src.docs_utils import SidebarDocsControls, DocsManager
-from src.utils import SidebarManager, AIClient
+from src.utils import SidebarManager, PagesManager, AIClient
 
 # Load environment variables
 load_dotenv()
@@ -17,11 +17,13 @@ class DocsApplication:
 
     def __init__(self):
         self.sidebar_manager = SidebarManager()
+        self.pages_manager = PagesManager("2")
         self.docs_manager = DocsManager(user=session_state['_']("User"))
         self.sidebar_doc_controls = SidebarDocsControls()
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""
+
 
         # Set and manage sidebar interface controls
         self.sidebar_manager.verify_user_session()

@@ -44,7 +44,13 @@ class SidebarDocsControls:
             'uploaded_pdf_files': [],
             'selected_file_name': None,
             'sources_to_highlight': {},
-            'sources_to_display': {}
+            'sources_to_display': {},
+
+            # Current documents list in binary
+            'doc_binary_data': {},
+
+            # Current vector store
+            'vector_store': None,
         }
 
         for key, default_value in required_keys.items():
@@ -52,7 +58,7 @@ class SidebarDocsControls:
                 session_state[key] = default_value
 
     @staticmethod
-    def check_amount_of_uploaded_files_and_set_variables():
+    def _check_amount_of_uploaded_files_and_set_variables():
         max_files = 5
         session_state['uploaded_pdf_files'] = []
 
@@ -73,7 +79,7 @@ class SidebarDocsControls:
             st.markdown("""---""")
 
             st.file_uploader("Upload PDF file(s)", type=['pdf'], accept_multiple_files=True,
-                             key='pdf_files', on_change=self.check_amount_of_uploaded_files_and_set_variables)
+                             key='pdf_files', on_change=self._check_amount_of_uploaded_files_and_set_variables)
 
 
 class DocsManager:
@@ -84,10 +90,7 @@ class DocsManager:
         # Columns to display pdf and chat
         self.column_uploaded_files, self.column_pdf, self.column_chat = st.columns([0.10, 0.425, 0.425],
                                                                                    gap="medium")
-        # The vector store
-        self.vector_store = None
-        # Current documents list
-        self.doc_binary_data = {}
+
         # Annotations for current documents
         self.annotations = []
         # Empty container to display pdf
@@ -255,8 +258,8 @@ class DocsManager:
         file_names_without_extension = [os.path.splitext(file_name)[0] for file_name in files_set]
 
         # Populate the dropdown box with the file names without extension
-        self.column_uploaded_files.selectbox("Select a file to display:", file_names_without_extension,
-                                             key='selected_file_name')
+        self.column_uploaded_files.selectbox(label="Select a file to display:", options=file_names_without_extension,
+                                             key='selected_file_name', index=None)
 
         self.column_uploaded_files.number_input(label='Input chunk size',
                                                 min_value=1,
@@ -308,44 +311,47 @@ class DocsManager:
     def display_pdf(self):
         with self.column_pdf:
             if st.session_state['selected_file_name']:
-                pdf_viewer(input=self.doc_binary_data[st.session_state['selected_file_name']],
+                pdf_viewer(input=session_state['doc_binary_data'][st.session_state['selected_file_name']],
                            annotations=self.annotations, height=1000,
                            width=int(self.main_dim['width'] * 0.4))
 
-    def load_doc_to_display(self):
+    @st.cache_data
+    def _process_uploaded_files(_self, uploaded_pdf_files):
+        # When the uploaded files change reinitialize variables
+        text = []
+        session_state['doc_binary_data'] = {}
+        for file in uploaded_pdf_files:
+            filename = file.name
 
+            file_stem = os.path.splitext(filename)[0]
+
+            session_state['doc_binary_data'][file_stem] = file.getvalue()
+
+            base64_pdf = base64.b64encode(session_state['doc_binary_data'][file_stem]).decode('utf-8')
+
+            # self.doc_binary_data = self.doc_binary_data.decode('utf-8')
+
+            # Embed PDF in HTML
+            pdf_display = (F'<iframe src="data:application/pdf;base64,{base64_pdf}" '
+                           F'width="100%" height="1000" type="application/pdf"></iframe>')
+
+            # Display file
+            # pdf_container.markdown(pdf_display, unsafe_allow_html=True)
+
+            # self.display_pdf()
+
+            # Parse the pdf
+            data_dict = _self.parse_pdf(file)
+
+            # Get text data
+            text.extend(_self.text_split(data_dict, filename))
+
+        session_state['vector_store'] = _self.get_embeddings(text)
+
+    def load_doc_to_display(self):
         if session_state['uploaded_pdf_files']:
             self.display_thumbnails()
-
-            text = []
-
-            for file in session_state['uploaded_pdf_files']:
-                filename = file.name
-
-                file_stem = os.path.splitext(filename)[0]
-
-                self.doc_binary_data[file_stem] = file.getvalue()
-
-                base64_pdf = base64.b64encode(self.doc_binary_data[file_stem]).decode('utf-8')
-
-                # self.doc_binary_data = self.doc_binary_data.decode('utf-8')
-
-                # Embed PDF in HTML
-                pdf_display = (F'<iframe src="data:application/pdf;base64,{base64_pdf}" '
-                               F'width="100%" height="1000" type="application/pdf"></iframe>')
-
-                # Display file
-                # pdf_container.markdown(pdf_display, unsafe_allow_html=True)
-
-                # self.display_pdf()
-
-                # Parse the pdf
-                data_dict = self.parse_pdf(file)
-
-                # Get text data
-                text.extend(self.text_split(data_dict, filename))
-
-            self.vector_store = self.get_embeddings(text)
+            self._process_uploaded_files(session_state['uploaded_pdf_files'])
         else:
             with self.column_pdf:
                 st.header("Please upload your documents on the sidebar.")
@@ -367,9 +373,12 @@ class DocsManager:
                 st.markdown(f"{i + 1}) {source}")
 
     def display_chat_title(self):
-        with self.column_chat:
-            # Interface to chat with selected expert
-            st.title(f"What do you want to know about your documents?")
+        # If no conversations yet then display chat title message
+        if ('docs' not in session_state['conversation_histories'] or
+                not session_state['conversation_histories']['docs']):
+            with self.column_chat:
+                # Interface to chat with selected expert
+                st.title(f"What do you want to know about your documents?")
 
     @staticmethod
     def _has_conversation_history():
@@ -449,7 +458,7 @@ class DocsManager:
                         user_message, chat_history_tuples, os.getenv('OPENAI_MODEL')
                     )
 
-                    sources = self.get_sources(self.vector_store, condensed_question)
+                    sources = self.get_sources(session_state['vector_store'], condensed_question)
                     all_output = self.get_answer(sources, condensed_question)
 
                     ai_response = all_output['output_text']
@@ -472,9 +481,9 @@ class DocsManager:
                                 # file from uploads that was already inserted in the VD.
                                 # Not ideal because it finds the source in the VD and
                                 # references it in the answer
-                                if page_file in self.doc_binary_data:
+                                if page_file in session_state['doc_binary_data']:
                                     if page_file not in docs:
-                                        docs[page_file] = self.get_doc(self.doc_binary_data[page_file])
+                                        docs[page_file] = self.get_doc(session_state['doc_binary_data'][page_file])
                                         st.session_state['sources_to_highlight'][page_file] = []
                                         st.session_state['sources_to_display'][page_file] = []
                                     st.session_state['sources_to_display'][page_file].append(
@@ -512,7 +521,7 @@ class DocsManager:
                 else:
                     conversation = self._create_empty_history()
 
-                file_stem = st.session_state['selected_file_name']
+                file_stem = session_state['selected_file_name']
 
                 user_message = self._collect_user_input(conversation)
 
@@ -525,14 +534,14 @@ class DocsManager:
 
                 self._user_message_processing(conversation, user_message)
 
-                if file_stem in st.session_state['sources_to_highlight']:
-                    self.annotations = st.session_state['sources_to_highlight'][file_stem]
+                if file_stem in session_state['sources_to_highlight']:
+                    self.annotations = session_state['sources_to_highlight'][file_stem]
                 else:
                     self.annotations = []
 
-                if file_stem in self.doc_binary_data:
+                if file_stem in session_state['doc_binary_data']:
                     self.display_pdf()
-                    if file_stem in st.session_state['sources_to_display']:
+                    if file_stem in session_state['sources_to_display']:
                         self.display_sources(file_stem)
 
             else:

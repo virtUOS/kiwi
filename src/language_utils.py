@@ -7,7 +7,6 @@ def initialize_language():
     languages = {"English": "en", "Deutsch": "de"}
 
     def change_language():
-        # session_state['changed_language'] = True
         if session_state["selected_language"] == 'English':
             set_language(language='en')
             session_state['_'] = gettext.gettext
@@ -20,16 +19,15 @@ def initialize_language():
         session_state['_'] = translate()
         st.query_params['lang'] = 'de'
 
-    with st.sidebar:
-        st.radio(
-            "Language",
-            options=languages,
-            horizontal=True,
-            key="selected_language",
-            on_change=change_language,
-            index=1,
-            label_visibility='hidden'
-        )
+    st.radio(
+        "Language",
+        options=languages,
+        horizontal=True,
+        key="selected_language",
+        on_change=change_language,
+        index=1,
+        label_visibility='hidden'
+    )
 
 
 def translate():

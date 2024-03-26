@@ -1,9 +1,7 @@
 import streamlit as st
 from streamlit import session_state
 from dotenv import load_dotenv
-
-from src.chatbot_utils import SidebarChatControls, ChatManager
-from src.utils import SidebarManager, AIClient
+from src.chatbot_utils import SidebarManager, ChatManager, AIClient
 
 # Load environment variables
 load_dotenv()
@@ -17,7 +15,6 @@ class ChatbotApplication:
 
     def __init__(self):
         self.sidebar_manager = SidebarManager()
-        self.sidebar_chat_manager = SidebarChatControls()
         self.chat_manager = ChatManager(user=session_state['_']("User"))
 
     def initialize_app(self):
@@ -26,10 +23,8 @@ class ChatbotApplication:
         # Set and manage sidebar interface controls
         self.sidebar_manager.verify_user_session()
         self.sidebar_manager.initialize_session_variables()
-        self.sidebar_chat_manager.initialize_chat_session_variables()
         self.sidebar_manager.display_logo()
-        self.sidebar_manager.display_general_sidebar_controls()
-        self.sidebar_manager.display_general_sidebar_bottom_controls()
+        self.sidebar_manager.display_sidebar_controls()
 
         # Initialize the client
         client = AIClient()

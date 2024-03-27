@@ -52,11 +52,6 @@ cookies = EncryptedCookieManager(
 initialize_language()
 
 
-if not cookies.ready():
-    # Wait for the component to load and send us current cookies.
-    st.spinner()
-    st.stop()
-
 current_language = st.query_params['lang']
 
 if "password_correct" not in session_state:
@@ -87,6 +82,11 @@ with st.sidebar:
 
         session_state['credentials_checked'] = True
 
+
+    if not cookies.ready():
+        # Wait for the component to load and send us current cookies.
+        st.spinner()
+        st.stop()
 
     st.write(session_state['_']("Login with your university credentials."))
 

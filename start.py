@@ -18,6 +18,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# JavaScript for detecting Safari browser
+detect_safari_script = """
+<script>
+var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+if (isSafari) {
+    // This will communicate back to Streamlit that Safari was detected
+    // "safari_detected" is a key that will hold the boolean True if Safari is detected
+    window.parent.streamlit.setComponentValue("safari_detected", true);
+}
+</script>
+"""
+
+# Display the script in a Streamlit markdown to ensure it runs
+st.markdown(detect_safari_script, unsafe_allow_html=True)
+
+# After the above script runs, it will set this key in session_state if Safari was detected
+if st.session_state.get("safari_detected", False):
+    # Safari browser detected
+    st.warning("It appears you're using Safari, which, in the meantime, doesn't fully support this application. "
+               "For the best experience, please consider using a different browser such as Google Chrome, Firefox, "
+               "or Microsoft Edge. We're working on having support for Safari as soon as possible.")
+    st.stop()
+
 initialize_language()
 
 # For session management
@@ -27,14 +50,14 @@ cookies = EncryptedCookieManager(
     password=os.getenv("COOKIES_PASSWORD")
 )
 
-st.write("Test")
-
-sleep(2)  # test for Safari
+st.write('Test 2')
 
 if not cookies.ready():
     # Wait for the component to load and send us current cookies.
     st.spinner()
     st.stop()
+
+st.write('Test 3')
 
 current_language = st.query_params['lang']
 

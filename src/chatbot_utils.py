@@ -29,31 +29,32 @@ class SidebarManager:
             password=os.getenv("COOKIES_PASSWORD")
         )
 
-        # JavaScript for detecting Safari browser
-        # For some reason the app is stopped due to cookies not being ready in Safari if we don't use this script
-        # MAGIC!
-        detect_safari_script = """
+        # JavaScript for detecting Safari browser and adding a delay
+        detect_safari_and_sleep_script = """
         <script>
         var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         if (isSafari) {
-            // This will communicate back to Streamlit that Safari was detected
-            // "safari_detected" is a key that will hold the boolean True if Safari is detected
-            window.parent.streamlit.setComponentValue("safari_detected", true);
+            // Delay execution for specified time when Safari is detected
+            // Time is specified in milliseconds (e.g., 2000 milliseconds = 2 seconds)
+            setTimeout(function() {
+                // After the delay, you may want to execute something specific for Safari
+                // Or simply proceed with your app initialization
+                console.log('Safari detected, proceeded after delay');
+                // Communicate back to Streamlit (if needed)
+                window.parent.streamlit.setComponentValue("safari_delayed", true);
+            }, 2000); // Adjust the delay time as needed
         }
         </script>
         """
-
-        # Display the script in a Streamlit markdown to ensure it runs
-        st.markdown(detect_safari_script, unsafe_allow_html=True)
-
-        if not cookies.ready():
-            st.spinner()
-            st.stop()
 
         return cookies
 
     def verify_user_session(self):
         """Verify if a user session is already started; if not, redirect to start page."""
+        if not self.cookies.ready():
+            st.spinner()
+            st.stop()
+
         if self.cookies.get("session") != 'in':
             st.switch_page("start.py")
 

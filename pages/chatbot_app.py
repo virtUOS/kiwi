@@ -21,8 +21,8 @@ class ChatbotApplication:
         """Initializes the app configurations, verifies user session, and sets up the UI components."""
 
         # Set and manage sidebar interface controls
-        self.sidebar_manager.verify_user_session()
         self.sidebar_manager.initialize_session_variables()
+        self.sidebar_manager.verify_user_session()
         self.sidebar_manager.display_logo()
         self.sidebar_manager.display_sidebar_controls()
 

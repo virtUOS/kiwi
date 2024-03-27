@@ -27,6 +27,10 @@ cookies = EncryptedCookieManager(
     password=os.getenv("COOKIES_PASSWORD")
 )
 
+st.write("Test")
+
+sleep(2)  # test for Safari
+
 if not cookies.ready():
     # Wait for the component to load and send us current cookies.
     st.spinner()

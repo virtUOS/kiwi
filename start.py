@@ -44,6 +44,9 @@ if (isSafari) {
 </script>
 """
 
+# Display the script in a Streamlit markdown to ensure it runs
+st.markdown(detect_safari_and_sleep_script, unsafe_allow_html=True)
+
 initialize_language()
 
 

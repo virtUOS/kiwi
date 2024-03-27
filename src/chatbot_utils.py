@@ -18,8 +18,8 @@ class SidebarManager:
 
     def __init__(self):
         # Set the language
-        initialize_language()
         self.cookies = self.initialize_cookies()
+        initialize_language()
 
     @staticmethod
     def initialize_cookies():
@@ -46,6 +46,9 @@ class SidebarManager:
         }
         </script>
         """
+
+        # Display the script in a Streamlit markdown to ensure it runs
+        st.markdown(detect_safari_and_sleep_script, unsafe_allow_html=True)
 
         return cookies
 

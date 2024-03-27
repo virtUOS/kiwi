@@ -42,7 +42,7 @@ class SidebarManager:
                 console.log('Safari detected, proceeded after delay');
                 // Communicate back to Streamlit (if needed)
                 window.parent.streamlit.setComponentValue("safari_delayed", true);
-            }, 10000); // Adjust the delay time as needed
+            }, 2000); // Adjust the delay time as needed
         }
         </script>
         """

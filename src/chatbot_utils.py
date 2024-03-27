@@ -29,6 +29,26 @@ class SidebarManager:
             password=os.getenv("COOKIES_PASSWORD")
         )
 
+        # JavaScript for detecting Safari browser and adding a delay.
+        # For some reason Safari needs more time to retrieve the cookies
+        detect_safari_and_sleep_script = """
+        <script>
+        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        if (isSafari) {
+            // Delay execution for specified time when Safari is detected
+            // Time is specified in milliseconds (e.g., 2000 milliseconds = 2 seconds)
+            setTimeout(function() {
+                console.log('Safari detected, proceeded after delay');
+                // Communicate back to Streamlit (if needed)
+                window.parent.streamlit.setComponentValue("safari_delayed", true);
+            }, 2000); // Adjust the delay time as needed
+        }
+        </script>
+        """
+
+        # Display the script in a Streamlit markdown to ensure it runs
+        st.markdown(detect_safari_and_sleep_script, unsafe_allow_html=True)
+
         if not cookies.ready():
             st.spinner()
             st.stop()

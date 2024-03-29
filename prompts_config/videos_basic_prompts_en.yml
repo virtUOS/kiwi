@@ -1,4 +1,4 @@
-Summary: "Write a comprehensive and concise summary of the video."
-Topics: "Write a comprehensive list of the topics in the video. Use nested bullet points: with headings, terms, and key concepts in bold."
+Summary: "Write a comprehensive and concise summary of the video. Do the summary in the language the transcription is in."
+Topics: "Write a comprehensive list of the topics in the video. Use nested bullet points: with headings, terms, and key concepts in bold. Do the summary in the language the transcription is in."
 Lyrics: "If you can determine that this video is of a song, then simply provide the lyrics of the song that you know."
 Artist: "If you can determine that this video is of a song, then provide the info that you know about the artist of that song, as a list."

@@ -82,9 +82,9 @@ prompt_templates:
       Question: '{question}?'
       
       Subtitles:
-      {subtitles}
+      {summaries}
       
       Answer:
     input_variables:
-      - subtitles
+      - summaries
       - question

@@ -461,7 +461,7 @@ class VideosManager:
 
                 title = self._prepare_title()
                 sources = self.client.get_sources(session_state['vector_store_transcription'], condensed_question)
-                all_output = self.client.get_answer(session_state['prompt_options_videos'],
+                all_output = self.client.get_answer(session_state['prompt_options_videos'][-1],
                                                     sources,
                                                     condensed_question,
                                                     title)
@@ -481,7 +481,7 @@ class VideosManager:
     def _display_ai_info_box(info, typ, container):
         if container:
             with container:
-                st.text_area(typ, info)
+                st.text_area(typ, info, height=300)
 
     def _generate_and_display_summary_and_topics(self):
         if not session_state['summary']:

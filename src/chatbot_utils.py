@@ -15,10 +15,9 @@ class SidebarChatControls:
 
     @staticmethod
     def initialize_chat_session_variables():
-        """Initialize cookies for session management."""
         """Initialize essential session variables."""
         required_keys = {
-            'prompt_options': menu_utils.load_prompts_from_yaml(),
+            'prompt_options_chatbot': menu_utils.load_prompts_from_yaml(typ='chat'),
             'edited_prompts': {},
         }
 
@@ -29,7 +28,8 @@ class SidebarChatControls:
 
 class ChatManager:
 
-    def __init__(self, user):
+    def __init__(self, user, general_manager):
+        self.gm = general_manager
         self.client = None
         session_state['USER'] = user
 
@@ -65,36 +65,18 @@ class ChatManager:
         return session_state['edited_prompts'].get(session_state[
                                                        'selected_chatbot_path_serialized'], default_description)
 
-    @staticmethod
-    def _display_conversation():
-        """Displays the conversation history for the selected path."""
-        conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                               'selected_chatbot_path_serialized'], [])
-
-        if conversation_history:
-            for speaker, message in conversation_history:
-                if speaker == session_state['USER']:
-                    st.chat_message("user").write(message)
-                else:
-                    st.chat_message("assistant").write(message)
-
     def _handle_user_input(self, description_to_use):
         """Handles user input, sending it to OpenAI and displaying the response."""
         if user_message := st.chat_input(session_state['USER']):
-            # Ensure there's a key for this conversation in the history
-            if session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories']:
-                session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
             # Get the current conversation history
-            current_history = session_state['conversation_histories'][session_state[
-                'selected_chatbot_path_serialized']]
+            current_history = self.gm.get_conversation_history(session_state[
+                                                                   'selected_chatbot_path_serialized'])
 
             # Prevent re-running the query on refresh or navigating back by checking
             # if the last stored message is not from the User or the history is empty
             if (not current_history or current_history[-1][0] != session_state['USER']
                     or current_history[-1][1] != user_message):
-                # Add user message to the conversation
-                current_history.append((session_state['USER'], user_message))
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
@@ -102,13 +84,13 @@ class ChatManager:
 
                 response = self.client.get_response(user_message, description_to_use)
 
-                # Add AI response to the conversation
-                current_history.append(('Assistant', response))
-
                 # Update the conversation history in the session state
-                session_state['conversation_histories'][
-                    session_state['selected_chatbot_path_serialized']] = current_history
-
+                self.gm.add_conversation_entry(chatbot=session_state['selected_chatbot_path_serialized'],
+                                               speaker='User',
+                                               message=user_message)
+                self.gm.add_conversation_entry(chatbot=session_state['selected_chatbot_path_serialized'],
+                                               speaker='Assistant',
+                                               message=response)
                 st.rerun()
 
     def display_chat_interface(self):
@@ -117,16 +99,17 @@ class ChatManager:
             selected_chatbot_path = session_state["selected_chatbot_path"]
 
             if isinstance(menu_utils.get_final_description(selected_chatbot_path,
-                                                           session_state["prompt_options"]), str):
+                                                           session_state["prompt_options_chatbot"]), str):
 
-                description = menu_utils.get_final_description(selected_chatbot_path, session_state["prompt_options"])
+                description = menu_utils.get_final_description(selected_chatbot_path,
+                                                               session_state["prompt_options_chatbot"])
 
-                st.markdown("""---""")
+                # Get the existing conversation history if there's any
+                conversation_history = self.gm.get_conversation_history(
+                    session_state['selected_chatbot_path_serialized'])
 
-                if (session_state['selected_chatbot_path_serialized'] not in session_state['conversation_histories']
-                        or not session_state['conversation_histories'][
-                            session_state['selected_chatbot_path_serialized']]):
-
+                # If there's no conversation history, display introduction message
+                if not conversation_history:
                     st.header(session_state['_']("How can I help you?"))
                     if session_state['model_selection'] == 'OpenAI':
                         using_text = session_state['_']("You're using the following OpenAI model:")
@@ -135,6 +118,8 @@ class ChatManager:
                         st.write(f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}")
                         st.write(session_state['_']("Each time you enter information, "
                                                     "a system prompt is sent to the chat model by default."))
+                    # Create a key for the new conversation history and initialize empty
+                    self.gm.create_empty_history(session_state['selected_chatbot_path_serialized'])
 
                 with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
                     self._display_prompt_editor(description)
@@ -143,5 +128,5 @@ class ChatManager:
 
                 description_to_use = self._get_description_to_use(description)
 
-                self._display_conversation()
+                self.gm.display_conversation(conversation_history)
                 self._handle_user_input(description_to_use)

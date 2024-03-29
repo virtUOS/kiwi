@@ -9,23 +9,12 @@ import fitz
 from pdf2image import convert_from_bytes
 from PIL import Image
 
-from typing import Any, Dict, List
+from typing import List
 
 import streamlit as st
 from streamlit import session_state
 from streamlit_pdf_viewer import pdf_viewer
 from streamlit_dimensions import st_dimensions
-
-from src import menu_utils
-
-from langchain.docstore.document import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAI, ChatOpenAI, OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma, VectorStore
-from langchain.chains import LLMChain
-from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
-from langchain.chains.conversational_retrieval.base import _get_chat_history
-from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 
 # Load environment variables
 load_dotenv()
@@ -33,14 +22,13 @@ load_dotenv()
 
 class SidebarDocsControls:
 
-    def __init__(self):
-        pass
+    def __init__(self, sidebar_general_manager):
+        self.sgm = sidebar_general_manager
 
-    @staticmethod
-    def initialize_docs_session_variables():
+    def initialize_docs_session_variables(self):
         """Initialize essential session variables."""
+        self.sgm.load_prompts(prompt_options='prompt_options_docs', typ='doc', prompt_key='document_assistance')
         required_keys = {
-            'prompt_options_doc': menu_utils.load_prompts_from_yaml(typ='doc', prompt_key='document_assistance'),
             'uploaded_pdf_files': [],
             'selected_file_name': None,
             'sources_to_highlight': {},
@@ -50,7 +38,7 @@ class SidebarDocsControls:
             'doc_binary_data': {},
 
             # Current vector store
-            'vector_store': None,
+            'vector_store_docs': None,
         }
 
         for key, default_value in required_keys.items():
@@ -84,13 +72,10 @@ class SidebarDocsControls:
 
 class DocsManager:
 
-    def __init__(self, user):
+    def __init__(self, user, general_manager):
+        self.gm = general_manager
         self.client = None
         session_state['USER'] = user
-        # Columns to display pdf and chat
-        self.column_uploaded_files, self.column_pdf, self.column_chat = st.columns([0.10, 0.425, 0.425],
-                                                                                   gap="medium")
-
         # Annotations for current documents
         self.annotations = []
         # Empty container to display pdf
@@ -101,41 +86,9 @@ class DocsManager:
     def set_client(self, client):
         self.client = client
 
-    def _handle_user_input(self, description_to_use):
-        """Handles user input, sending it to OpenAI and displaying the response."""
-        if user_message := st.chat_input(session_state['USER']):
-            # Ensure there's a key for this conversation in the history
-            if 'docs' not in session_state['conversation_histories']:
-                self._create_empty_history()
-
-            # Get the current conversation history
-            current_history = session_state['conversation_histories']['docs']
-
-            # Prevent re-running the query on refresh or navigating back by checking
-            # if the last stored message is not from the User or the history is empty
-            if not current_history or current_history[-1][0] != session_state['USER'] or current_history[-1][
-                1] != user_message:
-                # Add user message to the conversation
-                current_history.append((session_state['USER'], user_message))
-
-                # Print user message immediately after getting entered because we're streaming the chatbot output
-                with st.chat_message("user"):
-                    st.markdown(user_message)
-
-                response = self.client.get_response(user_message, description_to_use)
-
-                # Add AI response to the conversation
-                current_history.append(('Assistant', response))
-
-                # Update the conversation history in the session state
-                session_state['conversation_histories']['docs'] = current_history
-
-                st.rerun()
-
     @staticmethod
     def parse_pdf(file: BytesIO) -> List[str]:
         """PDF parser"""
-
         pdf = PdfReader(file)
         output = []
         for page in pdf.pages:
@@ -150,100 +103,6 @@ class DocsManager:
             output.append(text)
 
         return output
-
-    @staticmethod
-    def text_split(text: str, filename: str) -> List[Document]:
-        """Converts a string to a list of Documents (chunks of fixed size)
-        and returns this along with the following metadata:
-            - page number
-            - chunk number
-            - source (concatenation of page & chunk number)
-        """
-
-        if isinstance(text, str):
-            text = [text]
-        page_docs = [Document(page_content=page) for page in text]
-
-        # Add page numbers as metadata
-        for i, doc in enumerate(page_docs):
-            doc.metadata["page"] = i + 1
-
-        doc_chunks = []
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=session_state['chunk_size'],
-            chunk_overlap=session_state['chunk_size'] * 0.05,  # Overlap is 5% of the chunk size
-            separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-            length_function=len,
-        )
-
-        for doc in page_docs:
-            chunks = text_splitter.split_text(doc.page_content)
-            for i, chunk in enumerate(chunks):
-                doc = Document(
-                    page_content=chunk, metadata={"page": doc.metadata["page"], "chunk": i, "file": filename}
-                )
-                # Add sources a metadata
-                doc.metadata["source"] = (f"{doc.metadata['file'].split('.pdf')[0]}|"
-                                          f"{doc.metadata['page']}-{doc.metadata['chunk']}")
-                doc_chunks.append(doc)
-
-        return doc_chunks
-
-    @staticmethod
-    def get_embeddings(docs: List[Document]) -> VectorStore:
-        """Given as input a document, this function returns the indexed version,
-        leveraging the Chroma database"""
-
-        vectorstore = Chroma.from_documents(
-            docs,
-            OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=os.getenv('OPENAI_API_KEY')),
-            # Generate unique ids
-            ids=[doc.metadata["source"] for doc in docs]
-        )
-
-        return vectorstore
-
-    @staticmethod
-    def get_condensed_question(user_input: str, chat_history_tuples, model_name: str):
-        """
-        This function adds context to the user query, by combining it with the chat history
-        """
-
-        llm = ChatOpenAI(model_name=model_name, openai_api_key=os.getenv('OPENAI_API_KEY'))
-        question_generator = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
-
-        condensed_question = question_generator.predict(
-            question=user_input, chat_history=_get_chat_history(chat_history_tuples)
-        )
-
-        return condensed_question
-
-    @staticmethod
-    def get_sources(vectorstore: VectorStore, query: str) -> List[Document]:
-        """This function performs a similarity search between the user query and the
-        indexed document, returning the five most relevant document chunks for the given query
-        """
-
-        docs = vectorstore.similarity_search(query, k=5)
-
-        return docs
-
-    @staticmethod
-    def get_answer(docs: List[Document], query: str) -> Dict[str, Any]:
-        """Gets an answer to a question from a list of Documents."""
-
-        llm = OpenAI()
-        doc_chain = load_qa_with_sources_chain(
-            llm=llm,
-            chain_type="stuff",
-            prompt=session_state['prompt_options_doc'],
-        )
-
-        answer = doc_chain(
-            {"input_documents": docs, "question": query}, return_only_outputs=True
-        )
-
-        return answer
 
     def display_thumbnails(self):
 
@@ -308,11 +167,11 @@ class DocsManager:
                             else:
                                 st.write(f"File: {filename}")
 
-    def display_pdf(self):
+    def _display_pdf(self, annotations):
         with self.column_pdf:
             if st.session_state['selected_file_name']:
                 pdf_viewer(input=session_state['doc_binary_data'][st.session_state['selected_file_name']],
-                           annotations=self.annotations, height=1000,
+                           annotations=annotations, height=1000,
                            width=int(self.main_dim['width'] * 0.4))
 
     @st.cache_data
@@ -341,20 +200,12 @@ class DocsManager:
             # self.display_pdf()
 
             # Parse the pdf
-            data_dict = _self.parse_pdf(file)
+            pdf_text = _self.parse_pdf(file)
 
             # Get text data
-            text.extend(_self.text_split(data_dict, filename))
+            text.extend(_self.client.text_split(pdf_text, filename))
 
-        session_state['vector_store'] = _self.get_embeddings(text)
-
-    def load_doc_to_display(self):
-        if session_state['uploaded_pdf_files']:
-            self.display_thumbnails()
-            self._process_uploaded_files(session_state['uploaded_pdf_files'])
-        else:
-            with self.column_pdf:
-                st.header("Please upload your documents on the sidebar.")
+        session_state['vector_store_docs'] = _self.client.get_embeddings(text)
 
     @staticmethod
     def get_doc(binary_data):
@@ -364,65 +215,26 @@ class DocsManager:
             doc = None
         return doc
 
-    def display_sources(self, file):
-        files_with_sources = ', '.join(list(st.session_state['sources_to_display']))
+    def _display_sources(self, file):
+        files_with_sources = ', '.join(list(session_state['sources_to_display']))
         with self.column_pdf:
             st.write(f"Files with sources: {files_with_sources}")
             st.header(f"Sources for file {file}:")
-            for i, source in enumerate(st.session_state['sources_to_display'][file]):
+            for i, source in enumerate(session_state['sources_to_display'][file]):
                 st.markdown(f"{i + 1}) {source}")
 
-    def display_chat_title(self):
+    def _display_chat_title(self):
         # If no conversations yet then display chat title message
-        if ('docs' not in session_state['conversation_histories'] or
-                not session_state['conversation_histories']['docs']):
+        if not self.gm.has_conversation_history('docs'):
             with self.column_chat:
                 # Interface to chat with selected expert
                 st.title(f"What do you want to know about your documents?")
 
-    @staticmethod
-    def _has_conversation_history():
-        if ('docs' in session_state['conversation_histories']
-                and session_state['uploaded_pdf_files']):
-            return True
-        return False
-
-    @staticmethod
-    def _create_empty_history():
-        # If no conversation in history for this chatbot, then create an empty one
-        session_state['conversation_histories']['docs'] = [
-        ]
-        return session_state['conversation_histories']['docs']
-
-    def _display_conversation(self):
-        """Displays the conversation history for the selected path."""
-        conversation_history = session_state['conversation_histories'].get(
-            'docs', [])
-
-        if conversation_history:
-            for speaker, message in conversation_history:
-                if speaker == session_state['USER']:
-                    with self.column_chat:
-                        st.chat_message("user").write(message)
-                else:
-                    with self.column_chat:
-                        st.chat_message("assistant").write(message)
-
-        return conversation_history
-
     def _collect_user_input(self, conversation, repeat=False):
         with self.column_chat:
 
-            # Set style of chat input so that it shows up at the bottom of the column
-            chat_input_style = f"""
-            <style>
-                .stChatInput {{
-                  position: fixed;
-                  bottom: 3rem;
-                }}
-            </style>
-            """
-            st.markdown(chat_input_style, unsafe_allow_html=True)
+            # Changes the style of the chat input to appear at the bottom of the column
+            self.gm.change_chatbot_style()
 
             # Accept user input
             if user_message := st.chat_input("Ask something about your PDFs",
@@ -431,8 +243,8 @@ class DocsManager:
                 # Prevent re-running the query on refresh or navigating back to the page by checking
                 # if the last stored message is not from the User
                 if not conversation or conversation[-1] != (session_state['USER'], user_message) or repeat:
-                    st.session_state['sources_to_highlight'] = {}
-                    st.session_state['sources_to_display'] = {}
+                    session_state['sources_to_highlight'] = {}
+                    session_state['sources_to_display'] = {}
                     return user_message
 
         return None
@@ -440,26 +252,20 @@ class DocsManager:
     def _user_message_processing(self, conversation, user_message):
         if user_message:
             # Add user message to the conversation
-            session_state['conversation_histories']['docs'].append((session_state['USER'], user_message))
+            self.gm.add_conversation_entry(chatbot='videos', speaker='User', message=user_message)
 
-            # Generate tuples with the chat history
-            # We iterate with a step of 2 and always take
-            # the current and next item assuming USER follows by Assistant
-            chat_history_tuples = [
-                (conversation[i][1], conversation[i + 1][1])
-                # Extract just the messages, ignoring the labels
-                for i in range(0, len(conversation) - 1, 2)
-                # We use len(conversation)-1 to avoid out-of-range errors
-            ]
+            chat_history_tuples = self.gm.generate_chat_history_tuples(conversation)
 
             with self.column_chat:
                 with st.spinner():
-                    condensed_question = self.get_condensed_question(
-                        user_message, chat_history_tuples, os.getenv('OPENAI_MODEL')
+                    condensed_question = self.client.get_condensed_question(
+                        user_message, chat_history_tuples
                     )
 
-                    sources = self.get_sources(session_state['vector_store'], condensed_question)
-                    all_output = self.get_answer(sources, condensed_question)
+                    sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
+                    all_output = self.client.get_answer(session_state['prompt_options_docs'],
+                                                        sources,
+                                                        condensed_question)
 
                     ai_response = all_output['output_text']
 
@@ -484,16 +290,16 @@ class DocsManager:
                                 if page_file in session_state['doc_binary_data']:
                                     if page_file not in docs:
                                         docs[page_file] = self.get_doc(session_state['doc_binary_data'][page_file])
-                                        st.session_state['sources_to_highlight'][page_file] = []
-                                        st.session_state['sources_to_display'][page_file] = []
-                                    st.session_state['sources_to_display'][page_file].append(
+                                        session_state['sources_to_highlight'][page_file] = []
+                                        session_state['sources_to_display'][page_file] = []
+                                    session_state['sources_to_display'][page_file].append(
                                         f"{source_reference} - {content[:150]}")
                                     page_number = int(page_source.split('-')[0])
                                     page = docs[page_file][page_number - 1]
                                     rects = page.search_for(
                                         content)  # Maybe use flags here for better search??
                                     for rect in rects:
-                                        st.session_state['sources_to_highlight'][page_file].append(
+                                        session_state['sources_to_highlight'][page_file].append(
                                             {'page': page_number,
                                              'x': rect.x0,
                                              'y': rect.y0,
@@ -502,47 +308,67 @@ class DocsManager:
                                              'color': "red"})
 
             # Add AI response to the conversation
-            st.session_state['conversation_histories']['docs'].append(('Assistant', ai_response))
-        pass
+            self.gm.add_conversation_entry(chatbot='docs', speaker='Assistant', message=ai_response)
+
+    def _handle_user_input(self, conversation_history):
+        user_message = self._collect_user_input(conversation_history)
+
+        # Print user message immediately after
+        # getting entered because we're streaming the chatbot output
+        with self.column_chat:
+            if user_message:
+                with st.chat_message("user"):
+                    st.markdown(user_message)
+
+        self._user_message_processing(conversation_history, user_message)
+
+    def _handle_and_display_sources(self):
+        file_stem = session_state['selected_file_name']
+        if file_stem in session_state['sources_to_highlight']:
+            self.annotations = session_state['sources_to_highlight'][file_stem]
+        else:
+            self.annotations = []
+
+        if file_stem in session_state['doc_binary_data']:
+            self._display_pdf(self.annotations)
+            if file_stem in session_state['sources_to_display']:
+                self._display_sources(file_stem)
+
+    def _load_doc_to_display(self):
+        if session_state['uploaded_pdf_files']:
+            self.display_thumbnails()
+            self._process_uploaded_files(session_state['uploaded_pdf_files'])
+        else:
+            with self.column_pdf:
+                st.header("Please upload your documents on the sidebar.")
 
     def display_chat_interface(self):
 
+        # Columns to display pdf and chat
+        self.column_uploaded_files, self.column_pdf, self.column_chat = st.columns([0.10, 0.425, 0.425],
+                                                                                   gap="medium")
+
+        self._load_doc_to_display()
+
         if session_state['selected_chatbot_path']:
 
-            doc_prompt = session_state['prompt_options_doc']
+            doc_prompt = session_state['prompt_options_docs']
             # Checking if the prompt exists
             if doc_prompt:
 
-                self.display_chat_title()
+                self._display_chat_title()
+
+                conversation_history = self.gm.get_conversation_history('docs')
 
                 # If there's already a conversation in the history for this chatbot, display it.
-                if self._has_conversation_history():
-                    conversation = self._display_conversation()
+                if conversation_history:
+                    self.gm.display_conversation(conversation_history=conversation_history, container=self.column_chat)
                 else:
-                    conversation = self._create_empty_history()
+                    # Create empty conversation for this chatbot in case there's no key for it yet
+                    self.gm.create_empty_history(chatbot='docs')
 
-                file_stem = session_state['selected_file_name']
-
-                user_message = self._collect_user_input(conversation)
-
-                # Print user message immediately after
-                # getting entered because we're streaming the chatbot output
-                with self.column_chat:
-                    if user_message:
-                        with st.chat_message("user"):
-                            st.markdown(user_message)
-
-                self._user_message_processing(conversation, user_message)
-
-                if file_stem in session_state['sources_to_highlight']:
-                    self.annotations = session_state['sources_to_highlight'][file_stem]
-                else:
-                    self.annotations = []
-
-                if file_stem in session_state['doc_binary_data']:
-                    self.display_pdf()
-                    if file_stem in session_state['sources_to_display']:
-                        self.display_sources(file_stem)
+                self._handle_user_input(conversation_history)
+                self._handle_and_display_sources()
 
             else:
                 st.warning("No defined prompt was found. Please define a prompt before using the chat.")

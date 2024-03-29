@@ -4,34 +4,70 @@ import streamlit as st
 from langchain.prompts import PromptTemplate
 
 
+def _load_chat_prompts_from_yaml(language):
+    # Use basic prompts
+    if language == 'en':
+        file_path = 'prompts_config/chat_basic_prompts_en.yml'
+    else:
+        file_path = 'prompts_config/chat_basic_prompts_de.yml'
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return yaml.safe_load(file)
+
+
+def _load_docs_prompts_from_yaml(language, prompt_key):
+    # Use basic prompts
+    if language == 'en':
+        file_path = 'prompts_config/prompt_templates_en.yml'
+    else:
+        file_path = 'prompts_config/prompt_templates_en.yml'
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        prompt_templates = yaml.safe_load(file)
+
+    template_info = prompt_templates['prompt_templates'][prompt_key]
+
+    # Create the PromptTemplate instance with the loaded template and input_variables
+    return PromptTemplate(template=template_info['template'],
+                          input_variables=template_info['input_variables'])
+
+
+def _load_videos_prompts_from_yaml(language, prompt_key):
+    # Use basic prompts
+    if language == 'en':
+        file_path_basic = 'prompts_config/videos_basic_prompts_en.yml'
+        file_path_template = 'prompts_config/prompt_templates_en.yml'
+    else:
+        file_path_basic = 'prompts_config/videos_basic_prompts_de.yml'
+        file_path_template = 'prompts_config/prompt_templates_de.yml'
+
+    with open(file_path_basic, 'r', encoding='utf-8') as file:
+        prompt_templates_basic = yaml.safe_load(file)
+
+    with open(file_path_template, 'r', encoding='utf-8') as file:
+        prompt_templates = yaml.safe_load(file)
+
+    summary_prompt = {'prompt': prompt_templates_basic['Summary'], 'icon': '📝'}
+    topics_prompt = {'prompt': prompt_templates_basic['Topics'], 'icon': '🎯'}
+    artist_prompt = {'prompt': prompt_templates_basic['Artist'], 'icon': '🧑‍🎤'}
+    lyrics_prompt = {'prompt': prompt_templates_basic['Lyrics'], 'icon': '🎶'}
+
+    template_info = prompt_templates['prompt_templates'][prompt_key]
+
+    return summary_prompt, topics_prompt, artist_prompt, lyrics_prompt, PromptTemplate(
+        template=template_info['template'], input_variables=template_info['input_variables'])
+
+
 # Function to load prompts from a YAML file
 @st.cache_data
 def load_prompts_from_yaml(language='de', typ='chat', prompt_key=None):
     if typ == 'chat':
-        # Use basic prompts
-        if language == 'en':
-            file_path = 'prompts_config/chat_basic_prompts_en.yml'
-        else:
-            file_path = 'prompts_config/chat_basic_prompts_de.yml'
-
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return yaml.safe_load(file)
-
+        return _load_chat_prompts_from_yaml(language)
     elif typ == 'doc':
-        # Use basic prompts
-        if language == 'en':
-            file_path = 'prompts_config/doc_basic_prompts_en.yml'
-        else:
-            file_path = 'prompts_config/doc_basic_prompts_en.yml'
+        return _load_docs_prompts_from_yaml(language, prompt_key)
+    elif typ == 'vid':
+        return _load_videos_prompts_from_yaml(language, prompt_key)
 
-        with open(file_path, 'r', encoding='utf-8') as file:
-            prompt_templates = yaml.safe_load(file)
-
-        template_info = prompt_templates['prompt_templates'][prompt_key]
-
-        # Create the PromptTemplate instance with the loaded template and input_variables
-        return PromptTemplate(template=template_info['template'],
-                              input_variables=template_info['input_variables'])
 
 def load_dict_from_yaml(file):
     return yaml.safe_load(file)
@@ -43,7 +79,7 @@ def dict_to_yaml(dictionary):
 
 
 def set_prompt_for_path(prompts_dict, path, edited_prompt):
-    """Recursively updates the prompt for a specific path in the prompts dictionary."""
+    """Recursively updates the prompt for a specific path in the prompts' dictionary."""
     if len(path) == 1:
         prompts_dict[path[0]] = edited_prompt
     else:

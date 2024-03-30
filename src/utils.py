@@ -8,9 +8,10 @@ import extra_streamlit_components as stx
 
 from typing import Any, Dict, List
 
+from openai import OpenAI
 from langchain.chains import LLMChain
 from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
-from langchain_openai import OpenAI, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains.conversational_retrieval.base import _get_chat_history
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from langchain_openai import OpenAIEmbeddings

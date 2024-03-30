@@ -1,5 +1,5 @@
 import os
-import base64
+import re
 from urllib.parse import urlparse, parse_qs
 import requests
 from bs4 import BeautifulSoup
@@ -9,26 +9,13 @@ import yt_dlp
 from pathlib import Path
 
 from dotenv import load_dotenv
-import fitz
-
-from typing import Any, Dict, List
 
 import streamlit as st
 from streamlit import session_state
 import streamlit_pills as stp
 from streamlit_dimensions import st_dimensions
 
-from src import menu_utils
 from src import videos_config
-
-from langchain.docstore.document import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAI, ChatOpenAI, OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma, VectorStore
-from langchain.chains import LLMChain
-from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT
-from langchain.chains.conversational_retrieval.base import _get_chat_history
-from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 
 # Load environment variables
 load_dotenv()
@@ -61,6 +48,9 @@ class SidebarVideosControls:
             'video_title': None,
             'summary': None,
             'topics': None,
+            'suggestions_list': [],
+            'icons_list': [],
+            'suggested': False,
 
             # Current vector store
             'vector_store_transcription': None,
@@ -70,9 +60,10 @@ class SidebarVideosControls:
             if key not in session_state:
                 session_state[key] = default_value
 
-        self._fill_suggestions_pills_list()
+        # self._fill_suggestions_pills_list()
 
-    def _reset_videos_session_variables(self):
+    @staticmethod
+    def _reset_videos_session_variables():
         """Initialize essential session variables."""
         required_keys = {
             'selected_subtitles_file': None,
@@ -84,6 +75,9 @@ class SidebarVideosControls:
             'pills_index': None,
             'summary': None,
             'topics': None,
+            'suggestions_list': [],
+            'icons_list': [],
+            'suggested': False,
 
             # Current vector store
             'vector_store_transcription': None,
@@ -92,9 +86,10 @@ class SidebarVideosControls:
         for key, default_value in required_keys.items():
             session_state[key] = default_value
 
-        self._fill_suggestions_pills_list()
+        # self._fill_suggestions_pills_list()
 
-    def _reset_transcription_session_variables(self):
+    @staticmethod
+    def _reset_transcription_session_variables():
         """Initialize essential session variables."""
         required_keys = {
             'selected_subtitles_text': "",
@@ -102,6 +97,9 @@ class SidebarVideosControls:
             'pills_index': None,
             'summary': None,
             'topics': None,
+            'suggestions_list': [],
+            'icons_list': [],
+            'suggested': False,
 
             # Current vector store
             'vector_store_transcription': None,
@@ -110,7 +108,7 @@ class SidebarVideosControls:
         for key, default_value in required_keys.items():
             session_state[key] = default_value
 
-        self._fill_suggestions_pills_list()
+        # self._fill_suggestions_pills_list()
 
     @staticmethod
     def _fill_suggestions_pills_list():
@@ -376,7 +374,7 @@ class VideosManager:
             user_message = self._handle_user_input(predefined_prompt_selected)
 
             if user_message:
-                self.gm.add_conversation_entry(chatbot='videos', speaker='User', message=user_message)
+                self.gm.add_conversation_entry(chatbot='videos', speaker=session_state['USER'], message=user_message)
 
         return user_message, conversation_history
 
@@ -483,16 +481,68 @@ class VideosManager:
             with container:
                 st.text_area(typ, info, height=300)
 
-    def _generate_and_display_summary_and_topics(self):
-        if not session_state['summary']:
-            session_state['summary'] = self._process_user_message_and_get_answer(
-                session_state['prompt_options_videos'][0])
-            self._display_ai_info_box(session_state['summary'], 'Summary', session_state['column_info1'])
+    def _generate_and_display_info(self, info, column):
+        if not session_state[info]:
+            with st.spinner(f"Generating {info}"):
+                for i, prompt in enumerate(session_state['prompt_options_videos'][:-2]):
+                    if info in prompt.keys():
+                        session_state[info] = self._process_user_message_and_get_answer(
+                            session_state['prompt_options_videos'][i][info])
+                        break
+        self._display_ai_info_box(session_state[info], info.capitalize(), column)
 
-        if not session_state['topics']:
-            session_state['topics'] = self._process_user_message_and_get_answer(
-                session_state['prompt_options_videos'][1])
-            self._display_ai_info_box(session_state['topics'], 'Topics', session_state['column_info2'])
+    @staticmethod
+    def _process_ai_response_for_suggestion_queries(model_output):
+        # Ensure model_output is a single string for processing
+        model_output_string = ' '.join(model_output) if isinstance(model_output, list) else model_output
+
+        # Remove timestamps
+        clean_output = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3}', '', model_output_string)
+
+        # Removing content inside square brackets including the brackets themselves
+        clean_output = re.sub(r'\[.*?\]', '', clean_output)
+
+        # Define question keywords for splitting
+        split_keywords = ['What', 'How', 'Can you']
+        regex_pattern = '|'.join([f"(?={keyword})" for keyword in split_keywords])
+
+        # Performing keyword-based splitting
+        queries = re.split(regex_pattern, clean_output)
+
+        cleaned_queries = []
+        for query in queries:
+            # Additional cleaning to remove numerical lists that may start the query due to splitting
+            # Regular expression improved to target numerical patterns at the start and within the text
+            query_clean = re.sub(r'^\s*\d+[.)>\-]+\s*', '', query)  # Remove numerical patterns at the start
+            query_clean = re.sub(r'\s*\d+[.)>\-]+\s*$', '',
+                                 query_clean)  # Remove numerical patterns that might appear at the end
+            query_clean = re.sub(r'\s+\d+[.)>\-]+\s+', ' ',
+                                 query_clean)  # Clean up any numerical patterns within the text
+
+            # Replace multiple spaces with a single space
+            query_clean = re.sub(r'\s+', ' ', query_clean).strip()
+            if query_clean:
+                cleaned_queries.append(query_clean)
+
+        # Remove any initial empty or irrelevant entry
+        cleaned_queries = [q for q in cleaned_queries if q and not q.isdigit()]
+
+        print(cleaned_queries)
+
+        return cleaned_queries
+
+    def _generate_suggestions(self):
+        # Just run it the first time when a new transcription is loaded
+        if not session_state['suggestions_list'] and not session_state['suggested']:
+            with st.spinner(f"Generating suggestions..."):
+                ai_response = self._process_user_message_and_get_answer(
+                    session_state['prompt_options_videos'][-2]['queries'])
+                queries = self._process_ai_response_for_suggestion_queries(ai_response)
+                for query in queries:
+                    session_state['suggestions_list'].append(query)
+                    session_state['icons_list'].append(session_state['prompt_options_videos'][-2]['icon'])
+                session_state['suggested'] = True
+                st.rerun()
 
     def display_video_interface(self):
         # Use st.columns to create two columns
@@ -509,9 +559,11 @@ class VideosManager:
             user_message, conversation_history = self._display_chat()
             self._display_transcription()
             self._process_transcription(' '.join(session_state['selected_subtitles_text']))
-            self._generate_and_display_summary_and_topics()
+            self._generate_and_display_info("summary", session_state['column_info1'])
+            self._generate_and_display_info("topics", session_state['column_info2'])
+            self._generate_suggestions()
             if user_message:
-                print(conversation_history)
                 ai_response = self._process_user_message_and_get_answer(user_message=user_message,
                                                                         conversation_history=conversation_history)
                 self._display_ai_response(ai_response, session_state['column_chat'])
+                self.gm.add_conversation_entry('videos', 'Assistant', ai_response)

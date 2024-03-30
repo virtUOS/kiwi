@@ -47,14 +47,15 @@ def _load_videos_prompts_from_yaml(language, prompt_key):
     with open(file_path_template, 'r', encoding='utf-8') as file:
         prompt_templates = yaml.safe_load(file)
 
-    summary_prompt = {'prompt': prompt_templates_basic['Summary'], 'icon': '📝'}
-    topics_prompt = {'prompt': prompt_templates_basic['Topics'], 'icon': '🎯'}
-    artist_prompt = {'prompt': prompt_templates_basic['Artist'], 'icon': '🧑‍🎤'}
-    lyrics_prompt = {'prompt': prompt_templates_basic['Lyrics'], 'icon': '🎶'}
+    summary_prompt = {'summary': prompt_templates_basic['Summary'], 'icon': '📝'}
+    topics_prompt = {'topics': prompt_templates_basic['Topics'], 'icon': '🎯'}
+    artist_prompt = {'artist': prompt_templates_basic['Artist'], 'icon': '🧑‍🎤'}
+    lyrics_prompt = {'lyrics': prompt_templates_basic['Lyrics'], 'icon': '🎶'}
+    queries_prompt = {'queries': prompt_templates_basic['Queries'], 'icon': '🌟'}
 
     template_info = prompt_templates['prompt_templates'][prompt_key]
 
-    return summary_prompt, topics_prompt, artist_prompt, lyrics_prompt, PromptTemplate(
+    return summary_prompt, topics_prompt, artist_prompt, lyrics_prompt, queries_prompt, PromptTemplate(
         template=template_info['template'], input_variables=template_info['input_variables'])
 
 

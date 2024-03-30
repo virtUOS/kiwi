@@ -252,7 +252,7 @@ class DocsManager:
     def _user_message_processing(self, conversation, user_message):
         if user_message:
             # Add user message to the conversation
-            self.gm.add_conversation_entry(chatbot='videos', speaker='User', message=user_message)
+            self.gm.add_conversation_entry(chatbot='videos', speaker=session_state['USER'], message=user_message)
 
             chat_history_tuples = self.gm.generate_chat_history_tuples(conversation)
 

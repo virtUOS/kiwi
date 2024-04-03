@@ -7,6 +7,7 @@ streamlit-cookies-manager-hotpatched
 streamlit_pdf_viewer
 streamlit_dimensions
 streamlit_pills
+extra-streamlit-components
 PyYAML
 langchain
 langchain_openai

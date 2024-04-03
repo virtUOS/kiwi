@@ -86,7 +86,7 @@ class ChatManager:
 
                 # Update the conversation history in the session state
                 self.gm.add_conversation_entry(chatbot=session_state['selected_chatbot_path_serialized'],
-                                               speaker='User',
+                                               speaker=session_state['USER'],
                                                message=user_message)
                 self.gm.add_conversation_entry(chatbot=session_state['selected_chatbot_path_serialized'],
                                                speaker='Assistant',

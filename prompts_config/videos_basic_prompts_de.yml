@@ -1,5 +1,11 @@
-Summary: "Write a comprehensive and concise summary of the video. Do the summary in the language the transcription is in."
-Topics: "Write a comprehensive list of the topics in the video. Use nested bullet points: with headings, terms, and key concepts in bold. Do the summary in the language the transcription is in."
+Summary: "Write a comprehensive and concise summary of the video. Do the summary in the language the transcription is in. If you determine the video is from a song, provide the entire lyrics instead of a summary."
+Topics: "Write a comprehensive list of the topics in the video. Use nested bullet points: with headings, terms, and key concepts in bold. Do the summary in the language the transcription is in. If you determine the video is from a song, provide a list of facts about the artist instead of the topics."
 Lyrics: "If you can determine that this video is of a song, then simply provide the lyrics of the song that you know."
 Artist: "If you can determine that this video is of a song, then provide the info that you know about the artist of that song, as a list."
-Queries: "Based on your understanding of the video's content, including its summary, topics covered, and any specific details such as lyrics or artist information (if applicable), generate 3 query suggestions that the user could ask to learn more about the video. Format the suggestions as questions, separate each query with a semicolon (;), and ensure they are relevant to the video's content. Also, ensure the queries are in the same language as the video's transcription. Example: 'What is the main theme of the video?; Who is the artist of the song featured in the video?; Can you list any significant quotes mentioned?"
+Queries: "Directly provide 3 specific queries based solely on the video's content. **Don't write anything else but the queries.** These queries should aim to deepen the user's understanding of the video by addressing its summary, key topics, and any notable details. **Format the response as a concise list of questions ONLY, with no introductions, explanations, or comments before, between, or after the questions.** Use semicolons to separate each query. Ensure all queries are relevant to the video's content and presented in the same language as the video's transcription.
+
+**Example queries, formatted correctly**:
+
+'What is the main theme of the video?'
+'Who is the artist of the song featured in the video?'
+'Can you list any significant quotes mentioned?'"

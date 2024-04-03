@@ -302,9 +302,9 @@ class AIClient:
             def load_langchain_data(model_name):
                 llm = ChatOpenAI(model_name=model_name, openai_api_key=os.getenv('OPENAI_API_KEY'))
                 question_generator = LLMChain(llm=llm, prompt=CONDENSE_QUESTION_PROMPT)
-                return question_generator
+                return llm, question_generator
 
-            self.question_generator = load_langchain_data(self.model)
+            self.client_lc, self.question_generator = load_langchain_data(self.model)
         else:
             pass
             # Add here client initialization for local model
@@ -475,7 +475,7 @@ class AIClient:
     def get_answer(self, prompt: str, docs: List[Document], query: str, title="") -> Dict[str, Any]:
         """Gets an answer to a question from a list of Documents."""
         doc_chain = load_qa_with_sources_chain(
-            llm=self.client,
+            llm=self.client_lc,
             chain_type="stuff",
             prompt=prompt,
         )
@@ -484,14 +484,15 @@ class AIClient:
         )
         return answer
 
-    def get_embeddings(self, docs: List[Document]) -> VectorStore:
+    def get_vectorstore(self, docs: List[Document], collection=None) -> VectorStore:
         """Given as input a document, this function returns the indexed version,
         leveraging the Chroma database"""
         vectorstore = Chroma.from_documents(
             docs,
             OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=self.openai_key),
             # Generate unique ids
-            ids=[doc.metadata["source"] for doc in docs]
+            ids=[doc.metadata["source"] for doc in docs],
+            collection_name=collection,
         )
         return vectorstore
 

@@ -47,6 +47,10 @@ class SidebarDocsControls:
 
     @staticmethod
     def _check_amount_of_uploaded_files_and_set_variables():
+
+        if session_state['vector_store_docs']:
+            session_state['vector_store_docs'].delete_collection()
+
         max_files = 5
         session_state['uploaded_pdf_files'] = []
 
@@ -205,7 +209,7 @@ class DocsManager:
             # Get text data
             text.extend(_self.client.text_split(pdf_text, filename))
 
-        session_state['vector_store_docs'] = _self.client.get_embeddings(text)
+        session_state['vector_store_docs'] = _self.client.get_vectorstore(text, collection="docs")
 
     @staticmethod
     def get_doc(binary_data):
@@ -252,7 +256,7 @@ class DocsManager:
     def _user_message_processing(self, conversation, user_message):
         if user_message:
             # Add user message to the conversation
-            self.gm.add_conversation_entry(chatbot='videos', speaker=session_state['USER'], message=user_message)
+            self.gm.add_conversation_entry(chatbot='docs', speaker=session_state['USER'], message=user_message)
 
             chat_history_tuples = self.gm.generate_chat_history_tuples(conversation)
 

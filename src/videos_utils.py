@@ -23,8 +23,9 @@ load_dotenv()
 
 class SidebarVideosControls:
 
-    def __init__(self, sidebar_general_manager):
+    def __init__(self, sidebar_general_manager, general_manager):
         self.sgm = sidebar_general_manager
+        self.gm = general_manager
         self.client = None
 
     def set_client(self, client):
@@ -38,19 +39,21 @@ class SidebarVideosControls:
             'previous_video': None,
             'youtube': False,
             'selected_subtitles_file': None,
+            'previous_selected_subtitles_file': None,
             'subtitles_file_list': None,
             'selected_subtitles_text': "",
-            'previous_question': "",
-            'question': None,
             'input_disabled': False,
             'pills_index': None,
             'subtitles_files_folder': videos_config.TRANSCRIPTIONS_DIR,
             'video_title': None,
             'summary': None,
             'topics': None,
+            'artist': None,
+            'lyrics': None,
             'suggestions_list': [],
             'icons_list': [],
             'suggested': False,
+            'changed_video': True,
 
             # Current vector store
             'vector_store_transcription': None,
@@ -60,24 +63,26 @@ class SidebarVideosControls:
             if key not in session_state:
                 session_state[key] = default_value
 
-        # self._fill_suggestions_pills_list()
-
-    @staticmethod
-    def _reset_videos_session_variables():
+    def _reset_videos_session_variables(self):
         """Initialize essential session variables."""
+
+        if session_state['vector_store_transcription']:
+            session_state['vector_store_transcription'].delete_collection()
+
         required_keys = {
             'selected_subtitles_file': None,
             'subtitles_file_list': None,
             'selected_subtitles_text': "",
-            'previous_question': "",
-            'question': None,
             'input_disabled': False,
             'pills_index': None,
             'summary': None,
             'topics': None,
+            'artist': None,
+            'lyrics': None,
             'suggestions_list': [],
             'icons_list': [],
             'suggested': False,
+            'changed_video': True,
 
             # Current vector store
             'vector_store_transcription': None,
@@ -86,20 +91,26 @@ class SidebarVideosControls:
         for key, default_value in required_keys.items():
             session_state[key] = default_value
 
-        # self._fill_suggestions_pills_list()
+        self.gm.create_empty_history('videos')
 
-    @staticmethod
-    def _reset_transcription_session_variables():
+    def _reset_transcription_session_variables(self):
         """Initialize essential session variables."""
+
+        if session_state['vector_store_transcription']:
+            session_state['vector_store_transcription'].delete_collection()
+
         required_keys = {
             'selected_subtitles_text': "",
             'input_disabled': False,
             'pills_index': None,
             'summary': None,
             'topics': None,
+            'artist': None,
+            'lyrics': None,
             'suggestions_list': [],
             'icons_list': [],
             'suggested': False,
+            'changed_video': True,
 
             # Current vector store
             'vector_store_transcription': None,
@@ -108,19 +119,7 @@ class SidebarVideosControls:
         for key, default_value in required_keys.items():
             session_state[key] = default_value
 
-        # self._fill_suggestions_pills_list()
-
-    @staticmethod
-    def _fill_suggestions_pills_list():
-        # If the list of suggestions doesn't exist or is empty, fill it up
-        if 'suggestions_list' not in session_state or not session_state['suggestions_list']:
-            session_state['suggestions_list'] = []
-            session_state['icons_list'] = []
-
-            # The last prompt in the list of options is the template prompt
-            for prompt in session_state['prompt_options_videos'][:-1]:
-                session_state['suggestions_list'].append(prompt['prompt'])
-                session_state['icons_list'].append(prompt['icon'])
+        self.gm.create_empty_history('videos')
 
     @staticmethod
     def _extract_video_id(url):
@@ -179,12 +178,17 @@ class SidebarVideosControls:
                     if os.path.getsize(audio_file_path) > 26000000:
                         segment_paths = self._split_audio_file(audio_file_path)
                         transcriptions = []
+                        if session_state['video_title']:
+                            prompt = f"The title of this video is: {session_state['video_title']}"
+                        else:
+                            prompt = ""
                         for segment_path in segment_paths:
                             with open(segment_path, "rb") as segment_file:
                                 transcription = self.client.audio.transcriptions.create(
                                     model="whisper-1",
                                     file=segment_file,
-                                    response_format='vtt'
+                                    response_format='vtt',
+                                    prompt=prompt
                                 )
                                 transcriptions.append(transcription)
                                 os.remove(segment_path)  # Clean up temporary files
@@ -231,10 +235,6 @@ class SidebarVideosControls:
 
             self._generate_transcription(video_id)
 
-            # audio = transcribe.extract_audio(audio_file)
-            # transcribe.transcribe(audio, audio_file, videos_config.WHISPER_MODEL_SIZE, videos_config.DEVICE,
-            #                      videos_config.QUANT, videos_config.LANGUAGE, videos_config.DIARIZE)
-
     @staticmethod
     def _extract_video_youtube_title(youtube_video):
         r = requests.get(youtube_video)
@@ -247,6 +247,7 @@ class SidebarVideosControls:
         title = title.replace("- YouTube", "")
         title = title.strip()
         return title
+
 
     def display_videos_sidebar_controls(self):
         with st.sidebar:
@@ -286,14 +287,18 @@ class SidebarVideosControls:
                         file.endswith(".vtt") and file.startswith(session_state['file_stem'])]
 
                     if session_state['subtitles_file_list']:
-                        selected_subtitles_file = st.selectbox("Select an subtitles file to display the transcription",
-                                                               session_state['subtitles_file_list'])
+                        st.selectbox("Select an subtitles file to display the transcription",
+                                     session_state['subtitles_file_list'],
+                                     key='selected_subtitles_file',
+                                     index=None)
 
-                        if selected_subtitles_file != session_state['selected_subtitles_file']:
+                        if (session_state['previous_selected_subtitles_file']
+                                != session_state['selected_subtitles_file'] and
+                                session_state['selected_subtitles_file']):
                             self._reset_transcription_session_variables()
-                            session_state['selected_subtitles_file'] = selected_subtitles_file
                             _, session_state['selected_subtitles_text'] = self._open_transcription_file(
-                                selected_subtitles_file)
+                                session_state['selected_subtitles_file'])
+                            session_state['previous_selected_subtitles_file'] = session_state['selected_subtitles_file']
                     else:
                         st.button("Generate_transcription", on_click=self._process_video)
 
@@ -365,8 +370,6 @@ class VideosManager:
 
             if conversation_history:
                 self.gm.display_conversation(conversation_history, container=session_state['column_chat'])
-            else:
-                self.gm.create_empty_history('videos')
 
             # Changes the style of the chat input to appear at the bottom of the column
             self.gm.change_chatbot_style()
@@ -388,7 +391,6 @@ class VideosManager:
         user_message = None
         if predefined_prompt:
             user_message = predefined_prompt
-
         elif user_input:
             user_message = user_input
 
@@ -417,30 +419,28 @@ class VideosManager:
 
         return colored_line
 
-    def _display_transcription(self):
+    @st.cache_data
+    def _prepare_transcription(_self, transcription):
         # Initialize an empty string to store colored lines
         colored_lines = ""
-        with session_state['column_transcription']:
-            st.markdown("### Transcription:")
-            for line in session_state['selected_subtitles_text']:
-                words = ["SPEAKER_01", "SPEAKER_02"]
-                colored_line = self._color_specific_words(line, words)
-                colored_lines += colored_line + "<br>"
-            # Create a scrollable markdown section
-            scrollable_code = f"""
-            <div style='height: 300px; overflow-y: auto;'>
-            {colored_lines}
-            </div>
-            """
-            st.markdown(scrollable_code, unsafe_allow_html=True)
+        for line in transcription:
+            words = ["SPEAKER_01", "SPEAKER_02"]
+            colored_line = _self._color_specific_words(line, words)
+            colored_lines += colored_line + "<br>"
+        # Create a scrollable markdown section
+        scrollable_code = f"""
+        <div style='height: 300px; overflow-y: auto;'>
+        {colored_lines}
+        </div>
+        """
+        return scrollable_code
 
-    @st.cache_data
-    def _process_transcription(_self, transcription):
-        # When the uploaded files change reinitialize variables
-        text = []
-        # Get text data
-        text.extend(_self.client.text_split(transcription, session_state['video_title']))
-        session_state['vector_store_transcription'] = _self.client.get_embeddings(text)
+    def _process_transcription(self, transcription):
+        if session_state['changed_video']:
+            # When the uploaded files change reinitialize variables
+            # Get text data
+            text = self.client.text_split(transcription, session_state['video_title'])
+            session_state['vector_store_transcription'] = self.client.get_vectorstore(text, collection="videos")
 
     @staticmethod
     def _prepare_title():
@@ -476,20 +476,17 @@ class VideosManager:
                     st.markdown(ai_response)
 
     @staticmethod
-    def _display_ai_info_box(info, typ, container):
-        if container:
-            with container:
-                st.text_area(typ, info, height=300)
+    def _display_ai_info_box(info, typ):
+        st.text_area(typ, info, height=300)
 
-    def _generate_and_display_info(self, info, column):
-        if not session_state[info]:
+    def _generate_and_display_info(self, info):
+        if session_state['changed_video']:
             with st.spinner(f"Generating {info}"):
                 for i, prompt in enumerate(session_state['prompt_options_videos'][:-2]):
                     if info in prompt.keys():
                         session_state[info] = self._process_user_message_and_get_answer(
                             session_state['prompt_options_videos'][i][info])
                         break
-        self._display_ai_info_box(session_state[info], info.capitalize(), column)
 
     @staticmethod
     def _process_ai_response_for_suggestion_queries(model_output):
@@ -502,30 +499,27 @@ class VideosManager:
         # Removing content inside square brackets including the brackets themselves
         clean_output = re.sub(r'\[.*?\]', '', clean_output)
 
-        # Define question keywords for splitting
-        split_keywords = ['What', 'How', 'Can you']
-        regex_pattern = '|'.join([f"(?={keyword})" for keyword in split_keywords])
-
-        # Performing keyword-based splitting
-        queries = re.split(regex_pattern, clean_output)
+        # Splitting based on '?' to capture questions, adding '?' back to each split segment
+        queries = [query + '?' for query in re.split(r'\?+\s*', clean_output) if query.strip()]
 
         cleaned_queries = []
         for query in queries:
-            # Additional cleaning to remove numerical lists that may start the query due to splitting
-            # Regular expression improved to target numerical patterns at the start and within the text
-            query_clean = re.sub(r'^\s*\d+[.)>\-]+\s*', '', query)  # Remove numerical patterns at the start
-            query_clean = re.sub(r'\s*\d+[.)>\-]+\s*$', '',
-                                 query_clean)  # Remove numerical patterns that might appear at the end
-            query_clean = re.sub(r'\s+\d+[.)>\-]+\s+', ' ',
-                                 query_clean)  # Clean up any numerical patterns within the text
-
+            # Removing anything that is not a letter at the start of each query
+            query_clean = re.sub(r'^[^A-Za-z]+', '', query)  # Adjust regex as needed
+            # Attempt to more robustly remove quotes around the question
+            query_clean = re.sub(r'(^\s*"\s*)|(\s*"$)', '', query_clean)  # Improved to target quotes more effectively
+            # Remove numerical patterns and excessive whitespace
+            query_clean = re.sub(r'\s*\d+[.)>\-]+\s*$', '', query_clean).strip()
             # Replace multiple spaces with a single space
-            query_clean = re.sub(r'\s+', ' ', query_clean).strip()
+            query_clean = re.sub(r'\s+', ' ', query_clean)
             if query_clean:
                 cleaned_queries.append(query_clean)
 
-        # Remove any initial empty or irrelevant entry
-        cleaned_queries = [q for q in cleaned_queries if q and not q.isdigit()]
+        # Sort queries by length (descending) to prefer longer queries and select the first three
+        if len(cleaned_queries) > 3:
+            cleaned_queries = sorted(cleaned_queries, key=len, reverse=True)[:3]
+        elif len(cleaned_queries) < 3:
+            cleaned_queries = []
 
         print(cleaned_queries)
 
@@ -533,7 +527,7 @@ class VideosManager:
 
     def _generate_suggestions(self):
         # Just run it the first time when a new transcription is loaded
-        if not session_state['suggestions_list'] and not session_state['suggested']:
+        if session_state['changed_video']:
             with st.spinner(f"Generating suggestions..."):
                 ai_response = self._process_user_message_and_get_answer(
                     session_state['prompt_options_videos'][-2]['queries'])
@@ -541,8 +535,6 @@ class VideosManager:
                 for query in queries:
                     session_state['suggestions_list'].append(query)
                     session_state['icons_list'].append(session_state['prompt_options_videos'][-2]['icon'])
-                session_state['suggested'] = True
-                st.rerun()
 
     def display_video_interface(self):
         # Use st.columns to create two columns
@@ -554,16 +546,30 @@ class VideosManager:
         self._display_video()
 
         # Only load this if there's a transcription
-        if session_state['selected_subtitles_text']:
+        if session_state['selected_subtitles_file']:
             session_state['column_chat'], session_state['column_transcription'] = st.columns([0.5, 0.5], gap="medium")
             user_message, conversation_history = self._display_chat()
-            self._display_transcription()
+            scrollable_code = self._prepare_transcription(session_state['selected_subtitles_text'])
+            with session_state['column_transcription']:
+                st.markdown("### Transcription:")
+                st.markdown(scrollable_code, unsafe_allow_html=True)
             self._process_transcription(' '.join(session_state['selected_subtitles_text']))
-            self._generate_and_display_info("summary", session_state['column_info1'])
-            self._generate_and_display_info("topics", session_state['column_info2'])
+            with session_state['column_info1']:
+                self._generate_and_display_info("summary")
+                self._display_ai_info_box(session_state["summary"], "Summary")
+            with session_state['column_info2']:
+                self._generate_and_display_info("topics")
+                self._display_ai_info_box(session_state["topics"], "Topics")
             self._generate_suggestions()
+
+            # After processing everything when a video is changed, rerun to reflect changes
+            if session_state['changed_video']:
+                session_state['changed_video'] = False
+                st.rerun()
+
             if user_message:
                 ai_response = self._process_user_message_and_get_answer(user_message=user_message,
                                                                         conversation_history=conversation_history)
                 self._display_ai_response(ai_response, session_state['column_chat'])
                 self.gm.add_conversation_entry('videos', 'Assistant', ai_response)
+                st.rerun()

@@ -19,7 +19,8 @@ class DocsApplication:
         self.sidebar_manager = SidebarManager()
         self.general_manager = GeneralManager()
         self.videos_manager = VideosManager(user=session_state['_']("User"), general_manager=self.general_manager)
-        self.sidebar_vid_controls = SidebarVideosControls(self.sidebar_manager)
+        self.sidebar_vid_controls = SidebarVideosControls(sidebar_general_manager=self.sidebar_manager,
+                                                          general_manager=self.general_manager)
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""

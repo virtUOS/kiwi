@@ -19,3 +19,4 @@ pypdf
 pydub
 yt_dlp
 bs4
+lxml

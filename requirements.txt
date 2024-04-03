@@ -12,6 +12,7 @@ PyYAML
 langchain
 langchain_openai
 langchain_community
+chromadb
 pdf2image
 pymupdf
 pypdf

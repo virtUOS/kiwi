@@ -6,9 +6,13 @@ streamlit-option-menu
 streamlit-cookies-manager-hotpatched
 streamlit_pdf_viewer
 streamlit_dimensions
+streamlit_pills
 PyYAML
 langchain
 langchain_openai
 langchain_community
 pdf2image
 pymupdf
+pydub
+yt_dlp
+bs4

@@ -19,7 +19,7 @@ class DocsApplication:
         self.sidebar_manager = SidebarManager()
         self.general_manager = GeneralManager()
         self.docs_manager = DocsManager(user=session_state['_']("User"), general_manager=self.general_manager)
-        self.sidebar_doc_controls = SidebarDocsControls(self.sidebar_manager)
+        self.sidebar_doc_controls = SidebarDocsControls(self.sidebar_manager, self.general_manager)
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""

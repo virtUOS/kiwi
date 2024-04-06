@@ -22,8 +22,10 @@ load_dotenv()
 
 class SidebarDocsControls:
 
-    def __init__(self, sidebar_general_manager):
+    def __init__(self, sidebar_general_manager, general_manager):
         self.sgm = sidebar_general_manager
+        self.gm = general_manager
+        self.max_files = 5
 
     def initialize_docs_session_variables(self):
         """Initialize essential session variables."""
@@ -45,23 +47,40 @@ class SidebarDocsControls:
             if key not in session_state:
                 session_state[key] = default_value
 
-    @staticmethod
-    def _check_amount_of_uploaded_files_and_set_variables():
-
+    def _reset_docs_variables(self):
         if session_state['vector_store_docs']:
             session_state['vector_store_docs'].delete_collection()
 
-        max_files = 5
-        session_state['uploaded_pdf_files'] = []
+        required_keys = {
+            'uploaded_pdf_files': [],
+            'selected_file_name': None,
+            'sources_to_highlight': {},
+            'sources_to_display': {},
 
-        if len(session_state['pdf_files']) > max_files:
-            st.sidebar.warning(f"Maximum number of files reached. Only the first {max_files} files will be processed.")
+            # Current documents list in binary
+            'doc_binary_data': {},
+
+            # Current vector store
+            'vector_store_docs': None,
+        }
+
+        for key, default_value in required_keys.items():
+            session_state[key] = default_value
+
+        self.gm.create_empty_history('docs')
+
+    def _check_amount_of_uploaded_files_and_set_variables(self):
+        self._reset_docs_variables()
+
+        if len(session_state['pdf_files']) > self.max_files:
+            st.sidebar.warning(
+                f"Maximum number of files reached. Only the first {self.max_files} files will be processed.")
 
         # If there are uploaded files then use class list variable to store them
         if session_state['pdf_files']:
             for i, file in enumerate(session_state['pdf_files']):
                 # Only append the maximum number of files allowed
-                if i < max_files:
+                if i < self.max_files:
                     session_state['uploaded_pdf_files'].append(file)
                 else:
                     break
@@ -69,7 +88,6 @@ class SidebarDocsControls:
     def display_docs_sidebar_controls(self):
         with st.sidebar:
             st.markdown("""---""")
-
             st.file_uploader("Upload PDF file(s)", type=['pdf'], accept_multiple_files=True,
                              key='pdf_files', on_change=self._check_amount_of_uploaded_files_and_set_variables)
 

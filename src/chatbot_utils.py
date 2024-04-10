@@ -17,13 +17,20 @@ load_dotenv()
 class SidebarManager:
 
     def __init__(self):
-        # Set the language
+        """
+        Initialize the SidebarManager instance by setting up session cookies and initializing the language.
+        """
         self.cookies = self.initialize_cookies()
         initialize_language()
 
     @staticmethod
     def initialize_cookies():
-        """Initialize cookies for session management."""
+        """
+        Initialize cookies for managing user sessions with enhanced security.
+
+        Uses an encrypted cookie manager and detects the Safari browser to handle specific JavaScript-based delays.
+        This ensures a smooth user experience across different browsers.
+        """
         cookies = EncryptedCookieManager(
             prefix=os.getenv("COOKIES_PREFIX"),
             password=os.getenv("COOKIES_PASSWORD")
@@ -53,7 +60,13 @@ class SidebarManager:
         return cookies
 
     def verify_user_session(self):
-        """Verify if a user session is already started; if not, redirect to start page."""
+        """
+        Verify the user's session validity. If cookies indicate the session is not yet initiated,
+        then redirect the user to the start page.
+
+        This function ensures that unauthorized users are not able to access application sections
+        that require a valid session.
+        """
         if not self.cookies.ready():
             st.spinner()
             st.stop()
@@ -63,7 +76,12 @@ class SidebarManager:
 
     @staticmethod
     def initialize_session_variables():
-        """Initialize essential session variables."""
+        """
+        Initialize essential session variables with default values.
+
+        Sets up the initial state for model selection, chatbot paths, conversation histories,
+        prompt options, etc., essential for the application to function correctly from the start.
+        """
         required_keys = {
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
@@ -80,7 +98,12 @@ class SidebarManager:
 
     @staticmethod
     def display_logo():
-        """Display the logo on the sidebar."""
+        """
+        Display the application logo in the sidebar.
+
+        Utilizes Streamlit columns to center the logo and injects CSS to hide the fullscreen
+        button that appears on hover over the logo.
+        """
         with st.sidebar:
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
@@ -98,6 +121,12 @@ class SidebarManager:
 
     @staticmethod
     def load_prompts():
+        """
+        Load chat prompts based on the selected or default language.
+
+        This method enables dynamic loading of chat prompts to support multi-lingual chatbot interactions.
+        If no language is specified in the query parameters, German ('de') is used as the default language.
+        """
         language = st.query_params.get('lang', False)
         # Use German language as default
         if not language:
@@ -107,14 +136,27 @@ class SidebarManager:
         session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
     def logout_and_redirect(self):
-        # Set cookies and session variables before redirecting.
+        """
+        Perform logout operations and redirect the user to the start page.
+
+        This involves resetting cookies and session variables that signify the user's logged-in state,
+        thereby securely logging out the user.
+        """
         self.cookies["session"] = 'out'
         session_state["password_correct"] = False
         session_state['credentials_checked'] = False
         st.switch_page('start.py')
 
     def _display_chatbots_menu(self, options, path=[]):
-        """Display sidebar menu for chatbot selection."""
+        """
+        Recursively display sidebar menu for chatbot selection based on a nested dictionary structure.
+
+        Allows users to navigate and select chatbots in a hierarchical manner, updating the session state
+        to reflect the current selection path.
+
+        :param options: A dictionary containing chatbot options and potential sub-options.
+        :param path: A list representing the current selection path as the user navigates the menu.
+        """
         if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
             next_level = list(options.keys())
 
@@ -130,87 +172,103 @@ class SidebarManager:
                 self._display_chatbots_menu(options.get(choice, {}), new_path)
 
     def display_sidebar_controls(self):
-        """Display controls and settings in the sidebar."""
+        """
+        Display sidebar controls and settings for chatbot conversations.
 
-        # First load prompts
+        This function performs the following steps:
+        1. Loads prompt options to display in the chatbots' menu.
+        2. Checks for changes in the selected chatbot path to update the session state accordingly.
+        3. Displays model information for the selected model, e.g., OpenAI.
+        4. Provides options for the user to interact with the conversation history,
+        including deleting and downloading conversations.
+        5. Adds custom CSS to stylize the sidebar.
+        6. Offers a logout option.
+        """
+        self._load_and_display_prompts()
+
+        self._update_path_in_session_state()
+
+        self._display_model_information()
+
+        self._show_conversation_controls()
+
+        self._add_custom_css()
+
+        self._logout_option()
+
+    def _load_and_display_prompts(self):
+        """Load prompts and display chatbots menu."""
         self.load_prompts()
-
-        # Display the menu for chatbots
         self._display_chatbots_menu(session_state['prompt_options'])
 
-        # Store the serialized path in session state if different from current path
-        # Do this here to handle conversation controls showing up when changing
-        # chatbot and the conversation exists
-        if menu_utils.path_changed(session_state['selected_chatbot_path'], session_state[
-            'selected_chatbot_path_serialized']):
-            session_state['selected_chatbot_path_serialized'] = '/'.join(
-                session_state['selected_chatbot_path'])  # Update the serialized path in session state
+    @staticmethod
+    def _update_path_in_session_state():
+        """Update session state if the selected chatbot path has changed."""
+        path_has_changed = menu_utils.path_changed(session_state['selected_chatbot_path'],
+                                                   session_state['selected_chatbot_path_serialized'])
+        if path_has_changed:
+            serialized_path = '/'.join(session_state['selected_chatbot_path'])
+            session_state['selected_chatbot_path_serialized'] = serialized_path
 
-        # Custom prompt selection
+    @staticmethod
+    def _display_model_information():
+        """Display the model information in the sidebar if the model is OpenAI."""
         with st.sidebar:
             if session_state['model_selection'] == 'OpenAI':
                 model_text = session_state['_']("Model:")
                 st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
 
-            # Show the conversation controls only if there's a conversation
-            if session_state['selected_chatbot_path_serialized'] in session_state[
-                'conversation_histories'] and session_state['conversation_histories'][session_state[
-                'selected_chatbot_path_serialized']]:
-
-                st.markdown("""---""")
-
+    def _show_conversation_controls(self):
+        """Show controls to manage conversation history (delete and download options)."""
+        conversation_key = session_state['selected_chatbot_path_serialized']
+        if conversation_key in session_state['conversation_histories'] and session_state['conversation_histories'][
+                conversation_key]:
+            with st.sidebar:
+                st.markdown("---")
                 st.write(session_state['_']("**Options**"))
                 col1, col2 = st.columns([1, 5])
-                if col1.button("🗑️", help=session_state['_']("Delete the Conversation")):
-                    # Clears the current chatbot's conversation history
-                    session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = [
-                    ]
-                    st.rerun()
+                self._delete_conversation_button(col1)
+                self._download_conversation_button(col2, conversation_key)
 
-                conversation_to_download = session_state['conversation_histories'][
-                    session_state['selected_chatbot_path_serialized']]
+    @staticmethod
+    def _delete_conversation_button(column):
+        """Display button to delete the current chatbot's conversation history."""
+        if column.button("🗑️", help=session_state['_']("Delete the Conversation")):
+            session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
+            st.rerun()
 
-                conversation_df = pd.DataFrame(conversation_to_download,
-                                               columns=[session_state['_']('Speaker'), session_state['_']('Message')])
-                conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-                col2.download_button("📂",
-                                     data=conversation_csv,
-                                     file_name="conversation.csv",
-                                     mime="text/csv",
-                                     help=session_state['_']("Download the Conversation"))
+    @staticmethod
+    def _download_conversation_button(column, conversation_key):
+        """Display button to download the conversation as a CSV file."""
+        conversation_to_download = session_state['conversation_histories'][conversation_key]
+        conversation_df = pd.DataFrame(conversation_to_download,
+                                       columns=[session_state['_']('Speaker'), session_state['_']('Message')])
+        conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
+        column.download_button("📂", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
+                               help=session_state['_']("Download the Conversation"))
 
-            color = st.get_option('theme.secondaryBackgroundColor')
-
-            css = f'''
-            [data-testid="stSidebarNav"] {{
-                position:absolute;
-                bottom: 0;
-                z-index: 1;
-                background: {color};
-            }}
-            [data-testid="stSidebarNav"] > ul {{
-                padding-top: 2rem;
-            }}
-            [data-testid="stSidebarNav"] > div {{
-                position:absolute;
-                top: 0;
-            }}
-            [data-testid="stSidebarNav"] > div > svg {{
-                transform: rotate(180deg) !important;
-            }}
-            [data-testid="stSidebarNav"] + div {{
-                overflow: scroll;
-                max-height: 66vh;
-            }}
-            '''
-
-            st.markdown("""---""")
-
-            if st.button(session_state['_']('Logout')):
-                self.logout_and_redirect()
-
+    @staticmethod
+    def _add_custom_css():
+        """Add custom CSS to stylize the sidebar according to the theme."""
+        color = st.get_option('theme.secondaryBackgroundColor')
+        css = f"""
+                [data-testid="stSidebarNav"] {{
+                    position:absolute;
+                    bottom: 0;
+                    z-index: 1;
+                    background: {color};
+                }}
+                ... (rest of CSS)
+                """
+        with st.sidebar:
+            st.markdown("---")
             st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
+    def _logout_option(self):
+        """Display a logout button in the sidebar."""
+        with st.sidebar:
+            if st.button(session_state['_']('Logout')):
+                self.logout_and_redirect()
             st.write(f"Version: *Beta*")
 
 

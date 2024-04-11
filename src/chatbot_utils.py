@@ -36,26 +36,9 @@ class SidebarManager:
             password=os.getenv("COOKIES_PASSWORD")
         )
 
-        # JavaScript for detecting Safari browser and adding a delay
-        detect_safari_and_sleep_script = """
-        <script>
-        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        if (isSafari) {
-            // Delay execution for specified time when Safari is detected
-            // Time is specified in milliseconds (e.g., 2000 milliseconds = 2 seconds)
-            setTimeout(function() {
-                // After the delay, you may want to execute something specific for Safari
-                // Or simply proceed with your app initialization
-                console.log('Safari detected, proceeded after delay');
-                // Communicate back to Streamlit (if needed)
-                window.parent.streamlit.setComponentValue("safari_delayed", true);
-            }, 2000); // Adjust the delay time as needed
-        }
-        </script>
-        """
-
-        # Display the script in a Streamlit markdown to ensure it runs
-        st.markdown(detect_safari_and_sleep_script, unsafe_allow_html=True)
+        if not cookies.ready():
+            st.spinner()
+            st.stop()
 
         return cookies
 
@@ -67,10 +50,6 @@ class SidebarManager:
         This function ensures that unauthorized users are not able to access application sections
         that require a valid session.
         """
-        if not self.cookies.ready():
-            st.spinner()
-            st.stop()
-
         if self.cookies.get("session") != 'in':
             st.switch_page("start.py")
 
@@ -248,7 +227,7 @@ class SidebarManager:
         """
         conversation_key = session_state['selected_chatbot_path_serialized']
         if conversation_key in session_state['conversation_histories'] and session_state['conversation_histories'][
-            conversation_key]:
+                conversation_key]:
             with st.sidebar:
                 st.markdown("---")
                 st.write(session_state['_']("**Options**"))

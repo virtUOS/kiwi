@@ -425,6 +425,10 @@ class ChatManager:
         return False
 
     @staticmethod
+    def _update_conversation_history(current_history):
+        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = current_history
+
+    @staticmethod
     def _append_user_message_to_history(current_history, user_message, description_to_use):
         """
         Appends the user's message to the conversation history in the session state.
@@ -436,7 +440,6 @@ class ChatManager:
         """
         # Adding user message and description to the current conversation
         current_history.append((session_state['USER'], user_message, description_to_use))
-        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = current_history
 
     def _process_response(self, current_history, user_message, description_to_use):
         """
@@ -450,7 +453,6 @@ class ChatManager:
         response = self.client.get_response(user_message, description_to_use)
         # Add AI response to the history
         current_history.append(('Assistant', response, ""))
-        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = current_history
 
     def _handle_user_input(self, description_to_use):
         """
@@ -472,6 +474,7 @@ class ChatManager:
 
                 # Process and display response
                 self._process_response(current_history, user_message, description_to_use)
+                self._update_conversation_history(current_history)
                 st.rerun()
 
     @staticmethod
@@ -686,7 +689,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+                session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

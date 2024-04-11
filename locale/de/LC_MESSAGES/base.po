@@ -54,6 +54,22 @@ msgstr "System-Prompt"
 msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
+#: src/chatbot_utils.py:290
+msgid "**Upload conversation**"
+msgstr "**Konversation hochladen**"
+
+#: src/chatbot_utils.py:303
+msgid "The uploaded file is missing one or more required columns: 'Speaker', 'Message', 'System prompt'"
+msgstr "In der hochgeladenen Datei fehlen eine oder mehrere erforderliche Spalten: 'Sprecher', 'Nachricht', 'System-Prompt'"
+
+#: src/chatbot_utils.py:313
+msgid "Successfully uploaded the conversation."
+msgstr "Die Konversation wurde erfolgreich hochgeladen."
+
+#: src/chatbot_utils.py:315
+msgid "Failed to process the uploaded file. Error: "
+msgstr "Die hochgeladene Datei konnte nicht verarbeitet werden. Fehler: "
+
 #: src/chatbot_utils.py:294
 msgid "How can I help you?"
 msgstr "Wie kann ich Ihnen helfen?"

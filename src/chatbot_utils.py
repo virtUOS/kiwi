@@ -1,4 +1,6 @@
 import os
+import time
+
 import pandas as pd
 from openai import OpenAI
 import streamlit as st
@@ -226,14 +228,17 @@ class SidebarManager:
         `_delete_conversation_button` and `_download_conversation_button` methods to render these options.
         """
         conversation_key = session_state['selected_chatbot_path_serialized']
-        if conversation_key in session_state['conversation_histories'] and session_state['conversation_histories'][
-                conversation_key]:
-            with st.sidebar:
-                st.markdown("---")
-                st.write(session_state['_']("**Options**"))
-                col1, col2 = st.columns([1, 5])
-                self._delete_conversation_button(col1)
-                self._download_conversation_button(col2, conversation_key)
+        with st.sidebar:
+            st.markdown("---")
+            with st.expander(session_state['_']("**Options**")):
+                if conversation_key in session_state['conversation_histories'] and session_state[
+                        'conversation_histories'][conversation_key]:
+                    st.markdown("---")
+                    col1, col2 = st.columns([1, 3])
+                    self._delete_conversation_button(col1)
+                    self._download_conversation_button(col2, conversation_key)
+                    st.markdown("---")
+                self._upload_conversation_file(st, conversation_key)
 
     @staticmethod
     def _delete_conversation_button(column):
@@ -252,14 +257,14 @@ class SidebarManager:
             st.rerun()
 
     @staticmethod
-    def _download_conversation_button(column, conversation_key):
+    def _download_conversation_button(container, conversation_key):
         """
         Render a button in the specified column allowing users to download the conversation history as a CSV file.
 
         This static method creates a DataFrame from the conversation history stored in the session state under the
         given `conversation_key`, converts it to a CSV format, and provides a download button for the generated CSV.
 
-        :param column: The column in Streamlit where the button should be placed.
+        :param container: The container in Streamlit where the button should be placed.
         This should be a Streamlit column object.
         :param conversation_key: The key that uniquely identifies the conversation in the session state's
         conversation histories.
@@ -270,8 +275,65 @@ class SidebarManager:
                                                 session_state['_']('Message'),
                                                 session_state['_']('System prompt')])
         conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-        column.download_button("📂", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
-                               help=session_state['_']("Download the Conversation"))
+        container.download_button("📂", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
+                                  help=session_state['_']("Download the Conversation"))
+
+    @staticmethod
+    def _process_uploaded_conversation_file(container, conversation_key):
+        if session_state['file_uploader_conversation']:
+            try:
+                # Read the uploaded CSV file into a DataFrame
+                conversation_df = pd.read_csv(session_state['file_uploader_conversation'])
+
+                # Validate necessary columns exist
+                required_columns = [session_state['_']('Speaker'),
+                                    session_state['_']('Message'),
+                                    session_state['_']('System prompt')]
+                if not all(column in conversation_df.columns for column in required_columns):
+                    container.error(
+                        session_state['_']("The uploaded file is missing one or more required columns:"
+                                           " 'Speaker', 'Message', 'System prompt'"))
+                    return
+
+                # Convert the DataFrame to a list of tuples (converting each row to a tuple)
+                conversation_list = conversation_df[required_columns].to_records(index=False).tolist()
+
+                # Update the session state with the uploaded conversation
+                session_state['conversation_histories'][conversation_key] = conversation_list
+
+                # Extract the last "System prompt" from a user's message
+                # in the uploaded conversation for "edited_prompts"
+                user_prompts = [tuple_conv for tuple_conv in conversation_list if tuple_conv[0] ==
+                                session_state['USER']]
+                if user_prompts:  # Make sure the list is not empty
+                    last_user_prompt = user_prompts[-1][2]  # Safely access the last tuple
+                    session_state['edited_prompts'][conversation_key] = last_user_prompt
+                else:
+                    return
+                container.success(session_state['_']("Successfully uploaded the conversation."))
+                time.sleep(2)
+            except Exception as e:
+                container.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
+
+    def _upload_conversation_file(self, container, conversation_key):
+        """
+        Render a file uploader in the specified container allowing users to upload a conversation history CSV file.
+
+        This static method parses the uploaded CSV file to extract the conversation history and updates the
+        session state's conversation history for the current conversation_key with the uploaded data.
+
+        Parameters:
+        - container: The Streamlit container (e.g., st.sidebar, st) where the uploader should be placed.
+        This should be a Streamlit container object.
+        - conversation_key: The key that uniquely identifies the conversation in the session state's
+        conversation histories.
+        """
+        container.file_uploader(session_state['_']("**Upload conversation**"),
+                                type=['csv'],
+                                key='file_uploader_conversation',
+                                on_change=self._process_uploaded_conversation_file,
+                                args=(container, conversation_key)
+                                )
 
     @staticmethod
     def _add_custom_css():
@@ -426,6 +488,17 @@ class ChatManager:
 
     @staticmethod
     def _update_conversation_history(current_history):
+        """
+        Updates the session state with the current conversation history.
+
+        This method ensures that the conversation history for the currently selected chatbot path in the session state
+        is updated to reflect any new messages or responses that have been added during the interaction.
+
+        Parameters:
+        - current_history: The current conversation history, which is a list of tuples. Each tuple contains
+          the speaker ('USER' or 'Assistant'), the message, and optionally, the system description or prompt
+          accompanying user messages (for user messages only).
+        """
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = current_history
 
     @staticmethod

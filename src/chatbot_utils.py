@@ -241,7 +241,10 @@ class SidebarManager:
                 self._upload_conversation_file(st, conversation_key)
 
     @staticmethod
-    def _delete_conversation_button(column):
+    def _delete_conversation_callback():
+        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
+
+    def _delete_conversation_button(self, column):
         """
         Render a button in the specified column that allows the user
         to delete the active chatbot's conversation history.
@@ -252,9 +255,9 @@ class SidebarManager:
         :param column: The column in Streamlit where the button should be placed.
         This should be a Streamlit column object.
         """
-        if column.button("🗑️", help=session_state['_']("Delete the Conversation")):
-            session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
-            st.rerun()
+        column.button("🗑️",
+                      on_click=self._delete_conversation_callback,
+                      help=session_state['_']("Delete the Conversation"))
 
     @staticmethod
     def _download_conversation_button(container, conversation_key):
@@ -609,7 +612,7 @@ class ChatManager:
 
                 # Displays the existing conversation history
                 conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                       'selected_chatbot_path_serialized'],
+                                                                                    'selected_chatbot_path_serialized'],
                                                                                    [])
                 self._display_conversation(conversation_history)
 

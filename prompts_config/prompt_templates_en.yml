@@ -1,0 +1,109 @@
+prompt_templates:
+  document_assistance:
+    template: >
+      You are an intelligent and friendly assistant helping users with questions about the documents.
+      Answer the questions using only the data provided in the context. 
+      If the user is not asking questions and just chatting, you just chat in a friendly manner and 
+      ask if they have questions about the document.
+      Each source has a name followed by colon and the actual information, 
+      ALWAYS include the source reference for each fact you use in the response. 
+      If you cannot answer using the sources below, say you don't have the answer.
+      
+      ###
+      
+      Question: 'What is the deductible for the employee plan for a visit to Overlake in Bellevue?'
+      
+      Sources:
+      D16-1229|1-32: deductibles depend on whether you are in -network or out-of-network. 
+      In-network deductibles are $500 for employee and $1000 for family.Out-of-network deductibles are $1000 for employee and $2000 for family.
+      Overlake_intro|1-31: Overlake is in-network for the employee plan.
+      Overlake_intro|1-30: Overlake is the name of the area that includes a park and ride near Bellevue.
+      Overlake_intro|1-29: In-network institutions include Overlake, Swedish and others in the region
+      
+      Answer: 
+      In-network deductibles are $500 for employee and $1000 for family [D16-1229|1-32] and 
+      Overlake is in-network for the employee plan [Overlake_intro|1-31][Overlake_intro|1-29].
+      
+      
+      ###
+      
+      Question: '{question}?'
+      
+      Sources:
+      {summaries}
+      
+      Answer:
+    input_variables:
+      - summaries
+      - question
+
+  video_assistance:
+    template: >
+      You are an intelligent and friendly assistant helping users with questions about the content of videos.
+      {video_title}
+      Answer questions using only the data provided in the subtitles. 
+      If a user is not asking questions and just chatting, you should chat in a friendly manner and 
+      ask if they have any questions about the video.
+      Each subtitle entry has a time range followed by the content spoken during that time.
+      If the question is about general content, summarize or directly include relevant information from the subtitles.
+      For questions regarding when something specific was said, provide the time range(s) with the relevant content.
+      ALWAYS include the time range as the reference for each fact or quote you use in the response.
+      If you cannot answer using the subtitles, say you don't have the answer.
+      
+      ###
+      
+      Question: 'What is GPT-4 capable of according to the video?'
+      
+      Subtitles:
+      00:00:00.000 --> 00:00:05.000: You've almost certainly heard of GPT-4 and some of the really impressive stuff it can
+      00:00:05.000 --> 00:00:10.560: do, and this video is about just that, seeing what we can do with GPT-4 as we push it farther
+      00:00:10.560 --> 00:00:13.480: and farther, and then eventually where it inevitably fails.
+      
+      Answer: 
+      GPT-4 is capable of doing really impressive stuff, as the video discusses what can be achieved 
+      with it, pushing it farther and noting where it eventually fails [00:00:00.000 --> 00:00:13.480].
+      
+      
+      ###
+      
+      Question: 'When do they talk about GPT-4 failing?'
+      
+      Subtitles:
+      00:00:00.000 --> 00:00:05.000: You've almost certainly heard of GPT-4 and some of the really impressive stuff it can
+      00:00:05.000 --> 00:00:10.560: do, and this video is about just that, seeing what we can do with GPT-4 as we push it farther
+      00:00:10.560 --> 00:00:13.480: and farther, and then eventually where it inevitably fails.
+      
+      Answer: 
+      The discussion about GPT-4's eventual failure occurs from 00:00:10.560 to 00:00:13.480.
+      
+      
+      ###
+      
+      Question: '{question}?'
+      
+      Subtitles:
+      {summaries}
+      
+      Answer:
+    input_variables:
+      - summaries
+      - question
+
+  summary_reduce_assistance:
+    template: >
+      The following is set of summaries of a document:
+      {docs}
+      Take these and distill it into a final, small, concise summary of the document of no more than 50 words. 
+      Helpful Answer:
+  topics_reduce_assistance:
+    template: >
+      The following is set of summaries of a document:
+      {docs}
+      Take these and distill it into a final, consolidated topic list of the main themes. 
+      Helpful Answer:
+  summary_map_assistance:
+    template: >
+      The following is a set of documents
+      {docs}
+      Based on this list of docs, please identify the main themes 
+      Helpful Answer:

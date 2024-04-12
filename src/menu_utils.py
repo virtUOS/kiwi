@@ -1,11 +1,40 @@
 import yaml
 import streamlit as st
 
+from langchain.prompts import PromptTemplate
 
-# Function to load prompts from a YAML file
-@st.cache_data
-def load_prompts_from_yaml(language='de'):
 
+def _load_docs_prompts_from_yaml(language, prompt_key):
+    # Use basic prompts
+    if language == 'en':
+        file_path_basic = 'prompts_config/docs_basic_prompts_en.yml'
+        file_path_template = 'prompts_config/prompt_templates_en.yml'
+    else:
+        file_path_basic = 'prompts_config/docs_basic_prompts_de.yml'
+        file_path_template = 'prompts_config/prompt_templates_en.yml'
+
+    with open(file_path_basic, 'r', encoding='utf-8') as file:
+        prompt_templates_basic = yaml.safe_load(file)
+
+    with open(file_path_template, 'r', encoding='utf-8') as file:
+        prompt_templates = yaml.safe_load(file)
+
+    template_info = prompt_templates['prompt_templates'][prompt_key]
+
+    summary_reduce_prompt = prompt_templates['prompt_templates']['summary_reduce_assistance']
+    summary_map_prompt = prompt_templates['prompt_templates']['summary_map_assistance']
+    queries_prompt = {'queries': prompt_templates_basic['Queries'], 'icon': '🌟'}
+
+    # Create the PromptTemplate instance with the loaded template and input_variables
+    return (PromptTemplate(template=template_info['template'],
+                           input_variables=template_info['input_variables']),
+            summary_reduce_prompt,
+            summary_map_prompt,
+            queries_prompt)
+
+
+def _load_chat_prompts_from_yaml(language):
+    # Use basic prompts
     if language == 'en':
         file_path = 'prompts_config/chat_basic_prompts_en.yml'
     else:
@@ -13,6 +42,15 @@ def load_prompts_from_yaml(language='de'):
 
     with open(file_path, 'r', encoding='utf-8') as file:
         return yaml.safe_load(file)
+
+
+# Function to load prompts from a YAML file
+@st.cache_data
+def load_prompts_from_yaml(language='de', typ='chat', prompt_key=None):
+    if typ == 'chat':
+        return _load_chat_prompts_from_yaml(language)
+    elif typ == 'doc':
+        return _load_docs_prompts_from_yaml(language, prompt_key)
 
 
 def load_dict_from_yaml(file):

@@ -5,70 +5,27 @@ import pandas as pd
 from openai import OpenAI
 import streamlit as st
 from streamlit import session_state
-from streamlit_option_menu import option_menu
-from streamlit_cookies_manager import EncryptedCookieManager
 from src import menu_utils
 from dotenv import load_dotenv
-
-from src.language_utils import initialize_language
 
 # Load environment variables
 load_dotenv()
 
 
-class SidebarManager:
+class SidebarChatManager:
 
     def __init__(self):
-        """
-        Initialize the SidebarManager instance by setting up session cookies and initializing the language.
-        """
-        self.cookies = self.initialize_cookies()
-        initialize_language()
+        pass
 
     @staticmethod
-    def initialize_cookies():
+    def initialize_chat_session_variables():
         """
-        Initialize cookies for managing user sessions with enhanced security.
+        Initialize chat session variables with default values.
 
-        Uses an encrypted cookie manager and detects the Safari browser to handle specific JavaScript-based delays.
-        This ensures a smooth user experience across different browsers.
-        """
-        cookies = EncryptedCookieManager(
-            prefix=os.getenv("COOKIES_PREFIX"),
-            password=os.getenv("COOKIES_PASSWORD")
-        )
-
-        if not cookies.ready():
-            st.spinner()
-            st.stop()
-
-        return cookies
-
-    def verify_user_session(self):
-        """
-        Verify the user's session validity. If cookies indicate the session is not yet initiated,
-        then redirect the user to the start page.
-
-        This function ensures that unauthorized users are not able to access application sections
-        that require a valid session.
-        """
-        if self.cookies.get("session") != 'in':
-            st.switch_page("start.py")
-
-    @staticmethod
-    def initialize_session_variables():
-        """
-        Initialize essential session variables with default values.
-
-        Sets up the initial state for model selection, chatbot paths, conversation histories,
-        prompt options, etc., essential for the application to function correctly from the start.
+        Sets up the initial state for the chat application to function correctly from the start.
         """
         required_keys = {
-            'model_selection': "OpenAI",
-            'selected_chatbot_path': [],
-            'conversation_histories': {},
-            'selected_chatbot_path_serialized': "",
-            'prompt_options': menu_utils.load_prompts_from_yaml(),
+            'prompt_options': menu_utils.load_prompts_from_yaml(typ=session_state['typ']),
             'edited_prompts': {},
             'disable_custom': False,
         }
@@ -76,146 +33,6 @@ class SidebarManager:
         for key, default_value in required_keys.items():
             if key not in session_state:
                 session_state[key] = default_value
-
-    @staticmethod
-    def display_logo():
-        """
-        Display the application logo in the sidebar.
-
-        Utilizes Streamlit columns to center the logo and injects CSS to hide the fullscreen
-        button that appears on hover over the logo.
-        """
-        with st.sidebar:
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.image("img/logo.svg", width=100)
-
-                # Gets rid of full screen option for logo image
-                hide_img_fs = '''
-                <style>
-                button[title="View fullscreen"]{
-                    visibility: hidden;}
-                </style>
-                '''
-
-                st.markdown(hide_img_fs, unsafe_allow_html=True)
-
-    @staticmethod
-    def load_prompts():
-        """
-        Load chat prompts based on the selected or default language.
-
-        This method enables dynamic loading of chat prompts to support multi-lingual chatbot interactions.
-        If no language is specified in the query parameters, German ('de') is used as the default language.
-        """
-        language = st.query_params.get('lang', False)
-        # Use German language as default
-        if not language:
-            language = "de"
-
-        """Load chat prompts based on language."""
-        session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
-
-    def logout_and_redirect(self):
-        """
-        Perform logout operations and redirect the user to the start page.
-
-        This involves resetting cookies and session variables that signify the user's logged-in state,
-        thereby securely logging out the user.
-        """
-        self.cookies["session"] = 'out'
-        session_state["password_correct"] = False
-        session_state['credentials_checked'] = False
-        st.switch_page('start.py')
-
-    def _display_chatbots_menu(self, options, path=[]):
-        """
-        Recursively display sidebar menu for chatbot selection based on a nested dictionary structure.
-
-        Allows users to navigate and select chatbots in a hierarchical manner, updating the session state
-        to reflect the current selection path.
-
-        :param options: A dictionary containing chatbot options and potential sub-options.
-        :param path: A list representing the current selection path as the user navigates the menu.
-        """
-        if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
-            next_level = list(options.keys())
-
-            with st.sidebar:
-                choice = option_menu("", next_level,
-                                     # icons=['chat-dots'] * len(next_level),
-                                     # menu_icon="cast",
-                                     default_index=0)
-
-            if choice:
-                new_path = path + [choice]
-                session_state['selected_chatbot_path'] = new_path
-                self._display_chatbots_menu(options.get(choice, {}), new_path)
-
-    def display_sidebar_controls(self):
-        """
-        Display sidebar controls and settings for chatbot conversations.
-
-        This function performs the following steps:
-        1. Loads prompt options to display in the chatbots' menu.
-        2. Checks for changes in the selected chatbot path to update the session state accordingly.
-        3. Displays model information for the selected model, e.g., OpenAI.
-        4. Provides options for the user to interact with the conversation history,
-        including deleting and downloading conversations.
-        5. Adds custom CSS to stylize the sidebar.
-        6. Offers a logout option.
-        """
-        self._load_and_display_prompts()
-
-        self._update_path_in_session_state()
-
-        self._display_model_information()
-
-        self._show_conversation_controls()
-
-        self._add_custom_css()
-
-        self._logout_option()
-
-    def _load_and_display_prompts(self):
-        """
-        Load chat prompts from the session state and display them in the chatbots menu in the sidebar.
-
-        This method first loads the prompts by calling the `load_prompts` method and
-        then displays the chatbots menu with the loaded prompts using the `_display_chatbots_menu` method.
-        """
-        self.load_prompts()
-        self._display_chatbots_menu(session_state['prompt_options'])
-
-    @staticmethod
-    def _update_path_in_session_state():
-        """
-        Check if the selected chatbot path in the session state has changed and update the serialized path accordingly.
-
-        This static method compares the current selected chatbot path with the serialized chatbot path saved
-         in the session.
-        If there is a change, it updates the session state with the new serialized path, allowing for tracking
-         the selection changes.
-        """
-        path_has_changed = menu_utils.path_changed(session_state['selected_chatbot_path'],
-                                                   session_state['selected_chatbot_path_serialized'])
-        if path_has_changed:
-            serialized_path = '/'.join(session_state['selected_chatbot_path'])
-            session_state['selected_chatbot_path_serialized'] = serialized_path
-
-    @staticmethod
-    def _display_model_information():
-        """
-        Display OpenAI model information in the sidebar if the OpenAI model is the current selection.
-
-        In the sidebar, this static method shows the model name and version pulled from environment variables
-        if 'OpenAI' is selected as the model in the session state. The model information helps users
-        identify the active model configuration.
-        """
-        with st.sidebar:
-            if session_state['model_selection'] == 'OpenAI':
-                model_text = session_state['_']("Model:")
-                st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
 
     def _show_conversation_controls(self):
         """
@@ -239,6 +56,16 @@ class SidebarManager:
                     self._download_conversation_button(col2, conversation_key)
                     st.markdown("---")
                 self._upload_conversation_file(st, conversation_key)
+
+    def display_chat_sidebar_controls(self):
+        """
+        Display chat sidebar controls and settings.
+
+        This function performs the following steps:
+        1. Adds custom CSS to stylize the sidebar.
+        2. Offers a logout option.
+        """
+        self._show_conversation_controls()
 
     @staticmethod
     def _delete_conversation_callback():
@@ -338,50 +165,17 @@ class SidebarManager:
                                 args=(container, conversation_key)
                                 )
 
-    @staticmethod
-    def _add_custom_css():
-        """
-        Inject custom CSS into the sidebar to enhance its aesthetic according to the current theme.
-
-        This static method retrieves the secondary background color from Streamlit's theme options
-        and applies custom styles to various sidebar elements, enhancing the user interface.
-        """
-        color = st.get_option('theme.secondaryBackgroundColor')
-        css = f"""
-                [data-testid="stSidebarNav"] {{
-                    position:absolute;
-                    bottom: 0;
-                    z-index: 1;
-                    background: {color};
-                }}
-                ... (rest of CSS)
-                """
-        with st.sidebar:
-            st.markdown("---")
-            st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
-
-    def _logout_option(self):
-        """
-        Display a logout button in the sidebar, allowing users to end their session.
-
-        This method renders a logout button in the sidebar. If clicked, it calls the `logout_and_redirect` method
-        to clear session variables and cookies, securely logging out the user and redirecting them to the start page.
-        """
-        with st.sidebar:
-            if st.button(session_state['_']('Logout')):
-                self.logout_and_redirect()
-            st.write(f"Version: *Beta*")
-
 
 class ChatManager:
 
-    def __init__(self, user):
+    def __init__(self, user, general_manager):
         """
         Initializes the ChatManager instance with the user's identifier.
 
         Parameters:
         - user: A string identifier for the user, used to differentiate messages in the conversation.
         """
+        self.gm = general_manager
         self.client = None
         session_state['USER'] = user
 
@@ -612,7 +406,7 @@ class ChatManager:
 
                 # Displays the existing conversation history
                 conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                    'selected_chatbot_path_serialized'],
+                                                                                       'selected_chatbot_path_serialized'],
                                                                                    [])
                 self._display_conversation(conversation_history)
 
@@ -765,7 +559,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

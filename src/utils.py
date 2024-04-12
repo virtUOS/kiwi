@@ -88,6 +88,7 @@ class SidebarManager:
             'selected_chatbot_path_serialized': "",
             'chosen_page_index': "1",
             'current_page_index': "1",
+            'typ': "chat",
         }
 
         for key, default_value in required_keys.items():
@@ -118,7 +119,7 @@ class SidebarManager:
                 st.markdown(hide_img_fs, unsafe_allow_html=True)
 
     @staticmethod
-    def load_prompts(prompt_options, typ, prompt_key=None):
+    def load_prompts():
         """
         Load chat prompts based on the selected or default language.
 
@@ -131,9 +132,8 @@ class SidebarManager:
             language = "de"
 
         """Load chat prompts based on language."""
-        session_state[prompt_options] = menu_utils.load_prompts_from_yaml(typ=typ,
-                                                                          language=language,
-                                                                          prompt_key=prompt_key)
+        session_state[session_state['typ']] = menu_utils.load_prompts_from_yaml(typ=session_state['typ'],
+                                                                          language=language)
 
     def logout_and_redirect(self):
         """
@@ -280,8 +280,6 @@ class GeneralManager:
 
     @staticmethod
     def display_pages_tabs(default_id):
-
-        st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
 
         pages = ["Chatbot 🤖", "Chat with Documents 📖"]
 

@@ -37,7 +37,7 @@ class ChatbotApplication:
 
         # Set and manage chat interface display
         self.chat_manager.set_client(client)
-        self.general_manager.display_pages_tabs("1")
+        self.general_manager.display_pages_tabs(default_id=1)
         self.chat_manager.display_chat_interface()
 
     def run(self):

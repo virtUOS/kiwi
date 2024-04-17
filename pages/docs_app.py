@@ -34,7 +34,7 @@ class DocsApplication:
         initialize_language()
         self.sidebar_general_manager.set_user(user=session_state['_']("User"))
         self.sidebar_general_manager.initialize_cookies()
-        self.sidebar_general_manager.verify_user_session()
+        self.sidebar_general_manager.verify_and_set_user_session()
         self.sidebar_general_manager.display_logo()
         self.sidebar_general_manager.display_general_sidebar_controls()
         self.sidebar_doc_manager.display_docs_sidebar_controls()

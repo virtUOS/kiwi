@@ -1,5 +1,7 @@
 import os
 import re
+import string
+import random
 import streamlit as st
 from streamlit import session_state
 from streamlit_option_menu import option_menu
@@ -62,17 +64,26 @@ class SidebarManager:
 
         self.cookies = cookies
 
-    def verify_user_session(self):
+    def verify_and_set_user_session(self):
         """
         Verify the user's session validity. If cookies indicate the session is not yet initiated,
         then redirect the user to the start page.
 
         This function ensures that unauthorized users are not able to access application sections
-        that require a valid session.prompt_op
+        that require a valid session.prompt_op.
+
+        It also ensures that a username is assigned for the session. If the username is not found in the cookies,
+        a random username is generated combining letters and digits and assigned for the duration of the session.
         """
         if self.cookies and self.cookies.get('session') != 'in':
             st.switch_page("start.py")
+
         session_state['username'] = self.cookies.get('username')
+        # If there's no username in the cookies then just generate a random one for the session
+        if not session_state['username']:
+            alphabet = string.ascii_letters + string.digits
+            self.cookies['username'] = "".join(random.choices(alphabet, k=8))
+            session_state['username'] = self.cookies.get('username')
 
     @staticmethod
     def initialize_session_variables():
@@ -141,8 +152,9 @@ class SidebarManager:
         This involves resetting cookies and session variables that signify the user's logged-in state,
         thereby securely logging out the user.
         """
-        self.cookies["session"] = 'out'
-        session_state["password_correct"] = False
+        self.cookies['session'] = "out"
+        self.cookies['username'] = ""
+        session_state['password_correct'] = False
         session_state['credentials_checked'] = False
         st.switch_page('start.py')
 
@@ -659,7 +671,7 @@ class AIClient:
 
         # Add the history of the conversation
         for entry in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             speaker, message, *__ = entry + (None,)  # Ensure at least 3 elements
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})

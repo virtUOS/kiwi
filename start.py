@@ -192,11 +192,11 @@ if cookies.get('session') != 'in':
         st.stop()
     else:
         # When the password is correct create a persistent session
-        # Save cookie for the session. Use username as value, maybe it's useful at some point
+        # Save cookie for the session. Save username as value for using to name collections in vector db
         if session_state['username']:
-            cookies['session'] = "in"
             cookies['username'] = session_state['username']
-            cookies.save()
+        cookies['session'] = "in"
+        cookies.save()
 
 if cookies['session'] == 'in':
     st.sidebar.success(session_state['_']("Logged in!"))

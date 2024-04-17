@@ -318,6 +318,64 @@ class SidebarManager:
             except Exception as e:
                 container.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
 
+    @staticmethod
+    def _style_language_uploader():
+        lang = 'de'
+        if 'lang' in st.query_params:
+            if st.query_params['lang'] == 'en':
+                lang = 'en'
+
+        languages = {
+            "en": {
+                "button": "Browse Files",
+                "instructions": "Drag and drop files here",
+                "limits": "Limit 200MB per file",
+            },
+            "de": {
+                "button": "Dateien durchsuchen",
+                "instructions": "Dateien hierher ziehen und ablegen",
+                "limits": "Limit 200MB pro Datei",
+            },
+        }
+
+        hide_label = (
+            """
+        <style>
+            div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="baseButton-secondary"] {
+               color:white;
+            }
+            div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="baseButton-secondary"]::after {
+                content: "BUTTON_TEXT";
+                color:black;
+                display: block;
+                position: absolute;
+            }
+            div[data-testid="stFileUploaderDropzoneInstructions"]>div>span {
+               visibility:hidden;
+            }
+            div[data-testid="stFileUploaderDropzoneInstructions"]>div>span::after {
+               content:"INSTRUCTIONS_TEXT";
+               visibility:visible;
+               display:block;
+            }
+             div[data-testid="stFileUploaderDropzoneInstructions"]>div>small {
+               visibility:hidden;
+            }
+            div[data-testid="stFileUploaderDropzoneInstructions"]>div>small::before {
+               content:"FILE_LIMITS";
+               visibility:visible;
+               display:block;
+            }
+        </style>
+        """.replace(
+                "BUTTON_TEXT", languages.get(lang).get("button")
+            )
+            .replace("INSTRUCTIONS_TEXT", languages.get(lang).get("instructions"))
+            .replace("FILE_LIMITS", languages.get(lang).get("limits"))
+        )
+
+        st.markdown(hide_label, unsafe_allow_html=True)
+
     def _upload_conversation_file(self, container, conversation_key):
         """
         Render a file uploader in the specified container allowing users to upload a conversation history CSV file.
@@ -331,6 +389,7 @@ class SidebarManager:
         - conversation_key: The key that uniquely identifies the conversation in the session state's
         conversation histories.
         """
+        self._style_language_uploader()
         container.file_uploader(session_state['_']("**Upload conversation**"),
                                 type=['csv'],
                                 key='file_uploader_conversation',

@@ -1,6 +1,5 @@
 import os
 import re
-import pandas as pd
 import streamlit as st
 from streamlit import session_state
 from streamlit_option_menu import option_menu
@@ -28,8 +27,6 @@ from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from src import menu_utils
 from dotenv import load_dotenv
 
-from src.language_utils import initialize_language
-
 # Load environment variables
 load_dotenv()
 
@@ -37,14 +34,17 @@ load_dotenv()
 class SidebarManager:
 
     def __init__(self):
-        """
-        Initialize the SidebarManager instance by setting up session cookies and initializing the language.
-        """
-        initialize_language()
-        self.cookies = self.initialize_cookies()
+        self.cookies = None
 
     @staticmethod
-    def initialize_cookies():
+    def set_user(user):
+        session_state['USER'] = user
+
+    @staticmethod
+    def get_language():
+        return st.query_params.get('lang', False)
+
+    def initialize_cookies(self):
         """
         Initialize cookies for managing user sessions with enhanced security.
 
@@ -60,7 +60,7 @@ class SidebarManager:
             st.spinner()
             st.stop()
 
-        return cookies
+        self.cookies = cookies
 
     def verify_user_session(self):
         """
@@ -68,9 +68,9 @@ class SidebarManager:
         then redirect the user to the start page.
 
         This function ensures that unauthorized users are not able to access application sections
-        that require a valid session.
+        that require a valid session.prompt_op
         """
-        if self.cookies.get("session") != 'in':
+        if self.cookies and self.cookies.get("session") != 'in':
             st.switch_page("start.py")
 
     @staticmethod
@@ -118,22 +118,20 @@ class SidebarManager:
 
                 st.markdown(hide_img_fs, unsafe_allow_html=True)
 
-    @staticmethod
-    def load_prompts():
+    def load_prompts(self):
         """
         Load chat prompts based on the selected or default language.
 
         This method enables dynamic loading of chat prompts to support multi-lingual chatbot interactions.
         If no language is specified in the query parameters, German ('de') is used as the default language.
         """
-        language = st.query_params.get('lang', False)
+        language = self.get_language()
         # Use German language as default
         if not language:
             language = "de"
 
-        """Load chat prompts based on language."""
-        session_state[session_state['typ']] = menu_utils.load_prompts_from_yaml(typ=session_state['typ'],
-                                                                          language=language)
+        session_state[f"prompt_options_{session_state['typ']}"] = menu_utils.load_prompts_from_yaml(
+            typ=session_state['typ'], language=language)
 
     def logout_and_redirect(self):
         """
@@ -171,7 +169,7 @@ class SidebarManager:
                 session_state['selected_chatbot_path'] = new_path
                 self._display_chatbots_menu(options.get(choice, {}), new_path)
 
-    def _load_and_display_prompts(self):
+    def load_and_display_prompts(self):
         """
         Load chat prompts from the session state and display them in the chatbots menu in the sidebar.
 
@@ -179,7 +177,7 @@ class SidebarManager:
         then displays the chatbots menu with the loaded prompts using the `_display_chatbots_menu` method.
         """
         self.load_prompts()
-        self._display_chatbots_menu(session_state['prompt_options'])
+        self._display_chatbots_menu(session_state[f"prompt_options_{session_state['typ']}"])
 
     @staticmethod
     def _update_path_in_session_state():
@@ -216,12 +214,9 @@ class SidebarManager:
         Display sidebar controls and settings for the page.
 
         This function performs the following steps:
-        1. Loads prompt options to display in the chatbots' menu.
-        2. Checks for changes in the selected chatbot path to update the session state accordingly.
-        3. Displays model information for the selected model, e.g., OpenAI.
+        1. Checks for changes in the selected chatbot path to update the session state accordingly.
+        2. Displays model information for the selected model, e.g., OpenAI.
         """
-        self._load_and_display_prompts()
-
         self._update_path_in_session_state()
 
         self._display_model_information()
@@ -275,32 +270,104 @@ class SidebarManager:
 
 class GeneralManager:
 
-    def __init__(self):
-        pass
+    def __init__(self, sidebar_general_manager):
+        self.sgm = sidebar_general_manager
 
-    @staticmethod
-    def display_pages_tabs(default_id):
+    def display_pages_tabs(self, default_id):
 
-        pages = ["Chatbot 🤖", "Chat with Documents 📖"]
+        # We need to do this because we can't initialize language earlier due to affecting the navbar positioning
+        chat_with_documents_menu_name = "Chat mit Dokumenten 📖"
+        current_language = self.sgm.get_language()
+        if current_language:
+            if current_language == 'en':
+                chat_with_documents_menu_name = "Chat with Documents 📖"
 
-        page = st_navbar(pages, selected=pages[default_id])
+        pages = ["Chatbot 🤖", chat_with_documents_menu_name]
+
+        page = st_navbar(pages, selected=pages[default_id], options={"use_padding": False})
 
         session_state['chosen_page_index'] = pages.index(page)
 
         if session_state['chosen_page_index'] == session_state['current_page_index']:
             session_state['current_page_index'] = session_state['chosen_page_index']
-        elif session_state['chosen_page_index'] == 1 and session_state['current_page_index'] != 1:
-            session_state['current_page_index'] = 1
+        elif session_state['chosen_page_index'] == 0 and session_state['current_page_index'] != 0:
+            session_state['current_page_index'] = 0
             session_state['typ'] = 'chat'
             st.switch_page("pages/chatbot_app.py")
-        elif session_state['chosen_page_index'] == 2 and session_state['current_page_index'] != 2:
-            session_state['current_page_index'] = 2
-            session_state['typ'] = 'doc'
+        elif session_state['chosen_page_index'] == 1 and session_state['current_page_index'] != 1:
+            session_state['current_page_index'] = 1
+            session_state['typ'] = 'docs'
             st.switch_page("pages/docs_app.py")
 
     @staticmethod
-    def add_conversation_entry(chatbot, speaker, message):
-        session_state['conversation_histories'][chatbot].append((speaker, message))
+    def update_edited_prompt(chatbot):
+        """
+        Updates the edited prompt in the session state to reflect changes made by the user.
+
+        Parameters:
+        - chatbot: The chatbot for which the prompt will be updated.
+        """
+        session_state['edited_prompts'][chatbot] = session_state['edited_prompt']
+
+    @staticmethod
+    def restore_prompt(chatbot):
+        """
+        Restores the original chatbot prompt by removing any user-made edits from the session state.
+
+        Parameters:
+        - chatbot: The chatbot for which the prompt will be restored.
+        """
+        if chatbot in session_state['edited_prompts']:
+            del session_state['edited_prompts'][chatbot]
+
+    @staticmethod
+    def fetch_chatbot_prompt(chatbot):
+        """
+        Fetches the prompt for the current chatbot based on the selected path.
+
+        Parameters:
+        - chatbot: The chatbot for which the prompt will be fetched.
+
+        Returns:
+        - A string containing the prompt of the current chatbot.
+        """
+        return menu_utils.get_final_prompt(chatbot,
+                                           session_state[f"prompt_options_{session_state['typ']}"])
+
+    @staticmethod
+    def get_prompt_to_use(chatbot, description):
+        """
+        Retrieves and returns the current prompt description for the chatbot, considering any user edits.
+
+        Parameters:
+        - chatbot: The chatbot for which the prompt will be returned.
+        - default_description: The default description provided for the chatbot's prompt.
+
+        Returns:
+        - The current (possibly edited) description to be used as the prompt.
+        """
+        return session_state['edited_prompts'].get(chatbot, description)
+
+    @staticmethod
+    def update_conversation_history(chatbot, current_history):
+        """
+        Updates the session state with the current conversation history.
+
+        This method ensures that the conversation history for the currently selected chatbot path in the session state
+        is updated to reflect any new messages or responses that have been added during the interaction.
+
+        Parameters:
+        - chatbot: The chatbot for which the conversation will be updated.
+        - current_history: The current conversation history, which is a list of tuples. Each tuple contains
+          the speaker ('USER' or 'Assistant'), the message, and optionally, the system description or prompt
+          accompanying user messages (for user messages only).
+        """
+        session_state['conversation_histories'][chatbot] = current_history
+
+    @staticmethod
+    def add_conversation_entry(chatbot, speaker, message, prompt=""):
+        session_state['conversation_histories'][chatbot].append((speaker, message, prompt))
+        return session_state['conversation_histories'][chatbot]
 
     @staticmethod
     def get_conversation_history(chatbot):
@@ -312,10 +379,31 @@ class GeneralManager:
             if (chatbot in session_state['conversation_histories']
                     and session_state['uploaded_pdf_files']):
                 return True
+        else:
+            if (chatbot in session_state['conversation_histories']
+                    and session_state['conversation_histories'][chatbot]):
+                return True
         return False
 
     @staticmethod
-    def create_empty_history(chatbot):
+    def is_new_message(current_history, user_message):
+        """
+        Checks if the last message in history differs from the newly submitted user message.
+
+        Parameters:
+        - current_history: The current conversation history.
+        - user_message: The newly submitted user message.
+
+        Returns:
+        - A boolean indicating whether this is a new unique message submission.
+        """
+        if (not current_history or current_history[-1][0] != session_state['USER']
+                or current_history[-1][1] != user_message):
+            return True
+        return False
+
+    @staticmethod
+    def create_history(chatbot):
         # If no conversation in history for this chatbot, then create an empty one
         session_state['conversation_histories'][chatbot] = [
         ]
@@ -326,12 +414,14 @@ class GeneralManager:
         Displays the conversation history between the user and the assistant within the given container or globally.
 
         Parameters:
-        - conversation_history: A list containing tuples of (speaker, message) representing the conversation.
+        - conversation_history: A list containing tuples of (speaker, message, system prompt)
+         representing the conversation. The system prompt is optional.
         - container: The Streamlit container (e.g., column, expander) where the messages should be displayed.
           If None, messages will be displayed in the main app area.
         """
-        for speaker, message, __ in conversation_history:
-            chat_message_container = container if container else st
+        chat_message_container = container if container else st
+        for entry in conversation_history:
+            speaker, message, *__ = entry + (None,)  # Ensure at least 3 elements
             if speaker == session_state['USER']:
                 chat_message_container.chat_message("user").write(message)
             elif speaker == "Assistant":
@@ -462,20 +552,37 @@ class AIClient:
 
         return str_response
 
-    def get_response(self, prompt, description_to_use):
+    def process_response(self, current_history, user_message, prompt_to_use):
+        """
+        Submits the user message to OpenAI, retrieves the response, and updates the conversation history.
+
+        Parameters:
+        - current_history: The current conversation history.
+        - user_message: The message input by the user.
+        - prompt_to_use: The current system prompt associated with the user message.
+
+        Returns:
+        - current_history: The updated conversation history with the response from the chatbot.
+        """
+        response = self._get_response(user_message, prompt_to_use)
+        # Add AI response to the history
+        current_history.append(('Assistant', response, ""))
+        return current_history
+
+    def _get_response(self, message, prompt_to_use):
         """
         Sends a prompt to the OpenAI API and returns the API's response.
 
         Parameters:
-            prompt (str): The user's message or question.
-            description_to_use (str): Additional context or instructions to provide to the model.
+            message (str): The user's message or question.
+            prompt_to_use (str): Additional context or instructions to provide to the model.
 
         Returns:
             str: The response from the chatbot.
         """
         try:
             # Prepare the full prompt and messages with context or instructions
-            messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
+            messages = self._prepare_full_prompt_and_messages(message, prompt_to_use)
 
             # Send the request to the OpenAI API
             # Display assistant response in chat message container
@@ -550,8 +657,9 @@ class AIClient:
             messages = []
 
         # Add the history of the conversation
-        for speaker, message in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+        for entry in session_state['conversation_histories'][
+                session_state['selected_chatbot_path_serialized']]:
+            speaker, message, *__ = entry + (None,)  # Ensure at least 3 elements
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

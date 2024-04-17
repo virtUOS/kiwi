@@ -19,7 +19,7 @@ def _load_docs_prompts_from_yaml(language, prompt_key):
     with open(file_path_template, 'r', encoding='utf-8') as file:
         prompt_templates = yaml.safe_load(file)
 
-    template_info = prompt_templates['prompt_templates'][prompt_key]
+    template_info = prompt_templates['prompt_templates']['document_assistance']
 
     summary_reduce_prompt = prompt_templates['prompt_templates']['summary_reduce_assistance']
     summary_map_prompt = prompt_templates['prompt_templates']['summary_map_assistance']
@@ -49,7 +49,7 @@ def _load_chat_prompts_from_yaml(language):
 def load_prompts_from_yaml(language='de', typ='chat', prompt_key=None):
     if typ == 'chat':
         return _load_chat_prompts_from_yaml(language)
-    elif typ == 'doc':
+    elif typ == 'docs':
         return _load_docs_prompts_from_yaml(language, prompt_key)
 
 
@@ -72,14 +72,14 @@ def set_prompt_for_path(prompts_dict, path, edited_prompt):
 
 
 @st.cache_data
-def get_final_description(selected_path, options):
+def get_final_prompt(selected_path, options):
     """
     Navigate through the options based on the selected path,
-    returning the final description or None if not a final option.
+    returning the final prompt or None if not a final option.
 
     :param selected_path: List of strings representing the selected menu path.
     :param options: The current prompt options.
-    :return: The description string if a final option is reached, None otherwise.
+    :return: The prompt string if a final option is reached, None otherwise.
     """
     current_option = options
     for step in selected_path:

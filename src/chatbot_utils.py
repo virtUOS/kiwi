@@ -2,10 +2,8 @@ import os
 import time
 
 import pandas as pd
-from openai import OpenAI
 import streamlit as st
 from streamlit import session_state
-from src import menu_utils
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -14,18 +12,18 @@ load_dotenv()
 
 class SidebarChatManager:
 
-    def __init__(self):
-        pass
+    def __init__(self, sidebar_general_manager, general_manager):
+        self.sgm = sidebar_general_manager
+        self.gm = general_manager
 
-    @staticmethod
-    def initialize_chat_session_variables():
+    def initialize_chat_session_variables(self):
         """
         Initialize chat session variables with default values.
 
         Sets up the initial state for the chat application to function correctly from the start.
         """
+        self.sgm.load_prompts()
         required_keys = {
-            'prompt_options': menu_utils.load_prompts_from_yaml(typ=session_state['typ']),
             'edited_prompts': {},
             'disable_custom': False,
         }
@@ -48,8 +46,7 @@ class SidebarChatManager:
         with st.sidebar:
             st.markdown("---")
             with st.expander(session_state['_']("**Options**")):
-                if conversation_key in session_state['conversation_histories'] and session_state[
-                        'conversation_histories'][conversation_key]:
+                if self.gm.has_conversation_history(conversation_key):
                     st.markdown("---")
                     col1, col2 = st.columns([1, 3])
                     self._delete_conversation_button(col1)
@@ -57,13 +54,21 @@ class SidebarChatManager:
                     st.markdown("---")
                 self._upload_conversation_file(st, conversation_key)
 
-    def display_chat_sidebar_controls(self):
+    def display_chat_top_sidebar_controls(self):
         """
-        Display chat sidebar controls and settings.
+        Display chat top sidebar controls and settings for the chatbot.
 
         This function performs the following steps:
-        1. Adds custom CSS to stylize the sidebar.
-        2. Offers a logout option.
+        1. Display conversation controls.
+        """
+        self.sgm.load_and_display_prompts()
+
+    def display_chat_middle_sidebar_controls(self):
+        """
+        Display chat middle sidebar controls and settings for the chatbot.
+
+        This function performs the following steps:
+        1. Display conversation controls.
         """
         self._show_conversation_controls()
 
@@ -168,7 +173,7 @@ class SidebarChatManager:
 
 class ChatManager:
 
-    def __init__(self, user, general_manager):
+    def __init__(self, general_manager):
         """
         Initializes the ChatManager instance with the user's identifier.
 
@@ -177,7 +182,6 @@ class ChatManager:
         """
         self.gm = general_manager
         self.client = None
-        session_state['USER'] = user
 
     def set_client(self, client):
         """
@@ -188,22 +192,6 @@ class ChatManager:
         """
         self.client = client
 
-    @staticmethod
-    def _update_edited_prompt():
-        """
-        Updates the edited prompt in the session state to reflect changes made by the user.
-        """
-        session_state['edited_prompts'][session_state[
-            'selected_chatbot_path_serialized']] = session_state['edited_prompt']
-
-    @staticmethod
-    def _restore_prompt():
-        """
-        Restores the original chatbot prompt by removing any user-made edits from the session state.
-        """
-        if session_state['selected_chatbot_path_serialized'] in session_state['edited_prompts']:
-            del session_state['edited_prompts'][session_state['selected_chatbot_path_serialized']]
-
     def _display_prompt_editor(self, description):
         """
         Displays an editable text area for the current chatbot prompt, allowing the user to make changes.
@@ -212,117 +200,19 @@ class ChatManager:
         - description: The default chatbot prompt description which can be edited by the user.
         """
         current_chatbot_path_serialized = session_state['selected_chatbot_path_serialized']
-        current_edited_prompt = session_state['edited_prompts'].get(current_chatbot_path_serialized, description)
+        current_edited_prompt = self.gm.get_prompt_to_use(current_chatbot_path_serialized, description)
 
         st.text_area(session_state['_']("System prompt"),
                      value=current_edited_prompt,
-                     on_change=self._update_edited_prompt,
+                     on_change=self.gm.update_edited_prompt,
+                     args=session_state['selected_chatbot_path'],
                      key='edited_prompt',
                      label_visibility='hidden')
 
-        st.button("🔄", help=session_state['_']("Restore Original Prompt"), on_click=self._restore_prompt)
-
-    @staticmethod
-    def _get_description_to_use(default_description):
-        """
-        Retrieves and returns the current prompt description for the chatbot, considering any user edits.
-
-        Parameters:
-        - default_description: The default description provided for the chatbot's prompt.
-
-        Returns:
-        - The current (possibly edited) description to be used as the prompt.
-        """
-        return session_state['edited_prompts'].get(session_state[
-                                                       'selected_chatbot_path_serialized'], default_description)
-
-    @staticmethod
-    def _display_conversation(conversation_history, container=None):
-        """
-        Displays the conversation history between the user and the assistant within the given container or globally.
-
-        Parameters:
-        - conversation_history: A list containing tuples of (speaker, message) representing the conversation.
-        - container: The Streamlit container (e.g., column, expander) where the messages should be displayed.
-          If None, messages will be displayed in the main app area.
-        """
-        for speaker, message, __ in conversation_history:
-            chat_message_container = container if container else st
-            if speaker == session_state['USER']:
-                chat_message_container.chat_message("user").write(message)
-            elif speaker == "Assistant":
-                chat_message_container.chat_message("assistant").write(message)
-
-    @staticmethod
-    def _get_current_conversation_history():
-        """
-        Retrieves the current conversation history for the selected chatbot path from the session state.
-
-        Returns:
-        - A list representing the conversation history.
-        """
-        serialized_path = session_state['selected_chatbot_path_serialized']
-        if serialized_path not in session_state['conversation_histories']:
-            session_state['conversation_histories'][serialized_path] = []
-        return session_state['conversation_histories'][serialized_path]
-
-    @staticmethod
-    def _is_new_message(current_history, user_message):
-        """
-        Checks if the last message in history differs from the newly submitted user message.
-
-        Parameters:
-        - current_history: The current conversation history.
-        - user_message: The newly submitted user message.
-
-        Returns:
-        - A boolean indicating whether this is a new unique message submission.
-        """
-        if (not current_history or current_history[-1][0] != session_state['USER']
-                or current_history[-1][1] != user_message):
-            return True
-        return False
-
-    @staticmethod
-    def _update_conversation_history(current_history):
-        """
-        Updates the session state with the current conversation history.
-
-        This method ensures that the conversation history for the currently selected chatbot path in the session state
-        is updated to reflect any new messages or responses that have been added during the interaction.
-
-        Parameters:
-        - current_history: The current conversation history, which is a list of tuples. Each tuple contains
-          the speaker ('USER' or 'Assistant'), the message, and optionally, the system description or prompt
-          accompanying user messages (for user messages only).
-        """
-        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = current_history
-
-    @staticmethod
-    def _append_user_message_to_history(current_history, user_message, description_to_use):
-        """
-        Appends the user's message to the conversation history in the session state.
-
-        Parameters:
-        - current_history: The current conversation history.
-        - user_message: The message input by the user.
-        - description_to_use: The system description or prompt that should accompany user messages.
-        """
-        # Adding user message and description to the current conversation
-        current_history.append((session_state['USER'], user_message, description_to_use))
-
-    def _process_response(self, current_history, user_message, description_to_use):
-        """
-        Submits the user message to OpenAI, retrieves the response, and updates the conversation history.
-
-        Parameters:
-        - current_history: The current conversation history.
-        - user_message: The message input by the user.
-        - description_to_use: The current system description or prompt associated with the user message.
-        """
-        response = self.client.get_response(user_message, description_to_use)
-        # Add AI response to the history
-        current_history.append(('Assistant', response, ""))
+        st.button("🔄", help=session_state['_']("Restore Original Prompt"),
+                  on_click=self.gm.restore_prompt,
+                  args=session_state['selected_chatbot_path']
+                  )
 
     def _handle_user_input(self, description_to_use):
         """
@@ -332,35 +222,31 @@ class ChatManager:
         - description_to_use: The current system description or prompt used alongside user messages.
         """
         if user_message := st.chat_input(session_state['USER']):
-            current_history = self._get_current_conversation_history()
+            current_history = self.gm.get_conversation_history(session_state['selected_chatbot_path_serialized'])
 
             # Ensures unique submission to prevent re-running on refresh
-            if self._is_new_message(current_history, user_message):
-                self._append_user_message_to_history(current_history, user_message, description_to_use)
+            if self.gm.is_new_message(current_history, user_message):
+                if not current_history:
+                    self.gm.create_history(session_state['selected_chatbot_path_serialized'])
+                current_history = self.gm.add_conversation_entry(session_state['selected_chatbot_path_serialized'],
+                                                                 session_state['USER'],
+                                                                 user_message,
+                                                                 description_to_use)
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
                     st.markdown(user_message)
 
                 # Process and display response
-                self._process_response(current_history, user_message, description_to_use)
-                self._update_conversation_history(current_history)
+                current_history = self.client.process_response(current_history, user_message, description_to_use)
+
+                self.gm.update_conversation_history(session_state['selected_chatbot_path_serialized'], current_history)
                 st.rerun()
 
     @staticmethod
-    def _fetch_chatbot_description():
+    def _display_portal_model_info():
         """
-        Fetches the description for the current chatbot based on the selected path.
-
-        Returns:
-        - A string containing the description of the current chatbot.
-        """
-        return menu_utils.get_final_description(session_state["selected_chatbot_path"], session_state["prompt_options"])
-
-    @staticmethod
-    def _display_openai_model_info():
-        """
-        Displays information about the current OpenAI model in use.
+        Displays information about the portal and model in use.
         """
         using_text = session_state['_']("You're using the following OpenAI model:")
         remember_text = session_state['_']("Remember **not** to enter any personal information"
@@ -379,7 +265,7 @@ class ChatManager:
                 or not session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']]):
             st.header(session_state['_']("How can I help you?"))
             if session_state['model_selection'] == 'OpenAI':
-                self._display_openai_model_info()
+                self._display_portal_model_info()
 
     def display_chat_interface(self):
         """
@@ -390,189 +276,28 @@ class ChatManager:
         """
         if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
 
-            description = self._fetch_chatbot_description()
+            prompt = self.gm.fetch_chatbot_prompt(session_state['selected_chatbot_path'])
 
-            if isinstance(description, str) and len(description.strip()) > 0:
+            if isinstance(prompt, str) and len(prompt.strip()) > 0:
 
                 # Display chat interface header and model information if applicable
                 self._display_chat_interface_header()
 
                 with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
-                    self._display_prompt_editor(description)
+                    self._display_prompt_editor(prompt)
 
                 st.markdown("""---""")
 
-                description_to_use = self._get_description_to_use(description)
+                prompt_to_use = self.gm.get_prompt_to_use(session_state['selected_chatbot_path_serialized'],
+                                                          prompt)
 
                 # Displays the existing conversation history
-                conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                       'selected_chatbot_path_serialized'],
-                                                                                   [])
-                self._display_conversation(conversation_history)
+                conversation_history = self.gm.get_conversation_history(
+                    session_state['selected_chatbot_path_serialized'])
+
+                self.gm.display_conversation(conversation_history)
 
                 # Handles the user's input and interaction with the LLM
-                self._handle_user_input(description_to_use)
+                self._handle_user_input(prompt_to_use)
             else:
                 st.error(session_state['_']("The System Prompt should be a string and not empty."))
-
-
-class AIClient:
-
-    def __init__(self):
-        if session_state['model_selection'] == 'OpenAI':
-
-            @st.cache_resource
-            def load_openai_data():
-                return OpenAI(), os.getenv('OPENAI_MODEL')
-
-            self.client, self.model = load_openai_data()
-        else:
-            pass
-            # Add here client initialization for local model
-            # For example using OpenLLM as inference server
-            # session_state["inference_server_url"] = "http://localhost:3000/v1"
-            # self.client = OpenAI(base_url=session_state['inference_server_url'])
-            # models = session_state["client"].models.list()
-            # self.model = models.data[0].id
-
-    @staticmethod
-    def _generate_response(stream):
-        """
-        Extracts the content from the stream of responses from the OpenAI API.
-        Parameters:
-            stream: The stream of responses from the OpenAI API.
-
-        """
-
-        for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta:
-                chunk_content = chunk.choices[0].delta.content
-                yield chunk_content
-
-    @staticmethod
-    def _concatenate_partial_response(partial_response):
-        """
-        Concatenates the partial response into a single string.
-
-        Parameters:
-            partial_response (list): The chunks of the response from the OpenAI API.
-
-        Returns:
-            str: The concatenated response.
-        """
-        str_response = ""
-        for i in partial_response:
-            if isinstance(i, str):
-                str_response += i
-
-        st.markdown(str_response)
-
-        return str_response
-
-    def get_response(self, prompt, description_to_use):
-        """
-        Sends a prompt to the OpenAI API and returns the API's response.
-
-        Parameters:
-            prompt (str): The user's message or question.
-            description_to_use (str): Additional context or instructions to provide to the model.
-
-        Returns:
-            str: The response from the chatbot.
-        """
-        try:
-            # Prepare the full prompt and messages with context or instructions
-            messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
-
-            # Send the request to the OpenAI API
-            # Display assistant response in chat message container
-            response = ""
-            with st.chat_message("assistant"):
-                with st.spinner(session_state['_']("Generating response...")):
-                    stream = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=messages,
-                        stream=True,
-                    )
-                    partial_response = []
-
-                    gen_stream = self._generate_response(stream)
-                    for chunk_content in gen_stream:
-                        # check if the chunk is a code block
-                        if chunk_content == '```':
-                            partial_response.append(chunk_content)
-                            code_block = True
-                            while code_block:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    partial_response.append(chunk_content)
-                                    if chunk_content == "`\n\n":
-                                        code_block = False
-                                        str_response = self._concatenate_partial_response(partial_response)
-                                        partial_response = []
-                                        response += str_response
-
-                                except StopIteration:
-                                    break
-
-                        else:
-                            # If the chunk is not a code block, append it to the partial response
-                            partial_response.append(chunk_content)
-                            if chunk_content:
-                                if '\n' in chunk_content:
-                                    str_response = self._concatenate_partial_response(partial_response)
-                                    partial_response = []
-                                    response += str_response
-                # If there is a partial response left, concatenate it and render it
-                if partial_response:
-                    str_response = self._concatenate_partial_response(partial_response)
-                    response += str_response
-
-            return response
-
-        except Exception as e:
-            print(f"An error occurred while fetching the OpenAI response: {e}")
-            # Optionally, return a default error message or handle the error appropriately.
-            return "Sorry, I couldn't process that request."
-
-    @staticmethod
-    def _prepare_full_prompt_and_messages(user_prompt, description_to_use):
-        """
-        Prepares the full prompt and messages combining user input and additional descriptions.
-
-        Parameters:
-            user_prompt (str): The original prompt from the user.
-            description_to_use (str): Additional context or instructions to provide to the model.
-
-        Returns:
-            list: List of dictionaries containing messages for the chat completion.
-        """
-
-        if session_state["model_selection"] == 'OpenAI':
-            messages = [{
-                'role': "system",
-                'content': description_to_use
-            }]
-        else:  # Add here conditions for different types of models
-            messages = []
-
-        # Add the history of the conversation, ignore the system prompt
-        for speaker, message, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
-            role = 'user' if speaker == session_state['USER'] else 'assistant'
-            messages.append({'role': role, 'content': message})
-
-        # Building the messages with the "system" message based on expertise area
-        if session_state["model_selection"] == 'OpenAI':
-            messages.append({"role": "user", "content": user_prompt})
-        else:
-            # Add the description to the current user message to simulate a system prompt.
-            # This is for models that were trained with no system prompt: LLaMA/Mistral/Mixtral.
-            # Source: https://github.com/huggingface/transformers/issues/28366
-            # Maybe find a better solution or avoid any system prompt for these models
-            messages.append({"role": "user", "content": description_to_use + "\n\n" + user_prompt})
-
-        # This method can be expanded based on how you want to structure the prompt
-        # For example, you might prepend the description_to_use before the user_prompt
-        return messages

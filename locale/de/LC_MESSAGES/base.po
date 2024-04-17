@@ -98,6 +98,10 @@ msgstr "Antwort wird generiert..."
 msgid "The System Prompt should be a string and not empty."
 msgstr "Die System-Prompt sollte eine String und nicht leer sein."
 
+#: src/utils.py:285
+msgid "Chat with Documents 📖"
+msgstr "Chat mit Dokumenten 📖"
+
 #: start.py:68
 msgid "Login with your university credentials."
 msgstr "Melden Sie sich mit Ihren Benutzerdaten an."

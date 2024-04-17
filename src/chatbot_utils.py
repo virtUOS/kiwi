@@ -322,8 +322,7 @@ class SidebarManager:
     def _style_language_uploader():
         lang = 'de'
         if 'lang' in st.query_params:
-            if st.query_params['lang'] == 'en':
-                lang = 'en'
+            lang = st.query_params['lang']
 
         languages = {
             "en": {

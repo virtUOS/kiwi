@@ -70,8 +70,9 @@ class SidebarManager:
         This function ensures that unauthorized users are not able to access application sections
         that require a valid session.prompt_op
         """
-        if self.cookies and self.cookies.get("session") != 'in':
+        if self.cookies and self.cookies.get('session') != 'in':
             st.switch_page("start.py")
+        session_state['username'] = self.cookies.get('username')
 
     @staticmethod
     def initialize_session_variables():

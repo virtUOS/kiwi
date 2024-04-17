@@ -52,13 +52,13 @@ with st.sidebar:
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        user_found = ldap_connector.check_auth(username=session_state.username,
-                                               password=session_state.password)
+        user_found = ldap_connector.check_auth(username=session_state['username'],
+                                               password=session_state['password'])
         if user_found:
             session_state["password_correct"] = True
-            del session_state["password"]  # Don't store the password.
+            del session_state['password']  # Don't store the password.
         else:
-            session_state["password_correct"] = False
+            session_state['password_correct'] = False
 
         session_state['credentials_checked'] = True
 
@@ -186,16 +186,17 @@ else:
 
 
 # First check if there's a session already started
-if cookies.get("session") != 'in':
-
+if cookies.get('session') != 'in':
     # If no session, then check password
     if not check_password():
         st.stop()
     else:
         # When the password is correct create a persistent session
         # Save cookie for the session. Use username as value, maybe it's useful at some point
-        cookies["session"] = 'in'
-        cookies.save()
+        if session_state['username']:
+            cookies['session'] = "in"
+            cookies['username'] = session_state['username']
+            cookies.save()
 
 if cookies['session'] == 'in':
     st.sidebar.success(session_state['_']("Logged in!"))

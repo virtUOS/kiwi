@@ -230,6 +230,7 @@ class SidebarManager:
         conversation_key = session_state['selected_chatbot_path_serialized']
         with st.sidebar:
             st.markdown("---")
+            st.write(session_state['_']("**Options**"))
             col1, col2, col3 = st.columns([1, 1, 1])
             # with st.expander(session_state['_']("**Options**"), expanded=True):
             if conversation_key in session_state['conversation_histories'] and session_state[

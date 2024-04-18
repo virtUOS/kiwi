@@ -256,7 +256,7 @@ class SidebarManager:
         """
         column.button("🗑️",
                       on_click=self._delete_conversation_callback,
-                      help=session_state['_']("Delete the Conversation"))
+                      help=session_state['_']("Delete Conversation"))
 
     def _upload_conversation_button(self, container, conversation_key):
         """
@@ -292,8 +292,8 @@ class SidebarManager:
                                                 session_state['_']('Message'),
                                                 session_state['_']('System prompt')])
         conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-        container.download_button("📂", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
-                                  help=session_state['_']("Download the Conversation"))
+        container.download_button("⬇️", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
+                                  help=session_state['_']("Download Conversation"))
 
     @staticmethod
     def _process_uploaded_conversation_file(container, conversation_key):

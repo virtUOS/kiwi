@@ -55,8 +55,12 @@ msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
 #: src/chatbot_utils.py:290
-msgid "**Upload conversation**"
-msgstr "**Konversation hochladen**"
+msgid "**Upload Conversation**"
+msgstr "**Konversation Hochladen**"
+
+#: src/chatbot_utils.py:290
+msgid "Upload Conversation"
+msgstr "Konversation Hochladen"
 
 #: src/chatbot_utils.py:303
 msgid "The uploaded file is missing one or more required columns: 'Speaker', 'Message', 'System prompt'"

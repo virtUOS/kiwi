@@ -34,25 +34,23 @@ class SidebarChatManager:
 
     def _show_conversation_controls(self):
         """
-        Display buttons for conversation management, including deleting and downloading conversation history,
+        Display buttons for conversation management, including deleting uploading and downloading conversation history,
          in the sidebar.
 
         This method checks if there is an existing conversation history for the currently selected chatbot path and,
          if so,
-        displays options to either delete this history or download it as a CSV file. It leverages the
-        `_delete_conversation_button` and `_download_conversation_button` methods to render these options.
+        displays options to either delete this history or download it as a CSV file.
         """
         conversation_key = session_state['selected_chatbot_path_serialized']
         with st.sidebar:
             st.markdown("---")
-            with st.expander(session_state['_']("**Options**")):
-                if self.gm.has_conversation_history(conversation_key):
-                    st.markdown("---")
-                    col1, col2 = st.columns([1, 3])
-                    self._delete_conversation_button(col1)
-                    self._download_conversation_button(col2, conversation_key)
-                    st.markdown("---")
-                self._upload_conversation_file(st, conversation_key)
+            st.write(session_state['_']("**Options**"))
+            col1, col2, col3 = st.columns([1, 1, 1])
+            if conversation_key in session_state['conversation_histories'] and session_state[
+                    'conversation_histories'][conversation_key]:
+                self._delete_conversation_button(col3)
+                self._download_conversation_button(col2, conversation_key)
+            self._upload_conversation_button(col1, conversation_key)
 
     def display_chat_top_sidebar_controls(self):
         """
@@ -115,6 +113,17 @@ class SidebarChatManager:
 
     @staticmethod
     def _process_uploaded_conversation_file(container, conversation_key):
+        """
+        Handles the processing of a conversation history file uploaded by the user. Validates the uploaded CSV
+        file for required columns, updates the session state with the uploaded conversation, and extracts
+        the latest 'System prompt' based on user's message from the uploaded conversation for further processing.
+
+        Parameters:
+        - container (st.delta_generator.DeltaGenerator): The Streamlit container displaying status messages
+          regarding the uploading process.
+        - conversation_key (str): A unique identifier for the conversation history to correctly update the session
+          state with the uploaded content.
+        """
         if session_state['file_uploader_conversation']:
             try:
                 # Read the uploaded CSV file into a DataFrame
@@ -150,6 +159,49 @@ class SidebarChatManager:
             except Exception as e:
                 container.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
 
+    @staticmethod
+    def _style_language_uploader():
+        lang = 'de'
+        if 'lang' in st.query_params:
+            lang = st.query_params['lang']
+
+        languages = {
+            "en": {
+                "instructions": "Drag and drop files here",
+                "limits": "Limit 200MB per file",
+            },
+            "de": {
+                "instructions": "Dateien hierher ziehen und ablegen",
+                "limits": "Limit 200MB pro Datei",
+            },
+        }
+
+        hide_label = (
+            """
+        <style>
+            div[data-testid="stFileUploaderDropzoneInstructions"]>div>span {
+               visibility:hidden;
+            }
+            div[data-testid="stFileUploaderDropzoneInstructions"]>div>span::after {
+               content:"INSTRUCTIONS_TEXT";
+               visibility:visible;
+               display:block;
+            }
+             div[data-testid="stFileUploaderDropzoneInstructions"]>div>small {
+               visibility:hidden;
+            }
+            div[data-testid="stFileUploaderDropzoneInstructions"]>div>small::before {
+               content:"FILE_LIMITS";
+               visibility:visible;
+               display:block;
+            }
+        </style>
+        """.replace("INSTRUCTIONS_TEXT", languages.get(lang).get("instructions"))
+            .replace("FILE_LIMITS", languages.get(lang).get("limits"))
+        )
+
+        st.markdown(hide_label, unsafe_allow_html=True)
+
     def _upload_conversation_file(self, container, conversation_key):
         """
         Render a file uploader in the specified container allowing users to upload a conversation history CSV file.
@@ -169,6 +221,21 @@ class SidebarChatManager:
                                 on_change=self._process_uploaded_conversation_file,
                                 args=(container, conversation_key)
                                 )
+
+    def _upload_conversation_button(self, container, conversation_key):
+        """
+        Renders an upload button in the specified Streamlit container to allow users to upload the conversation
+        history from a CSV file. This function invokes another method to process the uploaded file upon the
+        button click.
+
+        Parameters:
+        - container (st.delta_generator.DeltaGenerator): The Streamlit container (e.g., a sidebar or a column)
+          where the upload button will be displayed.
+        - conversation_key (str): A unique string identifier for the conversation history to be uploaded. This
+          is used to correctly associate the uploaded conversation with its relevant session state.
+        """
+        if container.button("⬆️", help=session_state['_']("Upload Conversation")):
+            self._upload_conversation_file(st, conversation_key)
 
 
 class ChatManager:

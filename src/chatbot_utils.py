@@ -87,7 +87,7 @@ class SidebarChatManager:
         """
         column.button("🗑️",
                       on_click=self._delete_conversation_callback,
-                      help=session_state['_']("Delete the Conversation"))
+                      help=session_state['_']("Delete Conversation"))
 
     @staticmethod
     def _download_conversation_button(container, conversation_key):
@@ -108,8 +108,8 @@ class SidebarChatManager:
                                                 session_state['_']('Message'),
                                                 session_state['_']('System prompt')])
         conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-        container.download_button("📂", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
-                                  help=session_state['_']("Download the Conversation"))
+        container.download_button("⬇️", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
+                                  help=session_state['_']("Download Conversation"))
 
     @staticmethod
     def _process_uploaded_conversation_file(container, conversation_key):
@@ -215,6 +215,7 @@ class SidebarChatManager:
         - conversation_key: The key that uniquely identifies the conversation in the session state's
         conversation histories.
         """
+        self._style_language_uploader()
         container.file_uploader(session_state['_']("**Upload conversation**"),
                                 type=['csv'],
                                 key='file_uploader_conversation',

@@ -27,8 +27,8 @@ msgid "**Options**"
 msgstr "**Optionen**"
 
 #: src/chatbot_utils.py:143
-msgid "Delete the Conversation"
-msgstr "Löschen der Konversation"
+msgid "Delete Conversation"
+msgstr "Konversation löschen"
 
 #: src/chatbot_utils.py:153
 msgid "Message"
@@ -39,8 +39,8 @@ msgid "Speaker"
 msgstr "Sprecher"
 
 #: src/chatbot_utils.py:159
-msgid "Download the Conversation"
-msgstr "Download der Konversation"
+msgid "Download Conversation"
+msgstr "Konversation downloaden"
 
 #: src/chatbot_utils.py:188
 msgid "Logout"
@@ -60,7 +60,7 @@ msgstr "**Konversation Hochladen**"
 
 #: src/chatbot_utils.py:290
 msgid "Upload Conversation"
-msgstr "Konversation Hochladen"
+msgstr "Konversation hochladen"
 
 #: src/chatbot_utils.py:303
 msgid "The uploaded file is missing one or more required columns: 'Speaker', 'Message', 'System prompt'"

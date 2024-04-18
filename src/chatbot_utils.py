@@ -235,8 +235,8 @@ class SidebarManager:
             # with st.expander(session_state['_']("**Options**"), expanded=True):
             if conversation_key in session_state['conversation_histories'] and session_state[
                     'conversation_histories'][conversation_key]:
-                self._delete_conversation_button(col2)
-                self._download_conversation_button(col3, conversation_key)
+                self._delete_conversation_button(col3)
+                self._download_conversation_button(col2, conversation_key)
             self._upload_conversation_button(col1, conversation_key)
 
     @staticmethod

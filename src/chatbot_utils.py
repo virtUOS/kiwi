@@ -260,7 +260,15 @@ class SidebarManager:
 
     def _upload_conversation_button(self, container, conversation_key):
         """
-        Render a button in the specified column allowing users to upload the conversation history as a CSV file.
+        Renders an upload button in the specified Streamlit container to allow users to upload the conversation
+        history from a CSV file. This function invokes another method to process the uploaded file upon the
+        button click.
+
+        Parameters:
+        - container (st.delta_generator.DeltaGenerator): The Streamlit container (e.g., a sidebar or a column)
+          where the upload button will be displayed.
+        - conversation_key (str): A unique string identifier for the conversation history to be uploaded. This
+          is used to correctly associate the uploaded conversation with its relevant session state.
         """
         if container.button("⬆️", help=session_state['_']("Upload Conversation")):
             self._upload_conversation_file(st, conversation_key)
@@ -268,15 +276,15 @@ class SidebarManager:
     @staticmethod
     def _download_conversation_button(container, conversation_key):
         """
-        Render a button in the specified column allowing users to download the conversation history as a CSV file.
+        Renders a download button within a specified Streamlit container, allowing users to download their
+        conversation history as a CSV file. This method first structures the conversation history into a
+        pandas DataFrame, then converts it to CSV format for download.
 
-        This static method creates a DataFrame from the conversation history stored in the session state under the
-        given `conversation_key`, converts it to a CSV format, and provides a download button for the generated CSV.
-
-        :param container: The container in Streamlit where the button should be placed.
-        This should be a Streamlit column object.
-        :param conversation_key: The key that uniquely identifies the conversation in the session state's
-        conversation histories.
+        Parameters:
+        - container (st.delta_generator.DeltaGenerator): The Streamlit container (e.g., a sidebar or a column)
+          where the download button will be displayed.
+        - conversation_key (str): The key used to identify the conversation history within the session state,
+          ensuring the correct conversation history is made downloadable.
         """
         conversation_to_download = session_state['conversation_histories'][conversation_key]
         conversation_df = pd.DataFrame(conversation_to_download,
@@ -289,6 +297,17 @@ class SidebarManager:
 
     @staticmethod
     def _process_uploaded_conversation_file(container, conversation_key):
+        """
+        Handles the processing of a conversation history file uploaded by the user. Validates the uploaded CSV
+        file for required columns, updates the session state with the uploaded conversation, and extracts
+        the latest 'System prompt' based on user's message from the uploaded conversation for further processing.
+
+        Parameters:
+        - container (st.delta_generator.DeltaGenerator): The Streamlit container displaying status messages
+          regarding the uploading process.
+        - conversation_key (str): A unique identifier for the conversation history to correctly update the session
+          state with the uploaded content.
+        """
         if session_state['file_uploader_conversation']:
             try:
                 # Read the uploaded CSV file into a DataFrame

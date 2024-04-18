@@ -230,15 +230,13 @@ class SidebarManager:
         conversation_key = session_state['selected_chatbot_path_serialized']
         with st.sidebar:
             st.markdown("---")
-            with st.expander(session_state['_']("**Options**"), expanded=True):
-                if conversation_key in session_state['conversation_histories'] and session_state[
-                        'conversation_histories'][conversation_key]:
-                    st.markdown("---")
-                    col1, col2 = st.columns([1, 3])
-                    self._delete_conversation_button(col1)
-                    self._download_conversation_button(col2, conversation_key)
-                    st.markdown("---")
-                self._upload_conversation_file(st, conversation_key)
+            col1, col2, col3 = st.columns([1, 1, 1])
+            # with st.expander(session_state['_']("**Options**"), expanded=True):
+            if conversation_key in session_state['conversation_histories'] and session_state[
+                    'conversation_histories'][conversation_key]:
+                self._delete_conversation_button(col2)
+                self._download_conversation_button(col3, conversation_key)
+            self._upload_conversation_button(col1, conversation_key)
 
     @staticmethod
     def _delete_conversation_callback():
@@ -258,6 +256,13 @@ class SidebarManager:
         column.button("🗑️",
                       on_click=self._delete_conversation_callback,
                       help=session_state['_']("Delete the Conversation"))
+
+    def _upload_conversation_button(self, container, conversation_key):
+        """
+        Render a button in the specified column allowing users to upload the conversation history as a CSV file.
+        """
+        if container.button("⬆️", help=session_state['_']("Upload Conversation")):
+            self._upload_conversation_file(st, conversation_key)
 
     @staticmethod
     def _download_conversation_button(container, conversation_key):
@@ -389,7 +394,7 @@ class SidebarManager:
         conversation histories.
         """
         self._style_language_uploader()
-        container.file_uploader(session_state['_']("**Upload conversation**"),
+        container.file_uploader(session_state['_']("**Upload Conversation**"),
                                 type=['csv'],
                                 key='file_uploader_conversation',
                                 on_change=self._process_uploaded_conversation_file,
@@ -670,7 +675,7 @@ class ChatManager:
 
                 # Displays the existing conversation history
                 conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                    'selected_chatbot_path_serialized'],
+                                                                                       'selected_chatbot_path_serialized'],
                                                                                    [])
                 self._display_conversation(conversation_history)
 
@@ -823,7 +828,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

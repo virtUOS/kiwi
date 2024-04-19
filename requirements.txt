@@ -6,7 +6,6 @@ streamlit
 streamlit-option-menu
 streamlit-cookies-manager-hotpatched
 streamlit-dimensions
-streamlit-navigation-bar
 streamlit-pdf-viewer
 streamlit-pills
 PyYAML

@@ -17,88 +17,95 @@ from streamlit_pdf_viewer import pdf_viewer
 from streamlit_dimensions import st_dimensions
 import streamlit_pills as stp
 
+import src.utils as utils
+from src.utils import SidebarManager, GeneralManager
+
 # Load environment variables
 load_dotenv()
 
+# Variables
+MAX_FILES = 5
 
-class SidebarDocsManager:
 
-    def __init__(self, sidebar_general_manager, general_manager):
-        self.sgm = sidebar_general_manager
-        self.gm = general_manager
-        self.max_files = 5
+def initialize_docs_session_variables():
+    """Initialize essential session variables."""
+    required_keys = {
+        'uploaded_pdf_files': [],
+        'selected_file_name': None,
+        'sources_to_highlight': {},
+        'sources_to_display': {},
 
-    def initialize_docs_session_variables(self):
-        """Initialize essential session variables."""
-        self.sgm.load_prompts()
-        required_keys = {
-            'uploaded_pdf_files': [],
-            'selected_file_name': None,
-            'sources_to_highlight': {},
-            'sources_to_display': {},
+        # Current documents data
+        'doc_text_data': {},
+        'doc_binary_data': {},
 
-            # Current documents data
-            'doc_text_data': {},
-            'doc_binary_data': {},
+        # Current vector store
+        'vector_store_docs': None,
+    }
 
-            # Current vector store
-            'vector_store_docs': None,
-        }
-
-        for key, default_value in required_keys.items():
-            if key not in session_state:
-                session_state[key] = default_value
-
-    def _reset_docs_variables(self):
-        if session_state['vector_store_docs']:
-            session_state['vector_store_docs'].delete_collection()
-
-        required_keys = {
-            'uploaded_pdf_files': [],
-            'selected_file_name': None,
-            'sources_to_highlight': {},
-            'sources_to_display': {},
-
-            # Current documents list in binary
-            'doc_text_data': {},
-            'doc_binary_data': {},
-
-            # Current vector store
-            'vector_store_docs': None,
-        }
-
-        for key, default_value in required_keys.items():
+    for key, default_value in required_keys.items():
+        if key not in session_state:
             session_state[key] = default_value
 
-        self.gm.create_history('docs')
 
-    def _check_amount_of_uploaded_files_and_set_variables(self):
-        self._reset_docs_variables()
+def reset_docs_variables():
+    if session_state['vector_store_docs']:
+        session_state['vector_store_docs'].delete_collection()
 
-        if len(session_state['pdf_files']) > self.max_files:
-            st.sidebar.warning(
-                f"Maximum number of files reached. Only the first {self.max_files} files will be processed.")
+    required_keys = {
+        'uploaded_pdf_files': [],
+        'selected_file_name': None,
+        'sources_to_highlight': {},
+        'sources_to_display': {},
 
-        # If there are uploaded files then use class list variable to store them
-        if session_state['pdf_files']:
-            for i, file in enumerate(session_state['pdf_files']):
-                # Only append the maximum number of files allowed
-                if i < self.max_files:
-                    session_state['uploaded_pdf_files'].append(file)
-                else:
-                    break
+        # Current documents list in binary
+        'doc_text_data': {},
+        'doc_binary_data': {},
 
-    def display_docs_sidebar_controls(self):
+        # Current vector store
+        'vector_store_docs': None,
+    }
+
+    for key, default_value in required_keys.items():
+        session_state[key] = default_value
+
+    utils.create_history('docs')
+
+
+def check_amount_of_uploaded_files_and_set_variables():
+    reset_docs_variables()
+
+    if len(session_state['pdf_files']) > MAX_FILES:
+        st.sidebar.warning(
+            f"Maximum number of files reached. Only the first {MAX_FILES} files will be processed.")
+
+    # If there are uploaded files then use class list variable to store them
+    if session_state['pdf_files']:
+        for i, file in enumerate(session_state['pdf_files']):
+            # Only append the maximum number of files allowed
+            if i < MAX_FILES:
+                session_state['uploaded_pdf_files'].append(file)
+            else:
+                break
+
+
+class SidebarDocsManager(SidebarManager):
+
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def display_docs_sidebar_controls():
         with st.sidebar:
             st.markdown("""---""")
             st.file_uploader("Upload PDF file(s)", type=['pdf'], accept_multiple_files=True,
-                             key='pdf_files', on_change=self._check_amount_of_uploaded_files_and_set_variables)
+                             key='pdf_files', on_change=check_amount_of_uploaded_files_and_set_variables)
 
 
-class DocsManager:
+class DocsManager(GeneralManager):
 
-    def __init__(self, general_manager, summarization_manager):
-        self.gm = general_manager
+    def __init__(self, summarization_manager):
+        super().__init__()
         self.client = None
         # Annotations for current documents
         self.annotations = []
@@ -254,7 +261,7 @@ class DocsManager:
 
     def _display_chat_title(self):
         # If no conversations yet then display chat title message
-        if not self.gm.has_conversation_history('docs'):
+        if not utils.has_conversation_history('docs'):
             with session_state['column_chat']:
                 # Interface to chat with selected expert
                 st.title(f"What do you want to know about your documents?")
@@ -263,7 +270,7 @@ class DocsManager:
         with session_state['column_chat']:
 
             # Changes the style of the chat input to appear at the bottom of the column
-            self.gm.change_chatbot_style()
+            self.change_chatbot_style()
 
             # Accept user input
             if user_message := st.chat_input("Ask something about your PDFs",
@@ -295,9 +302,9 @@ class DocsManager:
     def _user_message_processing(self, conversation, user_message):
         if user_message:
             # Add user message to the conversation
-            self.gm.add_conversation_entry(chatbot='docs', speaker=session_state['USER'], message=user_message)
+            utils.add_conversation_entry(chatbot='docs', speaker=session_state['USER'], message=user_message)
 
-            chat_history_tuples = self.gm.generate_chat_history_tuples(conversation)
+            chat_history_tuples = utils.generate_chat_history_tuples(conversation)
 
             with session_state['column_chat']:
                 with st.spinner():
@@ -351,7 +358,7 @@ class DocsManager:
                                              'color': "red"})
 
             # Add AI response to the conversation
-            self.gm.add_conversation_entry(chatbot='docs', speaker='Assistant', message=ai_response)
+            utils.add_conversation_entry(chatbot='docs', speaker='Assistant', message=ai_response)
 
     def _handle_user_input(self, conversation_history, predefined_prompt_selected):
         if predefined_prompt_selected:
@@ -416,7 +423,7 @@ class DocsManager:
                 ai_response = self._process_query_and_get_answer_for_suggestions(
                     session_state['prompt_options_docs'][-1]['queries'])
                 print(ai_response)
-                queries = self.gm.process_ai_response_for_suggestion_queries(ai_response)
+                queries = utils.process_ai_response_for_suggestion_queries(ai_response)
                 print(queries)
                 for query in queries:
                     session_state[f'suggestions_{file_name}'].append(query)
@@ -470,15 +477,15 @@ class DocsManager:
                 if f'suggestions_{file_name}' in session_state and session_state[f'suggestions_{file_name}']:
                     predefined_prompt_selected = self._display_suggestions(file_name)
 
-                conversation_history = self.gm.get_conversation_history('docs')
+                conversation_history = utils.get_conversation_history('docs')
 
                 # If there's already a conversation in the history for this chatbot, display it.
                 if conversation_history:
-                    self.gm.display_conversation(conversation_history=conversation_history,
-                                                 container=session_state['column_chat'])
+                    self.display_conversation(conversation_history=conversation_history,
+                                              container=session_state['column_chat'])
                 else:
                     # Create empty conversation for this chatbot in case there's no key for it yet
-                    self.gm.create_history(chatbot='docs')
+                    utils.create_history(chatbot='docs')
 
                 self._handle_user_input(conversation_history, predefined_prompt_selected)
                 self._handle_and_display_sources()

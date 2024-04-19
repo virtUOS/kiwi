@@ -6,31 +6,34 @@ import streamlit as st
 from streamlit import session_state
 from dotenv import load_dotenv
 
+import src.utils as utils
+from src.utils import SidebarManager, GeneralManager
+
 # Load environment variables
 load_dotenv()
 
 
-class SidebarChatManager:
+def initialize_chat_session_variables():
+    """
+    Initialize chat session variables with default values.
 
-    def __init__(self, sidebar_general_manager, general_manager):
-        self.sgm = sidebar_general_manager
-        self.gm = general_manager
+    Sets up the initial state for the chat application to function correctly from the start.
+    """
+    utils.load_prompts(session_state['typ'])
+    required_keys = {
+        'edited_prompts': {},
+        'disable_custom': False,
+    }
 
-    def initialize_chat_session_variables(self):
-        """
-        Initialize chat session variables with default values.
+    for key, default_value in required_keys.items():
+        if key not in session_state:
+            session_state[key] = default_value
 
-        Sets up the initial state for the chat application to function correctly from the start.
-        """
-        self.sgm.load_prompts()
-        required_keys = {
-            'edited_prompts': {},
-            'disable_custom': False,
-        }
 
-        for key, default_value in required_keys.items():
-            if key not in session_state:
-                session_state[key] = default_value
+class SidebarChatManager(SidebarManager):
+
+    def __init__(self):
+        super().__init__()
 
     def _show_conversation_controls(self):
         """
@@ -47,19 +50,10 @@ class SidebarChatManager:
             st.write(session_state['_']("**Options**"))
             col1, col2, col3 = st.columns([1, 1, 1])
             if conversation_key in session_state['conversation_histories'] and session_state[
-                    'conversation_histories'][conversation_key]:
+                'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col3)
                 self._download_conversation_button(col2, conversation_key)
             self._upload_conversation_button(col1, conversation_key)
-
-    def display_chat_top_sidebar_controls(self):
-        """
-        Display chat top sidebar controls and settings for the chatbot.
-
-        This function performs the following steps:
-        1. Display conversation controls.
-        """
-        self.sgm.load_and_display_prompts()
 
     def display_chat_middle_sidebar_controls(self):
         """
@@ -239,16 +233,16 @@ class SidebarChatManager:
             self._upload_conversation_file(st, conversation_key)
 
 
-class ChatManager:
+class ChatManager(GeneralManager):
 
-    def __init__(self, general_manager):
+    def __init__(self):
         """
         Initializes the ChatManager instance with the user's identifier.
 
         Parameters:
         - user: A string identifier for the user, used to differentiate messages in the conversation.
         """
-        self.gm = general_manager
+        super().__init__()
         self.client = None
 
     def set_client(self, client):
@@ -260,7 +254,8 @@ class ChatManager:
         """
         self.client = client
 
-    def _display_prompt_editor(self, description):
+    @staticmethod
+    def _display_prompt_editor(description):
         """
         Displays an editable text area for the current chatbot prompt, allowing the user to make changes.
 
@@ -268,17 +263,17 @@ class ChatManager:
         - description: The default chatbot prompt description which can be edited by the user.
         """
         current_chatbot_path_serialized = session_state['selected_chatbot_path_serialized']
-        current_edited_prompt = self.gm.get_prompt_to_use(current_chatbot_path_serialized, description)
+        current_edited_prompt = utils.get_prompt_to_use(current_chatbot_path_serialized, description)
 
         st.text_area(session_state['_']("System prompt"),
                      value=current_edited_prompt,
-                     on_change=self.gm.update_edited_prompt,
+                     on_change=utils.update_edited_prompt,
                      args=session_state['selected_chatbot_path'],
                      key='edited_prompt',
                      label_visibility='hidden')
 
         st.button("🔄", help=session_state['_']("Restore Original Prompt"),
-                  on_click=self.gm.restore_prompt,
+                  on_click=utils.restore_prompt,
                   args=session_state['selected_chatbot_path']
                   )
 
@@ -290,16 +285,16 @@ class ChatManager:
         - description_to_use: The current system description or prompt used alongside user messages.
         """
         if user_message := st.chat_input(session_state['USER']):
-            current_history = self.gm.get_conversation_history(session_state['selected_chatbot_path_serialized'])
+            current_history = utils.get_conversation_history(session_state['selected_chatbot_path_serialized'])
 
             # Ensures unique submission to prevent re-running on refresh
-            if self.gm.is_new_message(current_history, user_message):
+            if utils.is_new_message(current_history, user_message):
                 if not current_history:
-                    self.gm.create_history(session_state['selected_chatbot_path_serialized'])
-                current_history = self.gm.add_conversation_entry(session_state['selected_chatbot_path_serialized'],
-                                                                 session_state['USER'],
-                                                                 user_message,
-                                                                 description_to_use)
+                    utils.create_history(session_state['selected_chatbot_path_serialized'])
+                current_history = utils.add_conversation_entry(session_state['selected_chatbot_path_serialized'],
+                                                               session_state['USER'],
+                                                               user_message,
+                                                               description_to_use)
 
                 # Print user message immediately after getting entered because we're streaming the chatbot output
                 with st.chat_message("user"):
@@ -308,7 +303,7 @@ class ChatManager:
                 # Process and display response
                 current_history = self.client.process_response(current_history, user_message, description_to_use)
 
-                self.gm.update_conversation_history(session_state['selected_chatbot_path_serialized'], current_history)
+                utils.update_conversation_history(session_state['selected_chatbot_path_serialized'], current_history)
                 st.rerun()
 
     @staticmethod
@@ -344,7 +339,7 @@ class ChatManager:
         """
         if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
 
-            prompt = self.gm.fetch_chatbot_prompt(session_state['selected_chatbot_path'])
+            prompt = utils.fetch_chatbot_prompt(session_state['selected_chatbot_path'])
 
             if isinstance(prompt, str) and len(prompt.strip()) > 0:
 
@@ -356,14 +351,14 @@ class ChatManager:
 
                 st.markdown("""---""")
 
-                prompt_to_use = self.gm.get_prompt_to_use(session_state['selected_chatbot_path_serialized'],
-                                                          prompt)
+                prompt_to_use = utils.get_prompt_to_use(session_state['selected_chatbot_path_serialized'],
+                                                        prompt)
 
                 # Displays the existing conversation history
-                conversation_history = self.gm.get_conversation_history(
+                conversation_history = utils.get_conversation_history(
                     session_state['selected_chatbot_path_serialized'])
 
-                self.gm.display_conversation(conversation_history)
+                self.display_conversation(conversation_history)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(prompt_to_use)

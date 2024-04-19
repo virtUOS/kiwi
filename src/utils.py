@@ -7,7 +7,6 @@ from streamlit import session_state
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
 # import extra_streamlit_components as stx
-from streamlit_navigation_bar import st_navbar
 
 from typing import Any, Dict, List
 
@@ -33,18 +32,70 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class SidebarManager:
+def initialize_session_variables(user, typ):
+    """
+    Initialize essential session variables with default values.
+
+    Sets up the initial state for model selection, chatbot paths, conversation histories,
+    prompt options, etc., essential for the application to function correctly from the start.
+    """
+    session_state['USER'] = user
+    session_state['typ'] = typ
+    session_state[f"prompt_options_{session_state['typ']}"] = load_prompts(session_state['typ'])
+    required_keys = {
+        'model_selection': "OpenAI",
+        'conversation_histories': {},
+        'selected_chatbot_path': [],
+        'selected_chatbot_path_serialized': "",
+        'chosen_page_index': "1",
+        'current_page_index': "1",
+        'typ': "chat",
+    }
+
+    for key, default_value in required_keys.items():
+        if key not in session_state:
+            session_state[key] = default_value
+
+
+def get_language():
+    return st.query_params.get('lang', False)
+
+
+def load_prompts(typ):
+    """
+    Load chat prompts based on the selected or default language.
+
+    This method enables dynamic loading of chat prompts to support multilingual chatbot interactions.
+    If no language is specified in the query parameters, German ('de') is used as the default language.
+    """
+    language = get_language()
+    # Use German language as default
+    if not language:
+        language = "de"
+
+    return menu_utils.load_prompts_from_yaml(typ=typ, language=language)
+
+
+def update_path_in_session_state():
+    """
+    Check if the selected chatbot path in the session state has changed and update the serialized path accordingly.
+
+    This static method compares the current selected chatbot path with the serialized chatbot path saved
+     in the session.
+    If there is a change, it updates the session state with the new serialized path, allowing for tracking
+     the selection changes.
+    """
+    path_has_changed = menu_utils.path_changed(session_state['selected_chatbot_path'],
+                                               session_state['selected_chatbot_path_serialized'])
+    if path_has_changed:
+        serialized_path = '/'.join(session_state['selected_chatbot_path'])
+        session_state['selected_chatbot_path_serialized'] = serialized_path
+
+
+class CookiesManager:
 
     def __init__(self):
         self.cookies = None
-
-    @staticmethod
-    def set_user(user):
-        session_state['USER'] = user
-
-    @staticmethod
-    def get_language():
-        return st.query_params.get('lang', False)
 
     def initialize_cookies(self):
         """
@@ -85,27 +136,24 @@ class SidebarManager:
             self.cookies['username'] = "".join(random.choices(alphabet, k=8))
             session_state['username'] = self.cookies.get('username')
 
-    @staticmethod
-    def initialize_session_variables():
+    def logout_and_redirect(self):
         """
-        Initialize essential session variables with default values.
+        Perform logout operations and redirect the user to the start page.
 
-        Sets up the initial state for model selection, chatbot paths, conversation histories,
-        prompt options, etc., essential for the application to function correctly from the start.
+        This involves resetting cookies and session variables that signify the user's logged-in state,
+        thereby securely logging out the user.
         """
-        required_keys = {
-            'model_selection': "OpenAI",
-            'conversation_histories': {},
-            'selected_chatbot_path': [],
-            'selected_chatbot_path_serialized': "",
-            'chosen_page_index': "1",
-            'current_page_index': "1",
-            'typ': "chat",
-        }
+        self.cookies['session'] = "out"
+        self.cookies['username'] = ""
+        session_state['password_correct'] = False
+        session_state['credentials_checked'] = False
+        st.switch_page('start.py')
 
-        for key, default_value in required_keys.items():
-            if key not in session_state:
-                session_state[key] = default_value
+
+class SidebarManager(CookiesManager):
+
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     def display_logo():
@@ -130,83 +178,53 @@ class SidebarManager:
 
                 st.markdown(hide_img_fs, unsafe_allow_html=True)
 
-    def load_prompts(self):
-        """
-        Load chat prompts based on the selected or default language.
+    # def _display_chatbots_menu(self, options, path=[]):
+    #    """
+    #    Recursively display sidebar menu for chatbot selection based on a nested dictionary structure.
 
-        This method enables dynamic loading of chat prompts to support multi-lingual chatbot interactions.
-        If no language is specified in the query parameters, German ('de') is used as the default language.
-        """
-        language = self.get_language()
-        # Use German language as default
-        if not language:
-            language = "de"
+    #    Allows users to navigate and select chatbots in a hierarchical manner, updating the session state
+    #    to reflect the current selection path.
 
-        session_state[f"prompt_options_{session_state['typ']}"] = menu_utils.load_prompts_from_yaml(
-            typ=session_state['typ'], language=language)
+    #    :param options: A dictionary containing chatbot options and potential sub-options.
+    #    :param path: A list representing the current selection path as the user navigates the menu.
+    #    """
+    #    if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
+    #        next_level = list(options.keys())
 
-    def logout_and_redirect(self):
-        """
-        Perform logout operations and redirect the user to the start page.
+    #        with st.sidebar:
+    #            choice = option_menu("", next_level,
+    #                                 # icons=['chat-dots'] * len(next_level),
+    #                                 # menu_icon="cast",
+    #                                 default_index=0)
 
-        This involves resetting cookies and session variables that signify the user's logged-in state,
-        thereby securely logging out the user.
-        """
-        self.cookies['session'] = "out"
-        self.cookies['username'] = ""
-        session_state['password_correct'] = False
-        session_state['credentials_checked'] = False
-        st.switch_page('start.py')
-
-    def _display_chatbots_menu(self, options, path=[]):
-        """
-        Recursively display sidebar menu for chatbot selection based on a nested dictionary structure.
-
-        Allows users to navigate and select chatbots in a hierarchical manner, updating the session state
-        to reflect the current selection path.
-
-        :param options: A dictionary containing chatbot options and potential sub-options.
-        :param path: A list representing the current selection path as the user navigates the menu.
-        """
-        if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
-            next_level = list(options.keys())
-
-            with st.sidebar:
-                choice = option_menu("", next_level,
-                                     # icons=['chat-dots'] * len(next_level),
-                                     # menu_icon="cast",
-                                     default_index=0)
-
-            if choice:
-                new_path = path + [choice]
-                session_state['selected_chatbot_path'] = new_path
-                self._display_chatbots_menu(options.get(choice, {}), new_path)
-
-    def load_and_display_prompts(self):
-        """
-        Load chat prompts from the session state and display them in the chatbots menu in the sidebar.
-
-        This method first loads the prompts by calling the `load_prompts` method and
-        then displays the chatbots menu with the loaded prompts using the `_display_chatbots_menu` method.
-        """
-        self.load_prompts()
-        self._display_chatbots_menu(session_state[f"prompt_options_{session_state['typ']}"])
+    #        if choice:
+    #            new_path = path + [choice]
+    #            session_state['selected_chatbot_path'] = new_path
+    #            self._display_chatbots_menu(options.get(choice, {}), new_path)
 
     @staticmethod
-    def _update_path_in_session_state():
-        """
-        Check if the selected chatbot path in the session state has changed and update the serialized path accordingly.
+    def display_pages_menu(default_id):
 
-        This static method compares the current selected chatbot path with the serialized chatbot path saved
-         in the session.
-        If there is a change, it updates the session state with the new serialized path, allowing for tracking
-         the selection changes.
-        """
-        path_has_changed = menu_utils.path_changed(session_state['selected_chatbot_path'],
-                                                   session_state['selected_chatbot_path_serialized'])
-        if path_has_changed:
-            serialized_path = '/'.join(session_state['selected_chatbot_path'])
-            session_state['selected_chatbot_path_serialized'] = serialized_path
+        pages = [session_state['_']("Chatbot"), session_state['_']("Chat with Documents")]
+
+        with st.sidebar:
+            page = option_menu("", pages, icons=['chat-dots'] * len(pages),
+                               menu_icon="cast",
+                               default_index=default_id)
+
+        session_state['chosen_page_index'] = pages.index(page)
+        session_state['selected_chatbot_path'] = [page]
+
+        if session_state['chosen_page_index'] == session_state['current_page_index']:
+            session_state['current_page_index'] = session_state['chosen_page_index']
+        elif session_state['chosen_page_index'] == 0 and session_state['current_page_index'] != 0:
+            session_state['current_page_index'] = 0
+            session_state['typ'] = 'chat'
+            st.switch_page("pages/chatbot_app.py")
+        elif session_state['chosen_page_index'] == 1 and session_state['current_page_index'] != 1:
+            session_state['current_page_index'] = 1
+            session_state['typ'] = 'docs'
+            st.switch_page("pages/docs_app.py")
 
     @staticmethod
     def _display_model_information():
@@ -230,7 +248,7 @@ class SidebarManager:
         1. Checks for changes in the selected chatbot path to update the session state accordingly.
         2. Displays model information for the selected model, e.g., OpenAI.
         """
-        self._update_path_in_session_state()
+        update_path_in_session_state()
 
         self._display_model_information()
 
@@ -266,7 +284,7 @@ class SidebarManager:
         with st.sidebar:
             if st.button(session_state['_']('Logout')):
                 self.logout_and_redirect()
-            st.write(f"Version: *Beta*")
+            st.write(f"Version: *v1.0.0*")
 
     def display_general_sidebar_bottom_controls(self):
         """
@@ -281,145 +299,171 @@ class SidebarManager:
         self._logout_option()
 
 
+# GENERAL MANAGEMENT #
+
+def update_edited_prompt(chatbot):
+    """
+    Updates the edited prompt in the session state to reflect changes made by the user.
+
+    Parameters:
+    - chatbot: The chatbot for which the prompt will be updated.
+    """
+    session_state['edited_prompts'][chatbot] = session_state['edited_prompt']
+
+
+def restore_prompt(chatbot):
+    """
+    Restores the original chatbot prompt by removing any user-made edits from the session state.
+
+    Parameters:
+    - chatbot: The chatbot for which the prompt will be restored.
+    """
+    if chatbot in session_state['edited_prompts']:
+        del session_state['edited_prompts'][chatbot]
+
+
+def fetch_chatbot_prompt(chatbot):
+    """
+    Fetches the prompt for the current chatbot based on the selected path.
+
+    Parameters:
+    - chatbot: The chatbot for which the prompt will be fetched.
+
+    Returns:
+    - A string containing the prompt of the current chatbot.
+    """
+    return menu_utils.get_final_prompt(chatbot,
+                                       session_state[f"prompt_options_{session_state['typ']}"])
+
+
+def get_prompt_to_use(chatbot, description):
+    """
+    Retrieves and returns the current prompt description for the chatbot, considering any user edits.
+
+    Parameters:
+    - chatbot: The chatbot for which the prompt will be returned.
+    - default_description: The default description provided for the chatbot's prompt.
+
+    Returns:
+    - The current (possibly edited) description to be used as the prompt.
+    """
+    return session_state['edited_prompts'].get(chatbot, description)
+
+
+def update_conversation_history(chatbot, current_history):
+    """
+    Updates the session state with the current conversation history.
+
+    This method ensures that the conversation history for the currently selected chatbot path in the session state
+    is updated to reflect any new messages or responses that have been added during the interaction.
+
+    Parameters:
+    - chatbot: The chatbot for which the conversation will be updated.
+    - current_history: The current conversation history, which is a list of tuples. Each tuple contains
+      the speaker ('USER' or 'Assistant'), the message, and optionally, the system description or prompt
+      accompanying user messages (for user messages only).
+    """
+    session_state['conversation_histories'][chatbot] = current_history
+
+
+def add_conversation_entry(chatbot, speaker, message, prompt=""):
+    session_state['conversation_histories'][chatbot].append((speaker, message, prompt))
+    return session_state['conversation_histories'][chatbot]
+
+
+def get_conversation_history(chatbot):
+    return session_state['conversation_histories'].get(chatbot, [])
+
+
+def has_conversation_history(chatbot):
+    if chatbot == 'docs':
+        if (chatbot in session_state['conversation_histories']
+                and session_state['uploaded_pdf_files']):
+            return True
+    else:
+        if (chatbot in session_state['conversation_histories']
+                and session_state['conversation_histories'][chatbot]):
+            return True
+    return False
+
+
+def is_new_message(current_history, user_message):
+    """
+    Checks if the last message in history differs from the newly submitted user message.
+
+    Parameters:
+    - current_history: The current conversation history.
+    - user_message: The newly submitted user message.
+
+    Returns:
+    - A boolean indicating whether this is a new unique message submission.
+    """
+    if (not current_history or current_history[-1][0] != session_state['USER']
+            or current_history[-1][1] != user_message):
+        return True
+    return False
+
+
+def create_history(chatbot):
+    # If no conversation in history for this chatbot, then create an empty one
+    session_state['conversation_histories'][chatbot] = [
+    ]
+
+
+def generate_chat_history_tuples(conversation):
+    # Generate tuples with the chat history
+    # We iterate with a step of 2 and always take
+    # the current and next item assuming USER follows by Assistant
+    if conversation:
+        chat_history_tuples = [
+            (conversation[i][1], conversation[i + 1][1])
+            # Extract just the messages, ignoring the labels
+            for i in range(0, len(conversation) - 1, 2)
+            # We use len(conversation)-1 to avoid out-of-range errors
+        ]
+        return chat_history_tuples
+    return []
+
+
+def process_ai_response_for_suggestion_queries(model_output):
+    # Ensure model_output is a single string for processing
+    model_output_string = ' '.join(model_output) if isinstance(model_output, list) else model_output
+
+    # Remove timestamps
+    clean_output = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3}', '', model_output_string)
+
+    # Removing content inside square brackets including the brackets themselves
+    clean_output = re.sub(r'\[.*?\]', '', clean_output)
+
+    # Splitting based on '?' to capture questions, adding '?' back to each split segment
+    queries = [query + '?' for query in re.split(r'\?+\s*', clean_output) if query.strip()]
+
+    cleaned_queries = []
+    for query in queries:
+        # Removing anything that is not a letter at the start of each query
+        query_clean = re.sub(r'^[^A-Za-z]+', '', query)  # Adjust regex as needed
+        # Attempt to more robustly remove quotes around the question
+        query_clean = re.sub(r'(^\s*"\s*)|(\s*"$)', '', query_clean)  # Improved to target quotes more effectively
+        # Remove numerical patterns and excessive whitespace
+        query_clean = re.sub(r'\s*\d+[.)>\-]+\s*$', '', query_clean).strip()
+        # Replace multiple spaces with a single space
+        query_clean = re.sub(r'\s+', ' ', query_clean)
+        if query_clean:
+            cleaned_queries.append(query_clean)
+
+    # Sort queries by length (descending) to prefer longer queries and select the first three
+    if len(cleaned_queries) > 3:
+        cleaned_queries = sorted(cleaned_queries, key=len, reverse=True)[:3]
+    elif len(cleaned_queries) < 3:
+        cleaned_queries = []
+
+    return cleaned_queries
+
+
 class GeneralManager:
 
-    def __init__(self, sidebar_general_manager):
-        self.sgm = sidebar_general_manager
-
-    def display_pages_tabs(self, default_id):
-
-        # We need to do this because we can't initialize language earlier due to affecting the navbar positioning
-        chat_with_documents_menu_name = "Chat mit Dokumenten 📖"
-        current_language = self.sgm.get_language()
-        if current_language:
-            if current_language == 'en':
-                chat_with_documents_menu_name = "Chat with Documents 📖"
-
-        pages = ["Chatbot 🤖", chat_with_documents_menu_name]
-
-        page = st_navbar(pages, selected=pages[default_id], options={"use_padding": False})
-
-        session_state['chosen_page_index'] = pages.index(page)
-
-        if session_state['chosen_page_index'] == session_state['current_page_index']:
-            session_state['current_page_index'] = session_state['chosen_page_index']
-        elif session_state['chosen_page_index'] == 0 and session_state['current_page_index'] != 0:
-            session_state['current_page_index'] = 0
-            session_state['typ'] = 'chat'
-            st.switch_page("pages/chatbot_app.py")
-        elif session_state['chosen_page_index'] == 1 and session_state['current_page_index'] != 1:
-            session_state['current_page_index'] = 1
-            session_state['typ'] = 'docs'
-            st.switch_page("pages/docs_app.py")
-
-    @staticmethod
-    def update_edited_prompt(chatbot):
-        """
-        Updates the edited prompt in the session state to reflect changes made by the user.
-
-        Parameters:
-        - chatbot: The chatbot for which the prompt will be updated.
-        """
-        session_state['edited_prompts'][chatbot] = session_state['edited_prompt']
-
-    @staticmethod
-    def restore_prompt(chatbot):
-        """
-        Restores the original chatbot prompt by removing any user-made edits from the session state.
-
-        Parameters:
-        - chatbot: The chatbot for which the prompt will be restored.
-        """
-        if chatbot in session_state['edited_prompts']:
-            del session_state['edited_prompts'][chatbot]
-
-    @staticmethod
-    def fetch_chatbot_prompt(chatbot):
-        """
-        Fetches the prompt for the current chatbot based on the selected path.
-
-        Parameters:
-        - chatbot: The chatbot for which the prompt will be fetched.
-
-        Returns:
-        - A string containing the prompt of the current chatbot.
-        """
-        return menu_utils.get_final_prompt(chatbot,
-                                           session_state[f"prompt_options_{session_state['typ']}"])
-
-    @staticmethod
-    def get_prompt_to_use(chatbot, description):
-        """
-        Retrieves and returns the current prompt description for the chatbot, considering any user edits.
-
-        Parameters:
-        - chatbot: The chatbot for which the prompt will be returned.
-        - default_description: The default description provided for the chatbot's prompt.
-
-        Returns:
-        - The current (possibly edited) description to be used as the prompt.
-        """
-        return session_state['edited_prompts'].get(chatbot, description)
-
-    @staticmethod
-    def update_conversation_history(chatbot, current_history):
-        """
-        Updates the session state with the current conversation history.
-
-        This method ensures that the conversation history for the currently selected chatbot path in the session state
-        is updated to reflect any new messages or responses that have been added during the interaction.
-
-        Parameters:
-        - chatbot: The chatbot for which the conversation will be updated.
-        - current_history: The current conversation history, which is a list of tuples. Each tuple contains
-          the speaker ('USER' or 'Assistant'), the message, and optionally, the system description or prompt
-          accompanying user messages (for user messages only).
-        """
-        session_state['conversation_histories'][chatbot] = current_history
-
-    @staticmethod
-    def add_conversation_entry(chatbot, speaker, message, prompt=""):
-        session_state['conversation_histories'][chatbot].append((speaker, message, prompt))
-        return session_state['conversation_histories'][chatbot]
-
-    @staticmethod
-    def get_conversation_history(chatbot):
-        return session_state['conversation_histories'].get(chatbot, [])
-
-    @staticmethod
-    def has_conversation_history(chatbot):
-        if chatbot == 'docs':
-            if (chatbot in session_state['conversation_histories']
-                    and session_state['uploaded_pdf_files']):
-                return True
-        else:
-            if (chatbot in session_state['conversation_histories']
-                    and session_state['conversation_histories'][chatbot]):
-                return True
-        return False
-
-    @staticmethod
-    def is_new_message(current_history, user_message):
-        """
-        Checks if the last message in history differs from the newly submitted user message.
-
-        Parameters:
-        - current_history: The current conversation history.
-        - user_message: The newly submitted user message.
-
-        Returns:
-        - A boolean indicating whether this is a new unique message submission.
-        """
-        if (not current_history or current_history[-1][0] != session_state['USER']
-                or current_history[-1][1] != user_message):
-            return True
-        return False
-
-    @staticmethod
-    def create_history(chatbot):
-        # If no conversation in history for this chatbot, then create an empty one
-        session_state['conversation_histories'][chatbot] = [
-        ]
+    def __init__(self):
+        pass
 
     @staticmethod
     def display_conversation(conversation_history, container=None):
@@ -452,56 +496,6 @@ class GeneralManager:
         </style>
         """
         st.markdown(chat_input_style, unsafe_allow_html=True)
-
-    @staticmethod
-    def generate_chat_history_tuples(conversation):
-        # Generate tuples with the chat history
-        # We iterate with a step of 2 and always take
-        # the current and next item assuming USER follows by Assistant
-        if conversation:
-            chat_history_tuples = [
-                (conversation[i][1], conversation[i + 1][1])
-                # Extract just the messages, ignoring the labels
-                for i in range(0, len(conversation) - 1, 2)
-                # We use len(conversation)-1 to avoid out-of-range errors
-            ]
-            return chat_history_tuples
-        return []
-
-    @staticmethod
-    def process_ai_response_for_suggestion_queries(model_output):
-        # Ensure model_output is a single string for processing
-        model_output_string = ' '.join(model_output) if isinstance(model_output, list) else model_output
-
-        # Remove timestamps
-        clean_output = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3}', '', model_output_string)
-
-        # Removing content inside square brackets including the brackets themselves
-        clean_output = re.sub(r'\[.*?\]', '', clean_output)
-
-        # Splitting based on '?' to capture questions, adding '?' back to each split segment
-        queries = [query + '?' for query in re.split(r'\?+\s*', clean_output) if query.strip()]
-
-        cleaned_queries = []
-        for query in queries:
-            # Removing anything that is not a letter at the start of each query
-            query_clean = re.sub(r'^[^A-Za-z]+', '', query)  # Adjust regex as needed
-            # Attempt to more robustly remove quotes around the question
-            query_clean = re.sub(r'(^\s*"\s*)|(\s*"$)', '', query_clean)  # Improved to target quotes more effectively
-            # Remove numerical patterns and excessive whitespace
-            query_clean = re.sub(r'\s*\d+[.)>\-]+\s*$', '', query_clean).strip()
-            # Replace multiple spaces with a single space
-            query_clean = re.sub(r'\s+', ' ', query_clean)
-            if query_clean:
-                cleaned_queries.append(query_clean)
-
-        # Sort queries by length (descending) to prefer longer queries and select the first three
-        if len(cleaned_queries) > 3:
-            cleaned_queries = sorted(cleaned_queries, key=len, reverse=True)[:3]
-        elif len(cleaned_queries) < 3:
-            cleaned_queries = []
-
-        return cleaned_queries
 
 
 class AIClient:

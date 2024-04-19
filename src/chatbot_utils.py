@@ -439,7 +439,7 @@ class SidebarManager:
         with st.sidebar:
             if st.button(session_state['_']('Logout')):
                 self.logout_and_redirect()
-            st.write(f"Version: *Beta*")
+            st.write(f"Version: *v1.0.0*")
 
 
 class ChatManager:

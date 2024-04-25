@@ -92,7 +92,7 @@ prompt_templates:
     template: >
       The following is set of summaries of a document:
       {docs}
-      Take these and distill it into a final, small, concise summary of the document of no more than 50 words. 
+      Take these and distill it into a final, small, concise summary of the document of no more than 100 words. 
       Helpful Answer:
   topics_reduce_assistance:
     template: >

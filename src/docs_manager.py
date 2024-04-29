@@ -1,4 +1,5 @@
 import os
+import threading
 from pdf2image import convert_from_bytes
 from PIL import Image
 
@@ -11,6 +12,8 @@ import streamlit_pills as stp
 import src.utils as utils
 import src.docs_utils as docs_utils
 from src.summarization_manager import SummarizationManager
+
+from queue import Queue
 
 
 class DocsManager:
@@ -80,16 +83,16 @@ class DocsManager:
         thumbnail_dim = int(self.main_dim['width'] * 0.05) if self.main_dim else 100
         thumbnail_size = (thumbnail_dim, thumbnail_dim)
 
-        files_set = {file.name for file in st.session_state['uploaded_pdf_files']}
+        files_set = {file.name for file in session_state['uploaded_pdf_files']}
         file_names_without_extension = [os.path.splitext(file_name)[0] for file_name in files_set]
 
-        selected_file_name = st.session_state['column_uploaded_files'].selectbox(
+        selected_file_name = session_state['column_uploaded_files'].selectbox(
             label="Select a file to display:",
             options=file_names_without_extension,
             key='selected_file_name', index=None  # Setting a default index
         )
 
-        st.session_state['column_uploaded_files'].number_input(
+        session_state['column_uploaded_files'].number_input(
             label='Input chunk size',
             min_value=100, max_value=4000, value=300, key='chunk_size',
             help=("The chunk size specifies the amount of characters each "
@@ -113,29 +116,44 @@ class DocsManager:
 
     @st.cache_data
     def _process_uploaded_files(_self, uploaded_pdf_files):
-        # When the uploaded files change reinitialize variables
+        """
+        Processes and stores the content of uploaded PDF files into a session state.
+
+        Parameters:
+        uploaded_pdf_files : list
+            A list containing the binary data of uploaded PDF files.
+
+        Updates the session state with metadata, binary data, chunk data, and text data for each uploaded PDF.
+        """
         text = []
         session_state['doc_binary_data'] = {}
         for file in uploaded_pdf_files:
             file_name = file.name
+            file_stem = os.path.splitext(file_name)[0]  # Extracts file name without extension
 
-            file_stem = os.path.splitext(file_name)[0]
-
+            # Store binary data of the file
             session_state['doc_binary_data'][file_stem] = file.getvalue()
 
-            # Parse the pdf
-            session_state['doc_chunk_data'][file_stem], session_state[
-                'doc_text_data'][file_stem] = docs_utils.parse_pdf(
-                session_state['doc_binary_data'][file_stem], file_name)
+            # Parse the PDF and update session state with chunk and text data
+            session_state['doc_chunk_data'][file_stem], session_state['doc_text_data'][file_stem] = \
+                docs_utils.parse_pdf(session_state['doc_binary_data'][file_stem], file_name)
 
-            # Get text data
+            # Prepare text data for database
             text.extend(_self.client.prepare_chunks_for_database(session_state['doc_chunk_data'][file_stem]))
 
+        # Update collection name based on username and initialize vector store for documents
         session_state['collection_name'] = f"docs-{session_state['username']}"
         session_state['vector_store_docs'] = _self.client.get_vectorstore(text)
 
     @staticmethod
     def _display_sources(file):
+        """
+        Displays the list of sources for a specific file.
+
+        Parameters:
+        file : str
+            The name of the file for which sources are being displayed.
+        """
         files_with_sources = ', '.join(list(session_state['sources_to_display']))
         with session_state['column_pdf']:
             st.write(f"Files with sources: {files_with_sources}")
@@ -145,157 +163,262 @@ class DocsManager:
 
     @staticmethod
     def _display_chat_title():
-        # If no conversations yet then display chat title message
+        """
+        Displays a title in the chat column if no conversation history is found.
+        """
         if not utils.has_conversation_history('docs'):
             with session_state['column_chat']:
-                # Interface to chat with selected expert
-                st.title(f"What do you want to know about your documents?")
+                st.title("What do you want to know about your documents?")
 
     @staticmethod
     def _collect_user_input(conversation, repeat=False):
+        """
+        Collects user input from a chat interface, avoiding repetition of queries on page refresh.
+
+        Parameters:
+        conversation : list
+            The current conversation history.
+        repeat : bool, optional
+            A flag to allow repeated queries, by default False.
+
+        Returns:
+        str or None
+            The user's message if new or None if no new input or disabled due to missing files.
+        """
         with session_state['column_chat']:
+            utils.change_chatbot_style()  # Adjusts chat interface styling
 
-            # Changes the style of the chat input to appear at the bottom of the column
-            utils.change_chatbot_style()
-
-            # Accept user input
             if user_message := st.chat_input("Ask something about your PDFs",
                                              disabled=not session_state['uploaded_pdf_files']):
-
-                # Prevent re-running the query on refresh or navigating back to the page by checking
-                # if the last stored message is not from the User
-                if not conversation or conversation[-1] != (session_state['USER'], user_message) or repeat:
+                if not conversation or conversation[-1] != ('USER', user_message) or repeat:
                     session_state['sources_to_highlight'] = {}
                     session_state['sources_to_display'] = {}
                     return user_message
-
         return None
 
     def _process_query_and_get_answer_for_suggestions(self, user_message):
-        condensed_question = self.client.get_condensed_question(
-            user_message, []
+        """
+        Processes the user's query to provide AI-generated suggestions based on the content of uploaded documents.
+
+        This method condenses the user's question, retrieves relevant sources based on the document's content,
+        and generates an AI response based on the condensed question and the identified sources.
+
+        Parameters:
+        user_message : str
+            The user's query about the document's content.
+
+        Returns:
+        str
+            The AI-generated response providing suggestions or answers based on the query and the document's content.
+        """
+        # Condense the user's query to its most relevant form
+        condensed_question = self.client.get_condensed_question(user_message, [])
+
+        # Retrieve sources from the document that are relevant to the condensed question
+        sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
+
+        # Get the AI-generated answer based on the prompt options, sources, and condensed question
+        all_output = self.client.get_answer(
+            session_state['prompt_options_docs'][0],
+            sources,
+            condensed_question
         )
 
-        sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
-        all_output = self.client.get_answer(session_state['prompt_options_docs'][0],
-                                            sources,
-                                            condensed_question)
-
+        # Extract the AI-generated text response
         ai_response = all_output['output_text']
 
         return ai_response
 
     def _user_message_processing(self, conversation, user_message):
+        """
+        Processes the user's message, updates the conversation history, and generates an AI response.
+
+        This method adds the user's message to the conversation history, generates a condensed question based on
+        the message and the conversation history, retrieves relevant sources, generates an AI response, and updates
+        the session state to display sources and highlights relevant to the user's query.
+
+        Parameters:
+        conversation : list
+            The current conversation history between the user and the assistant.
+        user_message : str
+            The latest message from the user.
+
+        Side Effects:
+        Updates the conversation history and session state with the AI's response, sources to highlight,
+        and sources to display.
+        """
         if user_message:
-            # Add user message to the conversation
+            # Update conversation history with the user's message
             utils.add_conversation_entry(chatbot='docs', speaker=session_state['USER'], message=user_message)
 
+            # Generate tuples representing the chat history for processing
             chat_history_tuples = utils.generate_chat_history_tuples(conversation)
 
-            # The sources to display change with every new user query
+            # Reset sources to display with each new user query
             session_state['sources_to_display'] = {}
 
             with session_state['column_chat']:
-                with st.spinner():
-                    condensed_question = self.client.get_condensed_question(
-                        user_message, chat_history_tuples
-                    )
-
+                with st.spinner("Processing your query..."):
+                    # Get condensed question, sources, and AI response
+                    condensed_question = self.client.get_condensed_question(user_message, chat_history_tuples)
                     sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
-                    all_output = self.client.get_answer(session_state['prompt_options_docs'][0],
-                                                        sources,
+                    all_output = self.client.get_answer(session_state['prompt_options_docs'][0], sources,
                                                         condensed_question)
-
                     ai_response = all_output['output_text']
 
+                    # Display AI's response in the chat column
                     with st.chat_message("assistant"):
                         st.markdown(ai_response)
-                        # Store docs to extract all sources the first time
-                        docs = {}
-                        for source in sources:
-                            # Collect the references to relevant sources and their first 150 characters
-                            source_reference = source.metadata['source']
-                            # Only add it if the source appears referenced in the response
-                            if source_reference in ai_response:
-                                content = source.page_content
 
-                                page_data = source_reference.split('|')
-                                page_file = page_data[0]
-                                page_source = page_data[1]
-                                # Without this condition, it can lead to error due to deleting a
-                                # file from uploads that was already inserted in the VD.
-                                # Not ideal because it finds the source in the VD and
-                                # references it in the answer
-                                if page_file in session_state['doc_binary_data']:
-                                    if page_file not in docs:
-                                        docs[page_file] = docs_utils.get_doc(session_state['doc_binary_data'][page_file])
-                                        session_state['sources_to_highlight'][page_file] = []
-                                        session_state['sources_to_display'][page_file] = []
-                                    session_state['sources_to_display'][page_file].append(
-                                        f"{source_reference} - {content[:150]}")
-                                    page_number = int(page_source.split('-')[0])
+                        # Process sources to highlight and display
+                        self._process_and_display_sources(ai_response, sources)
 
-                                    session_state['sources_to_highlight'][page_file].append(
-                                        {'page': page_number,
-                                         'x': source.metadata['x0'],
-                                         'y': source.metadata['y0'],
-                                         'width': source.metadata['x1'] - source.metadata['x0'],
-                                         'height': source.metadata['y1'] - source.metadata['y0'],
-                                         'color': "red",
-                                         })
-
-            # Add AI response to the conversation
+            # Update conversation history with AI's response and rerun to reflect updates
             utils.add_conversation_entry(chatbot='docs', speaker='Assistant', message=ai_response)
             st.rerun()
 
-    def _handle_user_input(self, conversation_history, predefined_prompt_selected):
-        if predefined_prompt_selected:
-            user_message = predefined_prompt_selected
-        else:
-            user_message = self._collect_user_input(conversation_history)
+    def _process_and_display_sources(self, ai_response, sources):
+        """
+        Processes sources related to the AI's response for displaying and highlighting in the document.
 
-        # Print user message immediately after
-        # getting entered because we're streaming the chatbot output
-        with session_state['column_chat']:
-            if user_message:
+        Parameters:
+        ai_response : str
+            The response generated by the AI based on the user's query.
+        sources : list
+            A list of sources related to the AI's response.
+
+        Side Effects:
+        Updates session state with the information necessary to display and highlight sources in the document.
+        """
+        docs = {}
+        for source in sources:
+            source_reference = source.metadata['source']
+            if source_reference in ai_response:
+                content = source.page_content
+                page_data = source_reference.split('|')
+                page_file = page_data[0]
+
+                if page_file in session_state['doc_binary_data']:
+                    if page_file not in docs:
+                        docs[page_file] = docs_utils.get_doc(session_state['doc_binary_data'][page_file])
+                        session_state['sources_to_highlight'][page_file] = []
+                        session_state['sources_to_display'][page_file] = []
+
+                    # Prepare source display and highlighting metadata
+                    session_state['sources_to_display'][page_file].append(f"{source_reference} - {content[:150]}")
+                    page_number, page_source = self._parse_page_metadata(page_data[1])
+                    session_state['sources_to_highlight'][page_file].append(
+                        self._prepare_source_highlight(source, page_number))
+
+    @staticmethod
+    def _parse_page_metadata(page_source):
+        """
+        Parses page source metadata into a usable format.
+
+        Parameters:
+        page_source : str
+            The source information of the page in 'page_number-source_type' format.
+
+        Returns:
+        Tuple[int, str]
+            A tuple containing the page number as an integer and the source type as a string.
+        """
+        page_number = int(page_source.split('-')[0])
+        return page_number, page_source
+
+    @staticmethod
+    def _prepare_source_highlight(source, page_number):
+        """
+        Prepares the highlight metadata for a given source.
+
+        Parameters:
+        source : object
+            The source object containing metadata for the highlight.
+        page_number : int
+            The page number where the highlight will be applied.
+
+        Returns:
+        dict
+            A dictionary with the highlight metadata including page number, dimensions, and color.
+        """
+        return {
+            'page': page_number,
+            'x': source.metadata['x0'],
+            'y': source.metadata['y0'],
+            'width': source.metadata['x1'] - source.metadata['x0'],
+            'height': source.metadata['y1'] - source.metadata['y0'],
+            'color': "red",
+        }
+
+    def _handle_user_input(self, conversation_history, predefined_prompt_selected):
+        """
+        Processes the user's input either from a predefined prompt or collected interactively,
+        and updates the conversation accordingly.
+
+        Parameters:
+        conversation_history : list
+            The current conversation history.
+        predefined_prompt_selected : str
+            The message from a predefined prompt selected by the user, if any.
+        """
+        # Determine the source of user message
+        user_message = predefined_prompt_selected if predefined_prompt_selected \
+            else self._collect_user_input(conversation_history)
+
+        # Display the user's message immediately for streaming output
+        if user_message:
+            with session_state['column_chat']:
                 with st.chat_message("user"):
                     st.markdown(user_message)
 
+        # Process the user's message
         self._user_message_processing(conversation_history, user_message)
 
-    @staticmethod
-    def _display_summary(file_name):
-        with session_state['column_chat']:
-            with st.expander("Summary"):
-                st.markdown(session_state[f'summary_{file_name}'])
+    def background_task(self, doc_text_data, model_name, map_prompt_template, reduce_prompt_template, result_queue):
+        try:
+            summary = self.sum_man.get_data_from_documents(
+                docs=doc_text_data,
+                model_name=model_name,
+                map_prompt_template=map_prompt_template,
+                reduce_prompt_template=reduce_prompt_template)
+            result_queue.put(summary)
+        except Exception as e:
+            print(f"Error in background task: {e}")  # Ensure any errors are logged
 
-    def _generate_summary(self):
-        with session_state['column_chat']:
-            with st.spinner("Generating summary..."):
-                summary_reduce_prompt = session_state['prompt_options_docs'][1]
-                summary_map_prompt = session_state['prompt_options_docs'][2]
-                file_name = session_state['selected_file_name']
-                session_state[f'summary_{file_name}'] = self.sum_man.get_data_from_documents(
-                    docs=session_state['doc_text_data'][
-                        session_state['selected_file_name']],
-                    model_name=os.getenv('OPENAI_MODEL_EXTRA'),
-                    map_prompt_template=summary_map_prompt['template'],
-                    reduce_prompt_template=summary_reduce_prompt['template'])
+    def _generate_summary_background(self, doc_text_data, file_name):
+        """
+        Triggers background summary generation for the given file. Does not attempt to access
+        Streamlit's UI elements directly, but updates the session state when complete.
+        """
+        # Define templates outside the thread
+        reduce_prompt_template = session_state.get('prompt_options_docs', [{}])[1].get('template', '')
+        map_prompt_template = session_state.get('prompt_options_docs', [{}])[2].get('template', '')
+        # Start the background task
+        thread = threading.Thread(target=self.background_task, args=(
+            doc_text_data, os.getenv('OPENAI_MODEL_EXTRA'),
+            map_prompt_template, reduce_prompt_template, session_state[f'result_queue_{file_name}']))
+        thread.start()
 
-    def _handle_and_display_sources(self):
+    def _handle_and_display_annotations_and_sources(self):
+        """
+        Handles the display of annotations and sources to the user based on the current file selection.
+        """
         file_stem = session_state['selected_file_name']
-        if file_stem in session_state['sources_to_highlight']:
-            self.annotations = session_state['sources_to_highlight'][file_stem]
-        else:
-            self.annotations = []
 
-        if file_stem in session_state['doc_binary_data']:
-            if st.session_state['selected_file_name']:
-                self._display_pdf(self.annotations)
-                if file_stem in session_state['sources_to_display']:
-                    self._display_sources(file_stem)
+        # Prepare annotations for the selected file
+        self.annotations = session_state['sources_to_highlight'].get(file_stem, [])
+
+        # Display the PDF with optional annotations and list of sources if available
+        if file_stem in session_state['doc_binary_data'] and st.session_state['selected_file_name']:
+            self._display_pdf(self.annotations)
+            if file_stem in session_state['sources_to_display']:
+                self._display_sources(file_stem)
 
     def _load_doc_to_display(self):
+        """
+        Loads the document to be displayed. If documents are uploaded, it displays thumbnails
+        and processes the files. Otherwise, it prompts the user to upload documents.
+        """
         if session_state['uploaded_pdf_files']:
             self.display_thumbnails()
             self._process_uploaded_files(session_state['uploaded_pdf_files'])
@@ -304,80 +427,122 @@ class DocsManager:
                 st.header("Please upload your documents on the sidebar.")
 
     def _generate_suggestions(self, file_name):
+        """
+        Generates query suggestions based on the content of the document specified by file_name.
+
+        Parameters:
+        file_name : str
+            The name of the file for which suggestions are to be generated.
+        """
         session_state[f'suggestions_{file_name}'] = []
         session_state[f'icons_{file_name}'] = []
         with session_state['column_chat']:
             with st.spinner(f"Generating suggestions..."):
                 ai_response = self._process_query_and_get_answer_for_suggestions(
                     session_state['prompt_options_docs'][-1]['queries'])
-                print(ai_response)
                 queries = utils.process_ai_response_for_suggestion_queries(ai_response)
-                print(queries)
+
                 for query in queries:
                     session_state[f'suggestions_{file_name}'].append(query)
                     session_state[f'icons_{file_name}'].append(session_state['prompt_options_docs'][-1]['icon'])
 
     @staticmethod
     def _display_suggestions(file_name):
-        session_state['pills_index'] = None
+        """
+        Displays query suggestions for the given file in an interactive format to the user.
+
+        Parameters:
+        file_name : str
+            The name of the file for which suggestions are to be displayed.
+
+        Returns:
+        str
+            The selected suggestion query by the user.
+        """
         with session_state['column_chat']:
             with st.expander("Query suggestions:"):
                 predefined_prompt_selected = stp.pills("", session_state[f'suggestions_{file_name}'],
                                                        session_state[f'icons_{file_name}'],
-                                                       index=session_state['pills_index'])
+                                                       index=session_state.get('pills_index'))
 
-        # Get rid of the suggestion now that it was chosen
+        # Remove the chosen suggestion from the list after selection
         if predefined_prompt_selected:
             index_to_eliminate = session_state[f'suggestions_{file_name}'].index(predefined_prompt_selected)
             session_state[f'suggestions_{file_name}'].pop(index_to_eliminate)
             session_state[f'icons_{file_name}'].pop(index_to_eliminate)
+
         return predefined_prompt_selected
 
-    def display_chat_interface(self):
+    @staticmethod
+    def _display_summary_if_ready(file_name):
+        """
+        Checks if a summary is ready and displays it; otherwise, indicates loading.
+        """
+        # When summary is ready, display it
+        if session_state.get(f'summary_{file_name}', False):
+            with session_state['column_chat']:
+                with st.expander("Summary"):
+                    st.markdown(session_state[f'summary_{file_name}'])
+        else:
+            # Keep displaying a loading message until the summary is ready
+            with session_state['column_chat']:
+                st.info(f"Generating summary for document {file_name}...")
 
-        # Columns to display pdf and chat
+    def display_chat_interface(self):
+        """
+        Displays the chat interface, handling document display, summary generation, suggestions,
+        and user query processing dynamically based on user interaction and document content.
+        """
+        # Initialize the columns for displaying documents and chat interface
         (session_state['column_uploaded_files'],
          session_state['column_pdf'],
-         session_state['column_chat']) = st.columns([0.10, 0.425, 0.425], gap="medium")
+         session_state['column_chat']) = st.columns([0.1, 0.425, 0.425], gap="medium")
 
         self._load_doc_to_display()
 
         if session_state['selected_chatbot_path']:
-
             doc_prompt = session_state['prompt_options_docs'][0]
-            # Checking if the prompt exists
+            predefined_prompt_selected = None
             if doc_prompt:
-
                 self._display_chat_title()
 
                 file_name = session_state['selected_file_name']
-                # Check if there's no summary yet for this file and generate the summary
-                if f'summary_{file_name}' not in session_state and session_state['selected_file_name'] is not None:
-                    self._generate_summary()
-                # If there's already a summary for this file, display it
-                if f'summary_{file_name}' in session_state:
-                    self._display_summary(file_name)
+                if file_name is not None:
+                    if f'summary_{file_name}' not in session_state:
+                        # Mark summary as not ready and start generation in the background
+                        session_state[f'summary_{file_name}'] = None  # Create the variable to avoid re-running thread
+                        session_state[f'result_queue_{file_name}'] = Queue()
+                        self._generate_summary_background(session_state['doc_text_data'][file_name], file_name)
 
-                predefined_prompt_selected = None
-                if f'suggestions_{file_name}' not in session_state and session_state['selected_file_name'] is not None:
-                    self._generate_suggestions(file_name)
-                if f'suggestions_{file_name}' in session_state and session_state[f'suggestions_{file_name}']:
-                    predefined_prompt_selected = self._display_suggestions(file_name)
+                    # Check if there are results in the queue
+                    if (f'result_queue_{file_name}' in session_state and
+                            not session_state[f'result_queue_{file_name}'].empty() and
+                            not session_state[f'summary_{file_name}']):
+                        # Retrieve the result from the queue
+                        summary = session_state[f'result_queue_{file_name}'].get()
 
-                print("PPS", predefined_prompt_selected)
+                        # Safely update session_state in the main thread
+                        session_state[f'summary_{file_name}'] = summary
+
+                    self._display_summary_if_ready(file_name)
+
+                    # Generate and display suggestions if not already present for the file
+                    if f'suggestions_{file_name}' not in session_state and file_name is not None:
+                        self._generate_suggestions(file_name)
+                    if f'suggestions_{file_name}' in session_state and session_state[f'suggestions_{file_name}']:
+                        predefined_prompt_selected = self._display_suggestions(file_name)
 
                 conversation_history = utils.get_conversation_history('docs')
 
-                # If there's already a conversation in the history for this chatbot, display it.
+                # Display conversation history or initialize it if absent
                 if conversation_history:
                     utils.display_conversation(conversation_history=conversation_history,
                                                container=session_state['column_chat'])
                 else:
-                    # Create empty conversation for this chatbot in case there's no key for it yet
                     utils.create_history(chatbot='docs')
 
                 self._handle_user_input(conversation_history, predefined_prompt_selected)
-                self._handle_and_display_sources()
+                self._handle_and_display_annotations_and_sources()
 
             else:
                 st.warning("No defined prompt was found. Please define a prompt before using the chat.")

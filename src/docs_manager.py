@@ -375,6 +375,23 @@ class DocsManager:
         self._user_message_processing(conversation_history, user_message)
 
     def background_task(self, doc_text_data, model_name, map_prompt_template, reduce_prompt_template, result_queue):
+        """
+        Executes the summarization process in the background for the given document text data.
+        The function is designed to run as a background task to not block the main Streamlit thread.
+        Once the summary is generated, it is put into the provided thread-safe queue.
+
+        Parameters:
+        doc_text_data : str
+            The text content of the document for which the summary is to be generated.
+        model_name : str
+            The name of the model to use for generating the document summary.
+        map_prompt_template : str
+            The map prompt template to be used in the summarization process.
+        reduce_prompt_template : str
+            The reduce prompt template to be used in the summarization process.
+        result_queue : Queue
+            A thread-safe queue where the generated summary result will be put once the task completes.
+        """
         try:
             summary = self.sum_man.get_data_from_documents(
                 docs=doc_text_data,
@@ -387,8 +404,24 @@ class DocsManager:
 
     def _generate_summary_background(self, doc_text_data, file_name):
         """
-        Triggers background summary generation for the given file. Does not attempt to access
-        Streamlit's UI elements directly, but updates the session state when complete.
+        Initiates the asynchronous generation of a document summary by triggering a background task.
+        This method aims to offload intensive summarization processing to a background thread, allowing
+        the Streamlit application to remain responsive. The completion of the task is communicated through
+        a thread-safe queue, specifically instantiated for each document based on its filename.
+
+        The method sets up necessary parameters for the summarization, including model name and summarization
+        templates, and uses these parameters to start the background task. The result of the summarization,
+        once completed, will be placed into a dedicated queue identified by the file name, from which it can
+        be retrieved and displayed in the Streamlit UI.
+
+        Parameters:
+        doc_text_data : str
+            The textual content of the document for which a summary is requested. This data will be processed
+            by the background task to generate the summary.
+        file_name : str
+            A unique identifier for the document being processed. This identifier is used to construct a unique
+            key for the results queue in the session state, ensuring that summaries for different documents are
+            correctly managed and accessed.
         """
         # Define templates outside the thread
         reduce_prompt_template = session_state.get('prompt_options_docs', [{}])[1].get('template', '')
@@ -476,7 +509,21 @@ class DocsManager:
     @staticmethod
     def _display_summary_if_ready(file_name):
         """
-        Checks if a summary is ready and displays it; otherwise, indicates loading.
+        Displays the generated summary for a specific document if it is available within the session state.
+        If the summary has not yet been generated or is still processing, this method displays a loading message
+        in the chat column to inform the user that the summary generation is in progress. This approach allows
+        users to be aware of ongoing processes and ensures that the UI remains informative and interactive.
+
+        The method relies on the Stream_state to check the readiness of the document's summary. The summary's availability
+        is indicated by the presence of an entry in the session state named after the document's filename. If the summary
+        is ready, it will be displayed within an expandable section in the chat column, allowing users to view the summary
+        at their convenience.
+
+        Parameters:
+        file_name : str
+            A unique identifier for the document whose summary is being checked. This identifier is used to look up the
+            summary within the session state. If the summary is available, it is displayed; otherwise, a loading message
+            is shown to indicate that the summary generation is still in progress.
         """
         # When summary is ready, display it
         if session_state.get(f'summary_{file_name}', False):

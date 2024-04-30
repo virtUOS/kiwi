@@ -86,10 +86,6 @@ msgstr "Wie kann ich Ihnen helfen?"
 msgid "You're using the following OpenAI model:"
 msgstr "Sie benutzen das folgende Modell von OpenAI:"
 
-#: src/chatbot_utils.py:297
-msgid "Remember **not** to enter any personal information or copyrighted material."
-msgstr "Denken Sie daran, **keine** persönlichen Informationen und urheberrechtlich geschützten Materialien einzugeben."
-
 #: src/chatbot_utils.py:301
 msgid "Each time you enter information, a system prompt is sent to the chat model by default."
 msgstr "Bei jeder Ihrer Eingaben wird standardmäßig ein System-Prompt mit an das Chat-Modell übermittelt."

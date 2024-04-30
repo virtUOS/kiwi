@@ -85,9 +85,7 @@ class ChatManager:
         Displays information about the portal and model in use.
         """
         using_text = session_state['_']("You're using the following OpenAI model:")
-        remember_text = session_state['_']("Remember **not** to enter any personal information"
-                                           " or copyrighted material.")
-        model_info = f"{using_text} **{os.getenv('OPENAI_MODEL')}**. {remember_text}"
+        model_info = f"{using_text} **{os.getenv('OPENAI_MODEL')}**."
         st.write(model_info)
         st.write(session_state['_']("Each time you enter information,"
                                     " a system prompt is sent to the chat model by default."))

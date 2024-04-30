@@ -14,23 +14,12 @@ def translate():
     return _
 
 
-def set_language(language) -> None:
-    """
-    Add the language to the query parameters based on the selected language.
-    param language: The selected language.
-    """
-    if language == 'en':
-        st.query_params["lang"] = "en"
-    elif language == 'de':
-        st.query_params["lang"] = "de"
-
-
 def change_language():
     if session_state["selected_language"] == 'English':
-        set_language(language='en')
+        st.query_params["lang"] = "en"
         session_state['_'] = gettext.gettext
     else:
-        set_language(language='de')
+        st.query_params["lang"] = "de"
         session_state['_'] = translate()
 
 
@@ -42,11 +31,24 @@ class LanguageManager:
     @staticmethod
     def initialize_language():
         # If no language is chosen yet set it to German
-        if 'selected_language' not in st.session_state or 'lang' not in st.query_params:
+        if 'selected_language' not in session_state and 'lang' not in st.query_params:
             session_state['_'] = translate()
             st.query_params['lang'] = 'de'
 
+    @staticmethod
+    def get_language():
+        return st.query_params.get('lang', False)
+
     def language_controls(self):
+        index = 1
+
+        # In case there's a language set maintain it between pages
+        if 'selected_language' in session_state:
+            current_language = session_state['selected_language']
+            for k, v in self.languages.items():
+                if k == current_language:
+                    index = list(self.languages).index(k)
+
         with st.sidebar:
             st.radio(
                 "Language",
@@ -54,6 +56,6 @@ class LanguageManager:
                 horizontal=True,
                 key="selected_language",
                 on_change=change_language,
-                index=1,
+                index=index,
                 label_visibility='hidden'
             )

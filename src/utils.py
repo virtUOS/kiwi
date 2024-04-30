@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def initialize_session_variables(user, typ):
+@st.cache_data
+def initialize_session_variables(user):
     """
     Initialize essential session variables with default values.
 
@@ -17,8 +18,6 @@ def initialize_session_variables(user, typ):
     prompt options, etc., essential for the application to function correctly from the start.
     """
     session_state['USER'] = user
-    session_state['typ'] = typ
-    session_state[f"prompt_options_{session_state['typ']}"] = load_prompts(session_state['typ'])
     required_keys = {
         'model_selection': "OpenAI",
         'conversation_histories': {},
@@ -34,18 +33,14 @@ def initialize_session_variables(user, typ):
             session_state[key] = default_value
 
 
-def get_language():
-    return st.query_params.get('lang', False)
-
-
-def load_prompts(typ):
+@st.cache_data
+def load_prompts(typ, language=None):
     """
     Load chat prompts based on the selected or default language.
 
     This method enables dynamic loading of chat prompts to support multilingual chatbot interactions.
     If no language is specified in the query parameters, German ('de') is used as the default language.
     """
-    language = get_language()
     # Use German language as default
     if not language:
         language = "de"
@@ -67,8 +62,6 @@ def update_path_in_session_state():
     if path_has_changed:
         serialized_path = '/'.join(session_state['selected_chatbot_path'])
         session_state['selected_chatbot_path_serialized'] = serialized_path
-
-
 
 
 # GENERAL MANAGEMENT #
@@ -94,6 +87,7 @@ def restore_prompt(chatbot):
         del session_state['edited_prompts'][chatbot]
 
 
+@st.cache_data
 def fetch_chatbot_prompt(chatbot):
     """
     Fetches the prompt for the current chatbot based on the selected path.
@@ -231,6 +225,7 @@ def process_ai_response_for_suggestion_queries(model_output):
 
     return cleaned_queries
 
+
 def display_conversation(conversation_history, container=None):
     """
     Displays the conversation history between the user and the assistant within the given container or globally.
@@ -249,6 +244,7 @@ def display_conversation(conversation_history, container=None):
         elif speaker == "Assistant":
             chat_message_container.chat_message("assistant").write(message)
 
+
 def change_chatbot_style():
     # Set style of chat input so that it shows up at the bottom of the column
     chat_input_style = f"""
@@ -260,7 +256,3 @@ def change_chatbot_style():
     </style>
     """
     st.markdown(chat_input_style, unsafe_allow_html=True)
-
-
-
-

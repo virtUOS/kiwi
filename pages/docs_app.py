@@ -34,8 +34,8 @@ class DocsApplication:
         # Set and manage sidebar interface controls
         self.language_manager.initialize_language()
         self.language_manager.language_controls()
-        utils.initialize_session_variables(user=session_state['_']("User"), typ='docs')
-        doc_utils.initialize_docs_session_variables()
+        utils.initialize_session_variables(user=session_state['_']("User"))
+        doc_utils.initialize_docs_session_variables(typ='docs', language=self.language_manager.get_language())
         self.cookies_manager.initialize_cookies()
         self.cookies_manager.verify_and_set_user_session()
         self.sidebar_general_manager.display_logo()

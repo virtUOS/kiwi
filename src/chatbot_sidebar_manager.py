@@ -113,6 +113,7 @@ class SidebarChatManager(SidebarManager):
                 # Convert the DataFrame to a list of tuples (converting each row to a tuple)
                 conversation_list = conversation_df[required_columns].to_records(index=False).tolist()
 
+                print(conversation_list)
                 # Update the session state with the uploaded conversation
                 session_state['conversation_histories'][conversation_key] = conversation_list
 

@@ -10,8 +10,11 @@ import src.utils as utils
 MAX_FILES = 5
 
 
-def initialize_docs_session_variables():
+def initialize_docs_session_variables(typ, language):
     """Initialize essential session variables."""
+
+    session_state['typ'] = typ
+    session_state[f"prompt_options_{session_state['typ']}"] = utils.load_prompts(session_state['typ'], language)
     required_keys = {
         'uploaded_pdf_files': [],
         'selected_file_name': None,
@@ -57,6 +60,7 @@ def reset_docs_variables():
     utils.create_history('docs')
 
 
+@st.cache_data
 def get_doc(binary_data):
     if binary_data:
         doc = fitz.open(filetype='pdf', stream=binary_data)
@@ -65,12 +69,14 @@ def get_doc(binary_data):
     return doc
 
 
+@st.cache_data
 def get_chunk_size(chunk_size=300):
     if 'chunk_size' not in session_state:
         session_state['chunk_size'] = chunk_size
     return session_state['chunk_size']
 
 
+@st.cache_data
 def get_overlap_size(overlap_size=20):
     if 'overlap_size' not in session_state:
         session_state['overlap_size'] = overlap_size
@@ -133,6 +139,7 @@ def format_chunk_info(page_number, chunk_text, chunk_bbox, file_name, chunk_coun
     }
 
 
+@st.cache_data
 def open_pdf(file: BytesIO):
     return fitz.open(filetype="pdf", stream=file)
 

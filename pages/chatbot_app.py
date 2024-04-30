@@ -34,8 +34,8 @@ class ChatbotApplication:
         # Set and manage sidebar interface controls
         self.language_manager.initialize_language()
         self.language_manager.language_controls()
-        utils.initialize_session_variables(user=session_state['_']("User"), typ='chat')
-        chatbot_utils.initialize_chat_session_variables()
+        utils.initialize_session_variables(user=session_state['_']("User"))
+        chatbot_utils.initialize_chat_session_variables(typ='chat', language=self.language_manager.get_language())
         self.cookies_manager.initialize_cookies()
         self.cookies_manager.verify_and_set_user_session()
         self.sidebar_general_manager.display_logo()

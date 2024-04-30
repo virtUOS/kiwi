@@ -35,7 +35,7 @@ lm = LanguageManager()
 lm.initialize_language()
 lm.language_controls()
 
-current_language = st.query_params['lang']
+current_language = session_state['selected_language']
 
 if "password_correct" not in session_state:
     session_state["password_correct"] = False

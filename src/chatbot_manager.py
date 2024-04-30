@@ -110,7 +110,7 @@ class ChatManager:
         This method sets up the interface for the chat, including fetching and displaying the system prompt,
         updating session states as necessary, and calling methods to display conversation history and handle user input.
         """
-        if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
+        if 'selected_chatbot_path' in session_state and session_state['selected_chatbot_path']:
 
             prompt = utils.fetch_chatbot_prompt(session_state['selected_chatbot_path'])
 

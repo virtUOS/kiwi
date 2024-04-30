@@ -18,6 +18,10 @@ msgstr ""
 msgid "User"
 msgstr "Eingabe"
 
+#: src/chatbot_manager.py:116
+msgid "The outputs of the chat assistant may be erroneous - therefore, always check the answers for their accuracy. Remember not to enter any personal information and copyrighted materials."
+msgstr "Die Ausgaben des Chat-Assistenten können fehlerhaft sein - überprüfen Sie die Antworten daher unbedingt auf ihre Korrektheit. Denken Sie daran, keine persönlichen Informationen und urheberrechtlich geschützten Materialien einzugeben."
+
 #: src/chatbot_utils.py:131
 msgid "Model:"
 msgstr "Modell:"

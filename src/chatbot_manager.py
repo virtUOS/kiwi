@@ -112,6 +112,11 @@ class ChatManager:
         """
         if 'selected_chatbot_path' in session_state and session_state['selected_chatbot_path']:
 
+            # General info on usage
+            st.info(session_state['_']("The outputs of the chat assistant may be erroneous - therefore, always "
+                                       "check the answers for their accuracy. Remember not to enter any personal "
+                                       "information and copyrighted materials."))
+
             prompt = utils.fetch_chatbot_prompt(session_state['selected_chatbot_path'])
 
             if isinstance(prompt, str) and len(prompt.strip()) > 0:

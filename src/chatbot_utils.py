@@ -10,7 +10,7 @@ from streamlit_cookies_manager import EncryptedCookieManager
 from src import menu_utils
 from dotenv import load_dotenv
 
-from src.language_utils import initialize_language
+from src.language_utils import initialize_language, language_controls
 
 # Load environment variables
 load_dotenv()
@@ -24,6 +24,10 @@ class SidebarManager:
         """
         self.cookies = self.initialize_cookies()
         initialize_language()
+        st.info(session_state['_']("The outputs of the chat assistant may be erroneous - therefore, "
+                                   "always check the answers for their accuracy. Remember not to enter "
+                                   "any personal information and copyrighted materials."))
+        language_controls()
 
     @staticmethod
     def initialize_cookies():
@@ -234,7 +238,7 @@ class SidebarManager:
             col1, col2, col3 = st.columns([1, 1, 1])
             # with st.expander(session_state['_']("**Options**"), expanded=True):
             if conversation_key in session_state['conversation_histories'] and session_state[
-                    'conversation_histories'][conversation_key]:
+                'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col3)
                 self._download_conversation_button(col2, conversation_key)
             self._upload_conversation_button(col1, conversation_key)
@@ -439,7 +443,7 @@ class SidebarManager:
         with st.sidebar:
             if st.button(session_state['_']('Logout')):
                 self.logout_and_redirect()
-            st.write(f"Version: *v1.0.0*")
+            st.write(f"Version: *v1.0.1*")
 
 
 class ChatManager:

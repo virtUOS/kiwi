@@ -235,7 +235,6 @@ def display_conversation(conversation_history, container=None):
     chat_message_container = container if container else st
     for entry in conversation_history:
         speaker, message, *__ = entry + (None,)  # Ensure at least 3 elements
-        print(session_state['USER'])
         if speaker == session_state['USER']:
             chat_message_container.chat_message("user").write(message)
         elif speaker == "Assistant":

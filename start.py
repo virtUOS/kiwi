@@ -7,7 +7,7 @@ import streamlit as st
 from streamlit import session_state
 from streamlit_cookies_manager import EncryptedCookieManager
 from src import ldap_connector
-from src.language_utils import initialize_language
+from src.language_utils import initialize_language, language_controls
 
 load_dotenv()
 
@@ -31,6 +31,7 @@ if not cookies.ready():
     st.stop()
 
 initialize_language()
+language_controls()
 
 current_language = st.query_params['lang']
 

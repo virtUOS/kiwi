@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit import session_state
 
-from dotenv import load_dotenv
 import src.utils as utils
 import src.docs_utils as doc_utils
 from src.docs_manager import DocsManager
@@ -10,9 +9,6 @@ from src.sidebar_general_manager import SidebarManager
 from src.language_manager import LanguageManager
 from src.session_manager import SessionManager
 from src.ai_client import AIClient
-
-# Load environment variables
-load_dotenv()
 
 # Streamlit page config
 st.set_page_config(page_title="Chat with your document", layout="wide", page_icon="🥝")
@@ -34,7 +30,8 @@ class DocsApplication:
         # Set and manage sidebar interface controls
         self.language_manager.initialize_language()
         self.language_manager.language_controls()
-        utils.initialize_session_variables(user=session_state['_']("User"))
+        session_state['USER'] = session_state['_']("User")
+        utils.initialize_session_variables()
         doc_utils.initialize_docs_session_variables(typ='docs', language=self.language_manager.get_language())
         self.cookies_manager.initialize_cookies()
         self.cookies_manager.verify_and_set_user_session()

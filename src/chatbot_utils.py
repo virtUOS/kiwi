@@ -1,10 +1,6 @@
 from streamlit import session_state
-from dotenv import load_dotenv
 
 import src.utils as utils
-
-# Load environment variables
-load_dotenv()
 
 
 def initialize_chat_session_variables(typ, language):

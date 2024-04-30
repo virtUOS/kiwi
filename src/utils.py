@@ -3,21 +3,15 @@ import streamlit as st
 from streamlit import session_state
 
 from src import menu_utils
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 
-@st.cache_data
-def initialize_session_variables(user):
+def initialize_session_variables():
     """
     Initialize essential session variables with default values.
 
     Sets up the initial state for model selection, chatbot paths, conversation histories,
     prompt options, etc., essential for the application to function correctly from the start.
     """
-    session_state['USER'] = user
     required_keys = {
         'model_selection': "OpenAI",
         'conversation_histories': {},
@@ -57,8 +51,10 @@ def update_path_in_session_state():
     If there is a change, it updates the session state with the new serialized path, allowing for tracking
      the selection changes.
     """
-    path_has_changed = menu_utils.path_changed(session_state['selected_chatbot_path'],
-                                               session_state['selected_chatbot_path_serialized'])
+    path_has_changed = True
+    if 'selected_chatbot_path_serialized' in session_state:
+        path_has_changed = menu_utils.path_changed(session_state['selected_chatbot_path'],
+                                                   session_state['selected_chatbot_path_serialized'])
     if path_has_changed:
         serialized_path = '/'.join(session_state['selected_chatbot_path'])
         session_state['selected_chatbot_path_serialized'] = serialized_path
@@ -239,6 +235,7 @@ def display_conversation(conversation_history, container=None):
     chat_message_container = container if container else st
     for entry in conversation_history:
         speaker, message, *__ = entry + (None,)  # Ensure at least 3 elements
+        print(session_state['USER'])
         if speaker == session_state['USER']:
             chat_message_container.chat_message("user").write(message)
         elif speaker == "Assistant":

@@ -47,7 +47,8 @@ class SidebarManager(SessionManager):
         session_state['chosen_page_index'] = pages.index(page)
         session_state['selected_chatbot_path'] = [page]
 
-        if session_state['chosen_page_index'] == session_state['current_page_index']:
+        if ('current_page_index' not in session_state or
+                session_state['chosen_page_index'] == session_state['current_page_index']):
             session_state['current_page_index'] = session_state['chosen_page_index']
         elif session_state['chosen_page_index'] == 0 and session_state['current_page_index'] != 0:
             session_state['current_page_index'] = 0
@@ -81,7 +82,6 @@ class SidebarManager(SessionManager):
         2. Displays model information for the selected model, e.g., OpenAI.
         """
         update_path_in_session_state()
-
         self._display_model_information()
 
     @staticmethod
@@ -127,5 +127,4 @@ class SidebarManager(SessionManager):
         2. Offers a logout option.
         """
         self._add_custom_css()
-
         self._logout_option()

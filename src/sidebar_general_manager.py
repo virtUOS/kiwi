@@ -3,7 +3,8 @@ import streamlit as st
 from streamlit import session_state
 from streamlit_option_menu import option_menu
 
-from src.utils import update_path_in_session_state
+import src.streamlit_styling as st_styling
+import src.utils as utils
 from src.session_manager import SessionManager
 
 
@@ -81,30 +82,8 @@ class SidebarManager(SessionManager):
         1. Checks for changes in the selected chatbot path to update the session state accordingly.
         2. Displays model information for the selected model, e.g., OpenAI.
         """
-        update_path_in_session_state()
+        utils.update_path_in_session_state()
         self._display_model_information()
-
-    @staticmethod
-    def _add_custom_css():
-        """
-        Inject custom CSS into the sidebar to enhance its aesthetic according to the current theme.
-
-        This static method retrieves the secondary background color from Streamlit's theme options
-        and applies custom styles to various sidebar elements, enhancing the user interface.
-        """
-        color = st.get_option('theme.secondaryBackgroundColor')
-        css = f"""
-                [data-testid="stSidebarNav"] {{
-                    position:absolute;
-                    bottom: 0;
-                    z-index: 1;
-                    background: {color};
-                }}
-                ... (rest of CSS)
-                """
-        with st.sidebar:
-            st.markdown("---")
-            st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
     def _logout_option(self):
         """
@@ -126,5 +105,5 @@ class SidebarManager(SessionManager):
         1. Adds custom CSS to stylize the sidebar.
         2. Offers a logout option.
         """
-        self._add_custom_css()
+        st_styling.add_custom_css()
         self._logout_option()

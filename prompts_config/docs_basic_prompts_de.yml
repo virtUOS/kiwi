@@ -1,4 +1,4 @@
-Queries: "Directly provide 3 specific queries based solely on the document's content. **Don't write anything else but the queries.** These queries should aim to deepen the user's understanding of the document by addressing its summary, key topics, and any notable details. **Format the response as a concise list of questions ONLY, with no introductions, explanations, or comments before, between, or after the questions.** Use semicolons to separate each query. Ensure all queries are relevant to the document's content and presented in the same language as the document's content.
+Queries: "Directly provide 3 specific queries (ONLY PROVIDE THE QUERIES, NOTHING ELSE) based solely on the document's content. **DON'T WRITE ANYTHING ELSE BUT THE QUERIES.** These queries should aim to deepen the user's understanding of the document by addressing any notable details. **Format the response as a concise list of questions ONLY, with NO introductions, explanations, or comments before, between, or after the questions.** Use semicolons to separate each query. Ensure all queries are relevant to the document's content.
 
 **Example queries, formatted correctly**:
 

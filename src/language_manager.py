@@ -66,7 +66,7 @@ class LanguageManager:
         Returns:
             str: The current language code if set (e.g., 'en', 'de'), with 'de' as the default value.
         """
-        selected_language = st.session_state.get("selected_language")
+        selected_language = st.session_state.get('selected_language')
         if not selected_language:
             return "de"
 
@@ -79,7 +79,8 @@ class LanguageManager:
         This method updates both the translation function and the current language index in the session
         state to reflect the user's choice. Also handles updating the language selection control in the UI.
         """
-        selected_language = st.session_state["selected_language"]
+        print("On change", session_state['selected_language'], session_state['language_index'])
+        selected_language = session_state['selected_language']
         if selected_language == 'English':
             update_language_in_session(gettext.gettext)
         else:
@@ -88,6 +89,7 @@ class LanguageManager:
         # Update the index in session state when it changes
         if selected_language != list(self.languages.keys())[session_state['language_index']]:
             session_state['language_index'] = list(self.languages.keys()).index(selected_language)
+        print("On change", session_state['selected_language'], session_state['language_index'])
 
     def language_controls(self):
         """
@@ -110,7 +112,9 @@ class LanguageManager:
                 options=list(self.languages),
                 horizontal=True,
                 index=session_state['language_index'],
-                key="selected_language",
+                key='selected_language',
                 on_change=self.change_language,
                 label_visibility='hidden'
             )
+
+        print("Main",session_state['selected_language'],"\n")

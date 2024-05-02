@@ -241,14 +241,3 @@ def display_conversation(conversation_history, container=None):
             chat_message_container.chat_message("assistant").write(message)
 
 
-def change_chatbot_style():
-    # Set style of chat input so that it shows up at the bottom of the column
-    chat_input_style = f"""
-    <style>
-        .stChatInput {{
-          position: fixed;
-          bottom: 3rem;
-        }}
-    </style>
-    """
-    st.markdown(chat_input_style, unsafe_allow_html=True)

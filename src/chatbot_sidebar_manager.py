@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 from streamlit import session_state
 
+import src.streamlit_styling as st_styling
 from src.sidebar_general_manager import SidebarManager
 
 
@@ -27,7 +28,7 @@ class SidebarChatManager(SidebarManager):
             st.write(session_state['_']("**Options**"))
             col1, col2, col3 = st.columns([1, 1, 1])
             if conversation_key in session_state['conversation_histories'] and session_state[
-                    'conversation_histories'][conversation_key]:
+                'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col3)
                 self._download_conversation_button(col2, conversation_key)
             self._upload_conversation_button(col1, conversation_key)
@@ -130,49 +131,6 @@ class SidebarChatManager(SidebarManager):
             except Exception as e:
                 container.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
 
-    @staticmethod
-    def _style_language_uploader():
-        lang = 'de'
-        if 'lang' in st.query_params:
-            lang = st.query_params['lang']
-
-        languages = {
-            "en": {
-                "instructions": "Drag and drop files here",
-                "limits": "Limit 200MB per file",
-            },
-            "de": {
-                "instructions": "Dateien hierher ziehen und ablegen",
-                "limits": "Limit 200MB pro Datei",
-            },
-        }
-
-        hide_label = (
-            """
-        <style>
-            div[data-testid="stFileUploaderDropzoneInstructions"]>div>span {
-               visibility:hidden;
-            }
-            div[data-testid="stFileUploaderDropzoneInstructions"]>div>span::after {
-               content:"INSTRUCTIONS_TEXT";
-               visibility:visible;
-               display:block;
-            }
-             div[data-testid="stFileUploaderDropzoneInstructions"]>div>small {
-               visibility:hidden;
-            }
-            div[data-testid="stFileUploaderDropzoneInstructions"]>div>small::before {
-               content:"FILE_LIMITS";
-               visibility:visible;
-               display:block;
-            }
-        </style>
-        """.replace("INSTRUCTIONS_TEXT", languages.get(lang).get("instructions"))
-            .replace("FILE_LIMITS", languages.get(lang).get("limits"))
-        )
-
-        st.markdown(hide_label, unsafe_allow_html=True)
-
     def _upload_conversation_file(self, container, conversation_key):
         """
         Render a file uploader in the specified container allowing users to upload a conversation history CSV file.
@@ -186,7 +144,7 @@ class SidebarChatManager(SidebarManager):
         - conversation_key: The key that uniquely identifies the conversation in the session state's
         conversation histories.
         """
-        self._style_language_uploader()
+        st_styling.style_language_uploader()
         container.file_uploader(session_state['_']("**Upload conversation**"),
                                 type=['csv'],
                                 key='file_uploader_conversation',
@@ -208,4 +166,3 @@ class SidebarChatManager(SidebarManager):
         """
         if container.button("⬆️", help=session_state['_']("Upload Conversation")):
             self._upload_conversation_file(st, conversation_key)
-

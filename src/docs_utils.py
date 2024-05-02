@@ -60,8 +60,7 @@ def reset_docs_variables():
     utils.create_history('docs')
 
 
-@st.cache_data
-def get_doc(binary_data):
+def open_pdf(binary_data):
     if binary_data:
         doc = fitz.open(filetype='pdf', stream=binary_data)
     else:
@@ -69,14 +68,12 @@ def get_doc(binary_data):
     return doc
 
 
-@st.cache_data
 def get_chunk_size(chunk_size=300):
     if 'chunk_size' not in session_state:
         session_state['chunk_size'] = chunk_size
     return session_state['chunk_size']
 
 
-@st.cache_data
 def get_overlap_size(overlap_size=20):
     if 'overlap_size' not in session_state:
         session_state['overlap_size'] = overlap_size
@@ -139,12 +136,6 @@ def format_chunk_info(page_number, chunk_text, chunk_bbox, file_name, chunk_coun
     }
 
 
-@st.cache_data
-def open_pdf(file: BytesIO):
-    return fitz.open(filetype="pdf", stream=file)
-
-
-@st.cache_data
 def parse_pdf(file: BytesIO, filename):
     doc = open_pdf(file)
     return chunk_text_with_bbox_and_overlap(doc, filename)

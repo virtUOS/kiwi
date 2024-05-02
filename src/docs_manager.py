@@ -9,6 +9,7 @@ from streamlit_pdf_viewer import pdf_viewer
 from streamlit_dimensions import st_dimensions
 import streamlit_pills as stp
 
+import src.streamlit_styling as st_styling
 import src.utils as utils
 import src.docs_utils as docs_utils
 from src.summarization_manager import SummarizationManager
@@ -92,12 +93,6 @@ class DocsManager:
             key='selected_file_name', index=None  # Setting a default index
         )
 
-        session_state['column_uploaded_files'].number_input(
-            label='Input chunk size',
-            min_value=100, max_value=4000, value=300, key='chunk_size',
-            help=("The chunk size specifies the amount of characters each "
-                  "chunk of text contains. Adjust based on the level of detail needed.")
-        )
         self._populate_thumbnails(files_set, thumbnail_size, selected_file_name)
 
     def _display_pdf(self, annotations):
@@ -114,7 +109,6 @@ class DocsManager:
                        height=1000,
                        width=int(self.main_dim['width'] * 0.4) if self.main_dim else 400)
 
-    @st.cache_data
     def _process_uploaded_files(_self, uploaded_pdf_files):
         """
         Processes and stores the content of uploaded PDF files into a session state.
@@ -186,7 +180,7 @@ class DocsManager:
             The user's message if new or None if no new input or disabled due to missing files.
         """
         with session_state['column_chat']:
-            utils.change_chatbot_style()  # Adjusts chat interface styling
+            st_styling.change_chatbot_style()  # Adjusts chat interface styling
 
             if user_message := st.chat_input("Ask something about your PDFs",
                                              disabled=not session_state['uploaded_pdf_files']):
@@ -300,7 +294,7 @@ class DocsManager:
 
                 if page_file in session_state['doc_binary_data']:
                     if page_file not in docs:
-                        docs[page_file] = docs_utils.get_doc(session_state['doc_binary_data'][page_file])
+                        docs[page_file] = docs_utils.open_pdf(session_state['doc_binary_data'][page_file])
                         session_state['sources_to_highlight'][page_file] = []
                         session_state['sources_to_display'][page_file] = []
 

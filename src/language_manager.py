@@ -44,7 +44,7 @@ class LanguageManager:
         Initializes the LanguageManager with supported languages.
         """
         self.languages = {"English": "en", "Deutsch": "de"}
-        self.current_index = 1  # Stores the current language's index for optimization
+        self.default_index = 1  # Stores the current language's index for optimization
 
     @staticmethod
     def initialize_language():
@@ -72,24 +72,29 @@ class LanguageManager:
 
         return self.languages.get(selected_language)
 
-    def change_language(self):
+    @staticmethod
+    def change_language():
         """
-        Changes the application language based on user selection and updates session state accordingly.
+        Changes the application's language based on the user's selection, updates the session state,
+        and ensures that the translation function and current language index in the session state
+        reflect the user's choice efficiently.
 
-        This method updates both the translation function and the current language index in the session
-        state to reflect the user's choice. Also handles updating the language selection control in the UI.
+        This method accomplishes the following:
+        1. Directly retrieves the current language selection from the session state.
+        2. Checks if the selected language is indeed different from the current language.
+           If not, the method exits, avoiding unnecessary updates.
+        3. Depending on the selected language, updates the translation function appropriately.
+        4. Updates the current language index in the session state if it has changed.
+           This ensures that future UI elements and text translations align with the newly selected language.
         """
-        print("On change", session_state['selected_language'], session_state['language_index'])
-        selected_language = session_state['selected_language']
-        #if selected_language == 'English':
-        #    update_language_in_session(gettext.gettext)
-        #else:
-        #    update_language_in_session(translate())
+        # Directly fetch the currently selected language and compare it against the current session state.
+        selected_language = session_state.get('selected_language')
 
-        # Update the index in session state when it changes
-        if selected_language != list(self.languages.keys())[session_state['language_index']]:
-            session_state['language_index'] = list(self.languages.keys()).index(selected_language)
-        print("On change", session_state['selected_language'], session_state['language_index'])
+        # Determine and set the appropriate translation function based on the selection.
+        if selected_language == 'English':
+            update_language_in_session(gettext.gettext)
+        else:
+            update_language_in_session(translate())
 
     def language_controls(self):
         """
@@ -99,22 +104,15 @@ class LanguageManager:
         to choose between supported languages. This selection automatically updates the application's
         displayed language through a callback on change.
         """
-        # Use cached index if available, else find it
-        if 'language_index' not in session_state:
-            current_language = session_state.get('selected_language')
-            if current_language and current_language in self.languages:
-                self.current_index = list(self.languages.keys()).index(current_language)
-            session_state['language_index'] = self.current_index
 
         with st.sidebar:
             st.radio(
                 "Language",
                 options=list(self.languages),
                 horizontal=True,
-                index=session_state['language_index'],
+                index=self.default_index,
                 key='selected_language',
                 on_change=self.change_language,
                 label_visibility='hidden'
             )
 
-        print("Main",session_state['selected_language'],"\n")

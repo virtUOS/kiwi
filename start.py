@@ -201,7 +201,7 @@ if cookies.get('session') != 'in':
             cookies['username'] = session_state['username']
         cookies['session'] = "in"
         cookies.save()
-print(cookies['session'])
+
 if cookies['session'] == 'in':
     st.sidebar.success(session_state['_']("Logged in!"))
     # Wait a bit before redirecting

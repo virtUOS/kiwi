@@ -8,11 +8,12 @@ import src.utils as utils
 from src.session_manager import SessionManager
 
 
-class SidebarManager(SessionManager):
+class SidebarManager:
 
-    def __init__(self):
+    def __init__(self, session_manager):
         super().__init__()
         self.version = "v1.0.0"
+        self.ssm = session_manager
 
     @staticmethod
     def display_logo():
@@ -94,7 +95,7 @@ class SidebarManager(SessionManager):
         """
         with st.sidebar:
             if st.button(session_state['_']('Logout')):
-                self.logout_and_redirect()
+                self.ssm.logout_and_redirect()
             st.write(f"Version: *{self.version}*")
 
     def display_general_sidebar_bottom_controls(self):

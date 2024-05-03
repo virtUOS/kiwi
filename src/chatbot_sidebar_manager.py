@@ -5,13 +5,12 @@ import streamlit as st
 from streamlit import session_state
 
 import src.streamlit_styling as st_styling
-from src.sidebar_general_manager import SidebarManager
 
 
-class SidebarChatManager(SidebarManager):
+class SidebarChatManager:
 
     def __init__(self):
-        super().__init__()
+        pass
 
     def _show_conversation_controls(self):
         """
@@ -28,7 +27,7 @@ class SidebarChatManager(SidebarManager):
             st.write(session_state['_']("**Options**"))
             col1, col2, col3 = st.columns([1, 1, 1])
             if conversation_key in session_state['conversation_histories'] and session_state[
-                'conversation_histories'][conversation_key]:
+                    'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col3)
                 self._download_conversation_button(col2, conversation_key)
             self._upload_conversation_button(col1, conversation_key)

@@ -18,9 +18,9 @@ st.set_page_config(page_title="kiwi", layout="wide", page_icon="🥝")
 class ChatbotApplication:
 
     def __init__(self):
-        self.cookies_manager = SessionManager()
+        self.session_manager = SessionManager()
         self.language_manager = LanguageManager()
-        self.sidebar_general_manager = SidebarManager()
+        self.sidebar_general_manager = SidebarManager(self.session_manager)
         self.sidebar_chat_manager = SidebarChatManager()
         self.chat_manager = ChatManager()
 
@@ -33,8 +33,8 @@ class ChatbotApplication:
         session_state['USER'] = session_state['_']("User")
         utils.initialize_session_variables()
         chatbot_utils.initialize_chat_session_variables(typ='chat', language=self.language_manager.get_language())
-        self.cookies_manager.initialize_cookies()
-        self.cookies_manager.verify_and_set_user_session()
+        self.session_manager.initialize_cookies()
+        self.session_manager.verify_and_set_user_session()
         self.sidebar_general_manager.display_logo()
         self.sidebar_general_manager.display_pages_menu(default_id=0)
         self.sidebar_general_manager.display_general_sidebar_controls()

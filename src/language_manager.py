@@ -81,10 +81,10 @@ class LanguageManager:
         """
         print("On change", session_state['selected_language'], session_state['language_index'])
         selected_language = session_state['selected_language']
-        if selected_language == 'English':
-            update_language_in_session(gettext.gettext)
-        else:
-            update_language_in_session(translate())
+        #if selected_language == 'English':
+        #    update_language_in_session(gettext.gettext)
+        #else:
+        #    update_language_in_session(translate())
 
         # Update the index in session state when it changes
         if selected_language != list(self.languages.keys())[session_state['language_index']]:

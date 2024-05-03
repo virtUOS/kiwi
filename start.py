@@ -78,7 +78,7 @@ with st.sidebar:
     st.markdown(hide_submit_text, unsafe_allow_html=True)
 
     with st.form("login-form"):
-        # Show input for password.
+        # Show input for password.https://platform.openai.com/usage
         st.text_input(
             session_state['_']("User name"), key="username"
         )
@@ -201,7 +201,7 @@ if cookies.get('session') != 'in':
             cookies['username'] = session_state['username']
         cookies['session'] = "in"
         cookies.save()
-
+print(cookies['session'])
 if cookies['session'] == 'in':
     st.sidebar.success(session_state['_']("Logged in!"))
     # Wait a bit before redirecting

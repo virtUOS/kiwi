@@ -18,9 +18,9 @@ st.set_page_config(page_title="Chat with your document", layout="wide", page_ico
 class DocsApplication:
 
     def __init__(self):
-        self.cookies_manager = SessionManager()
+        self.session_manager = SessionManager()
         self.language_manager = LanguageManager()
-        self.sidebar_general_manager = SidebarManager()
+        self.sidebar_general_manager = SidebarManager(self.session_manager)
         self.docs_manager = DocsManager()
         self.sidebar_doc_manager = SidebarDocsManager()
 
@@ -33,8 +33,8 @@ class DocsApplication:
         session_state['USER'] = session_state['_']("User")
         utils.initialize_session_variables()
         doc_utils.initialize_docs_session_variables(typ='docs', language=self.language_manager.get_language())
-        self.cookies_manager.initialize_cookies()
-        self.cookies_manager.verify_and_set_user_session()
+        self.session_manager.initialize_cookies()
+        self.session_manager.verify_and_set_user_session()
         self.sidebar_general_manager.display_logo()
         self.sidebar_general_manager.display_pages_menu(default_id=1)
         self.sidebar_general_manager.display_general_sidebar_controls()

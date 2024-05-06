@@ -143,7 +143,7 @@ class SidebarChatManager:
         - conversation_key: The key that uniquely identifies the conversation in the session state's
         conversation histories.
         """
-        st_styling.style_language_uploader()
+        st_styling.style_language_uploader(lang=session_state['selected_language'])
         container.file_uploader(session_state['_']("**Upload conversation**"),
                                 type=['csv'],
                                 key='file_uploader_conversation',

@@ -110,6 +110,86 @@ msgstr "Chat-Bot"
 msgid "Chat with Documents"
 msgstr "Chat mit Dokumenten"
 
+#: src/docs_utils.py:148
+msgid "Maximum number of files reached"
+msgstr "Maximale Anzahl von Dateien erreicht"
+
+#: src/docs_utils.py:149
+msgid "Number of files which will be processed"
+msgstr "Anzahl der Dateien, die verarbeitet werden"
+
+#: src/docs_manager.py:80
+msgid "Uploaded PDF files or UI column for displaying files not found in session state."
+msgstr "Hochgeladene PDF-Dateien oder UI-Spalte zur Anzeige von Dateien, die im Sitzungsstatus nicht gefunden wurden."
+
+#: src/docs_manager.py:91
+msgid "Select a file to display:"
+msgstr "Wählen Sie eine Datei zur Anzeige aus:"
+
+#: src/docs_manager.py:153
+msgid "Files with sources"
+msgstr "Dateien mit Quellen"
+
+#: src/docs_manager.py:154
+msgid "Sources for file"
+msgstr "Quellen für die Datei"
+
+#: src/docs_manager.py:185
+msgid "What do you want to know about your documents?"
+msgstr "Was wollen Sie über Ihre Dokumente wissen?"
+
+#: src/docs_manager.py:185
+msgid "Ask something about your PDFs"
+msgstr "Fragen Sie etwas über Ihre PDFs"
+
+#: src/docs_manager.py:523
+msgid "Please upload your documents on the sidebar."
+msgstr "Bitte laden Sie Ihre Dokumente in der Seitenleiste hoch."
+
+#: src/docs_manager.py:552
+msgid "Query suggestions:"
+msgstr "Vorschläge für Abfragen:"
+
+#: src/docs_manager.py:567
+msgid "Couldn't generate query suggestions."
+msgstr "Konnte keine Abfragevorschläge generieren."
+
+#: src/docs_manager.py:571
+msgid "Generating query suggestions for document"
+msgstr "Generierung von Abfragevorschlägen für Dokumente"
+
+#: src/docs_manager.py:602
+msgid "Generating summary for document"
+msgstr "Erstellung einer Zusammenfassung für das Dokument"
+
+#: src/docs_manager.py:678
+msgid "No defined prompt was found. Please define a prompt before using the chat."
+msgstr "Es wurde kein definierter Prompt gefunden. Bitte definieren Sie einen Prompt, bevor Sie den Chat benutzen."
+
+#: src/docs_sidebar_manager.py:19
+msgid "**Upload PDF file(s)**"
+msgstr "**PDF-Datei(en)hochladen**"
+
+#: src/docs_sidebar_manager.py:22
+msgid "Advanced Options"
+msgstr "Erweiterte Optionen"
+
+#: src/docs_sidebar_manager.py:24
+msgid "Input chunk size"
+msgstr "Größe der Eingabechunks"
+
+#: src/docs_sidebar_manager.py:26
+msgid "The chunk size specifies the amount of characters each chunk of text contains. Adjust based on the level of detail needed."
+msgstr "Die Chunk-Größe gibt die Anzahl der Zeichen an, die jeder Textchunk enthält. Passen Sie die Größe je nach benötigtem Detailgrad an."
+
+#: src/docs_sidebar_manager.py:31
+msgid "Overlap size"
+msgstr "Größe der Überlappung"
+
+#: src/docs_sidebar_manager.py:26
+msgid "The overlap size specifies the character count that will overlap between consecutive chunks. It helps in maintaining context connectivity across chunks. Adjust based on the required continuity."
+msgstr "Die Überlappungsgröße gibt die Anzahl der Zeichen an, die sich zwischen aufeinanderfolgenden Chunks überlappen. Sie hilft bei der Aufrechterhaltung der Kontextkonnektivität zwischen den Chunks. Passen Sie die Größe entsprechend der erforderlichen Kontinuität an."
+
 #: start.py:68
 msgid "Login with your university credentials."
 msgstr "Melden Sie sich mit Ihren Benutzerdaten an."

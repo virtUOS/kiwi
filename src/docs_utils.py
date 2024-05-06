@@ -145,8 +145,10 @@ def check_amount_of_uploaded_files_and_set_variables():
     reset_docs_variables()
 
     if len(session_state['pdf_files']) > MAX_FILES:
+        maximum_text = session_state['_']("Maximum number of files reached")
+        file_processed_text = session_state['_']("Number of files which will be processed")
         st.sidebar.warning(
-            f"Maximum number of files reached. Only the first {MAX_FILES} files will be processed.")
+            f"{maximum_text}. {file_processed_text}: {MAX_FILES}")
 
     # If there are uploaded files then use class list variable to store them
     if session_state['pdf_files']:

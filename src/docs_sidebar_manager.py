@@ -15,20 +15,20 @@ class SidebarDocsManager:
         with st.sidebar:
             st.markdown("""---""")
             st.write(session_state['_']("**Options**"))
-            st_styling.style_language_uploader()
-            st.file_uploader("Upload PDF file(s)", type=['pdf'], accept_multiple_files=True,
+            st_styling.style_language_uploader(lang=session_state['selected_language'])
+            st.file_uploader(session_state['_']("**Upload PDF file(s)**"), type=['pdf'], accept_multiple_files=True,
                              key='pdf_files', on_change=docs_utils.check_amount_of_uploaded_files_and_set_variables)
 
             with st.expander(session_state['_']("Advanced Options")):
                 st.number_input(
-                    label='Input chunk size',
+                    label=session_state['_']("Input chunk size"),
                     min_value=100, max_value=4000, value=300, key='chunk_size',
                     help=(session_state['_']("The chunk size specifies the amount of characters each "
                           "chunk of text contains. Adjust based on the level of detail needed."))
                 )
 
                 st.number_input(
-                    label=session_state['_']('Overlap size'),
+                    label=session_state['_']("Overlap size"),
                     min_value=0, max_value=3000, value=20, key='overlap_size',
                     help=session_state['_']("The overlap size specifies the character count that will overlap "
                                             "between consecutive chunks. It helps in maintaining context "

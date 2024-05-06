@@ -77,7 +77,8 @@ class DocsManager:
         a file to view and set a chunk size for text selection.
         """
         if 'uploaded_pdf_files' not in session_state or 'column_uploaded_files' not in session_state:
-            st.warning("Uploaded PDF files or UI column for displaying files not found in session state.")
+            st.warning(session_state['_']("Uploaded PDF files or UI column for displaying files "
+                                          "not found in session state."))
             return
 
         # Calculating thumbnail dimensions and size relative to screen width
@@ -88,7 +89,7 @@ class DocsManager:
         file_names_without_extension = [os.path.splitext(file_name)[0] for file_name in files_set]
 
         selected_file_name = session_state['column_uploaded_files'].selectbox(
-            label="Select a file to display:",
+            label=session_state['_']("Select a file to display:"),
             options=file_names_without_extension,
             key='selected_file_name', index=None  # Setting a default index
         )
@@ -150,8 +151,10 @@ class DocsManager:
         """
         files_with_sources = ', '.join(list(session_state['sources_to_display']))
         with session_state['column_pdf']:
-            st.write(f"Files with sources: {files_with_sources}")
-            st.header(f"Sources for file {file}:")
+            files_sources_text = session_state['_']("Files with sources")
+            sources_for_file_text = session_state['_']("Sources for file")
+            st.write(f"{files_sources_text}: {files_with_sources}")
+            st.header(f"{sources_for_file_text} {file}:")
             for i, source in enumerate(session_state['sources_to_display'][file]):
                 st.markdown(f"{i + 1}) {source}")
 
@@ -162,7 +165,7 @@ class DocsManager:
         """
         if not utils.has_conversation_history('docs'):
             with session_state['column_chat']:
-                st.title("What do you want to know about your documents?")
+                st.title(session_state['_']("What do you want to know about your documents?"))
 
     @staticmethod
     def _collect_user_input(conversation, repeat=False):
@@ -182,46 +185,13 @@ class DocsManager:
         with session_state['column_chat']:
             st_styling.change_chatbot_style()  # Adjusts chat interface styling
 
-            if user_message := st.chat_input("Ask something about your PDFs",
+            if user_message := st.chat_input(session_state['_']("Ask something about your PDFs"),
                                              disabled=not session_state['uploaded_pdf_files']):
                 if not conversation or conversation[-1] != ('USER', user_message) or repeat:
                     session_state['sources_to_highlight'] = {}
                     session_state['sources_to_display'] = {}
                     return user_message
         return None
-
-    def _process_query_and_get_answer_for_suggestions(self, user_message):
-        """
-        Processes the user's query to provide AI-generated suggestions based on the content of uploaded documents.
-
-        This method condenses the user's question, retrieves relevant sources based on the document's content,
-        and generates an AI response based on the condensed question and the identified sources.
-
-        Parameters:
-        user_message : str
-            The user's query about the document's content.
-
-        Returns:
-        str
-            The AI-generated response providing suggestions or answers based on the query and the document's content.
-        """
-        # Condense the user's query to its most relevant form
-        condensed_question = self.client.get_condensed_question(user_message, [])
-
-        # Retrieve sources from the document that are relevant to the condensed question
-        sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
-
-        # Get the AI-generated answer based on the prompt options, sources, and condensed question
-        all_output = self.client.get_answer(
-            session_state['prompt_options_docs'][0],
-            sources,
-            condensed_question
-        )
-
-        # Extract the AI-generated text response
-        ai_response = all_output['output_text']
-
-        return ai_response
 
     def _user_message_processing(self, conversation, user_message):
         """
@@ -252,7 +222,7 @@ class DocsManager:
             session_state['sources_to_display'] = {}
 
             with session_state['column_chat']:
-                with st.spinner("Processing your query..."):
+                with st.spinner(session_state['_']("Generating response...")):
                     # Get condensed question, sources, and AI response
                     condensed_question = self.client.get_condensed_question(user_message, chat_history_tuples)
                     sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
@@ -517,7 +487,7 @@ class DocsManager:
             self._process_uploaded_files(session_state['uploaded_pdf_files'])
         else:
             with session_state['column_pdf']:
-                st.header("Please upload your documents on the sidebar.")
+                st.header(session_state['_']("Please upload your documents on the sidebar."))
 
     @staticmethod
     def _display_suggestions_if_ready(file_name):
@@ -546,7 +516,7 @@ class DocsManager:
         if (session_state.get(f'suggestions_{file_name}', False) and
                 session_state[f'suggestions_{file_name}'] != "EMPTY"):
             with session_state['column_chat']:
-                with st.expander("Query suggestions:"):
+                with st.expander(session_state['_']("Query suggestions:")):
                     predefined_prompt_selected = stp.pills("", session_state[f'suggestions_{file_name}'],
                                                            session_state[f'icons_{file_name}'],
                                                            index=session_state.get('pills_index'))
@@ -561,11 +531,12 @@ class DocsManager:
         elif session_state[f'suggestions_{file_name}'] == "EMPTY":
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
-                st.info(f"Couldn't generate query suggestions.")
+                st.info(session_state['_']("Couldn't generate query suggestions."))
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
-                st.info(f"Generating query suggestions for document {file_name}...")
+                generating_suggestions_text = "Generating query suggestions for document"
+                st.info(f"{generating_suggestions_text} {file_name}...")
             return None
 
     @staticmethod
@@ -595,7 +566,8 @@ class DocsManager:
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
-                st.info(f"Generating summary for document {file_name}...")
+                generating_summary_text = "Generating summary for document"
+                st.info(f"{generating_summary_text} {file_name}...")
 
     def display_chat_interface(self):
         """

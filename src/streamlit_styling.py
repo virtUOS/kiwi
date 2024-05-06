@@ -14,17 +14,14 @@ def change_chatbot_style():
     st.markdown(chat_input_style, unsafe_allow_html=True)
 
 
-def style_language_uploader():
-    lang = 'de'
-    if 'lang' in st.query_params:
-        lang = st.query_params['lang']
+def style_language_uploader(lang):
 
     languages = {
-        "en": {
+        "English": {
             "instructions": "Drag and drop files here",
             "limits": "Limit 200MB per file",
         },
-        "de": {
+        "Deutsch": {
             "instructions": "Dateien hierher ziehen und ablegen",
             "limits": "Limit 200MB pro Datei",
         },

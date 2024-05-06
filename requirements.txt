@@ -2,6 +2,7 @@ ldap3
 openai
 python-dotenv
 langchain
+langchain-openai
 streamlit
 streamlit-option-menu
 streamlit-cookies-manager-hotpatched

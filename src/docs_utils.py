@@ -155,7 +155,10 @@ def check_amount_of_uploaded_files_and_set_variables():
     # If there are uploaded files then use class list variable to store them
     if session_state['pdf_files']:
         for file in session_state['pdf_files']:
-            if file not in session_state['uploaded_pdf_files']:  # Avoid duplicate files
+            # Extract the names of already uploaded files
+            uploaded_file_names = [f.name for f in session_state['uploaded_pdf_files']]
+            # Check if the file name is not in the list of already uploaded file names
+            if file.name not in uploaded_file_names:  # Avoid duplicate files by name
                 # Only append the maximum number of files allowed
                 if count_files < MAX_FILES:
                     session_state['uploaded_pdf_files'].append(file)

@@ -235,6 +235,12 @@ class AIClient:
     def get_vectorstore(self, docs: List[Document]) -> VectorStore:
         """Given as input a document, this function returns the indexed version,
         leveraging the Chroma database"""
+        ids = [doc.metadata["source"] for doc in docs]
+        unique_ids = set(ids)
+
+        if len(ids) != len(unique_ids):
+            raise ValueError("Duplicate IDs found in document sources. Please ensure all IDs are unique.")
+
         vectorstore = Chroma.from_documents(
             docs,
             OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=self.openai_key),
@@ -246,28 +252,39 @@ class AIClient:
 
     @staticmethod
     def prepare_chunks_for_database(chunks: list) -> List[Document]:
-        """Converts a string to a list of Documents (chunks of fixed size)
-        and returns this along with the following metadata:
+        """Converts a list of chunk data to a list of Documents (chunks of fixed size)
+        avoiding duplicates based on a unique source identifier (file name, page, and chunk number).
+
+        Each Document includes the following metadata:
             - page number
             - chunk number
-            - source (concatenation of page & chunk number)
+            - file name
+            - coordinates (x0, x1, y0, y1)
+            - source (unique identifier combining file name, page and chunk number)
         """
+
         doc_chunks = []
+        seen_sources = set()  # Set to track the sources that have been added
+
         for i, chunk in enumerate(chunks):
-            doc = Document(
-                page_content=chunk['text'],
-                metadata={'page': chunk['page'],
-                          'chunk': chunk['chunk_number'],
-                          'file': chunk['file_name'],
-                          'x0': chunk['x0'],
-                          'x1': chunk['x1'],
-                          'y0': chunk['y0'],
-                          'y1': chunk['y1']
-                          }
-            )
-            # Add sources a metadata
-            doc.metadata["source"] = (f"{doc.metadata['file'].split('.pdf')[0]}|"
-                                      f"{doc.metadata['page']}-{doc.metadata['chunk']}")
-            doc_chunks.append(doc)
+            # Generate the source identifier
+            source = f"{chunk['file_name'].split('.pdf')[0]}|{chunk['page']}-{chunk['chunk_number']}"
+
+            # Check if this source has already been processed
+            if source not in seen_sources:
+                doc = Document(
+                    page_content=chunk['text'],
+                    metadata={'page': chunk['page'],
+                              'chunk': chunk['chunk_number'],
+                              'file': chunk['file_name'],
+                              'x0': chunk['x0'],
+                              'x1': chunk['x1'],
+                              'y0': chunk['y0'],
+                              'y1': chunk['y1'],
+                              'source': source
+                              }
+                )
+                doc_chunks.append(doc)
+                seen_sources.add(source)  # Mark this source as seen
 
         return doc_chunks

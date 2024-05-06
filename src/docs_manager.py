@@ -371,6 +371,19 @@ class DocsManager:
         except Exception as e:
             print(f"Error in background task: {e}")  # Ensure any errors are logged
 
+    def _summary_task(self,
+                             doc_text_data,
+                             model_name,
+                             map_prompt_template,
+                             reduce_prompt_template):
+
+        summary = self.sum_man.get_data_from_documents(
+            docs=doc_text_data,
+            model_name=model_name,
+            map_prompt_template=map_prompt_template,
+            reduce_prompt_template=reduce_prompt_template)
+        return summary
+
     def _generate_summary_background(self, doc_text_data, summary_queue):
         """
         Initiates the asynchronous generation of a document summary by triggering a background task.
@@ -394,6 +407,7 @@ class DocsManager:
         # Define templates outside the thread
         reduce_prompt_template = session_state.get('prompt_options_docs', [{}])[1].get('template', '')
         map_prompt_template = session_state.get('prompt_options_docs', [{}])[2].get('template', '')
+
         # Start the background task
         thread = threading.Thread(target=self._background_summary_task, args=(
             doc_text_data, os.getenv('OPENAI_MODEL_EXTRA'),
@@ -535,7 +549,7 @@ class DocsManager:
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
-                generating_suggestions_text = "Generating query suggestions for document"
+                generating_suggestions_text = session_state['_']("Generating query suggestions for document")
                 st.info(f"{generating_suggestions_text} {file_name}...")
             return None
 
@@ -566,7 +580,7 @@ class DocsManager:
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
-                generating_summary_text = "Generating summary for document"
+                generating_summary_text = session_state['_']("Generating summary for document")
                 st.info(f"{generating_summary_text} {file_name}...")
 
     def display_chat_interface(self):
@@ -642,4 +656,5 @@ class DocsManager:
                 self._handle_and_display_annotations_and_sources()
 
             else:
-                st.warning("No defined prompt was found. Please define a prompt before using the chat.")
+                st.warning(session_state['_']("No defined prompt was found. "
+                                              "Please define a prompt before using the chat."))

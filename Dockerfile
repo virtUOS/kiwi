@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12
 EXPOSE 8501
 
 COPY requirements.txt /kiwi/requirements.txt

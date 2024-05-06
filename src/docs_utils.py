@@ -150,12 +150,15 @@ def check_amount_of_uploaded_files_and_set_variables():
         st.sidebar.warning(
             f"{maximum_text}. {file_processed_text}: {MAX_FILES}")
 
+    # Variable to count files to avoid going over the MAX_FILES limit
+    count_files = 0
     # If there are uploaded files then use class list variable to store them
     if session_state['pdf_files']:
-        for i, file in enumerate(session_state['pdf_files']):
+        for file in session_state['pdf_files']:
             if file not in session_state['uploaded_pdf_files']:  # Avoid duplicate files
                 # Only append the maximum number of files allowed
-                if i < MAX_FILES:
+                if count_files < MAX_FILES:
                     session_state['uploaded_pdf_files'].append(file)
+                    count_files += 1
                 else:
                     break

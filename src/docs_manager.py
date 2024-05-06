@@ -371,19 +371,6 @@ class DocsManager:
         except Exception as e:
             print(f"Error in background task: {e}")  # Ensure any errors are logged
 
-    def _summary_task(self,
-                             doc_text_data,
-                             model_name,
-                             map_prompt_template,
-                             reduce_prompt_template):
-
-        summary = self.sum_man.get_data_from_documents(
-            docs=doc_text_data,
-            model_name=model_name,
-            map_prompt_template=map_prompt_template,
-            reduce_prompt_template=reduce_prompt_template)
-        return summary
-
     def _generate_summary_background(self, doc_text_data, summary_queue):
         """
         Initiates the asynchronous generation of a document summary by triggering a background task.
@@ -530,7 +517,7 @@ class DocsManager:
         if (session_state.get(f'suggestions_{file_name}', False) and
                 session_state[f'suggestions_{file_name}'] != "EMPTY"):
             with session_state['column_chat']:
-                with st.expander(session_state['_']("Query suggestions:")):
+                with st.expander(session_state['_']("Query suggestions")):
                     predefined_prompt_selected = stp.pills("", session_state[f'suggestions_{file_name}'],
                                                            session_state[f'icons_{file_name}'],
                                                            index=session_state.get('pills_index'))
@@ -575,7 +562,7 @@ class DocsManager:
         # When summary is ready, display it
         if session_state.get(f'summary_{file_name}', False):
             with session_state['column_chat']:
-                with st.expander("Summary"):
+                with st.expander(session_state['_']("Summary")):
                     st.markdown(session_state[f'summary_{file_name}'])
         else:
             # Keep displaying a loading message until the summary is ready

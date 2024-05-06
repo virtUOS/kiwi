@@ -147,8 +147,12 @@ msgid "Please upload your documents on the sidebar."
 msgstr "Bitte laden Sie Ihre Dokumente in der Seitenleiste hoch."
 
 #: src/docs_manager.py:552
-msgid "Query suggestions:"
-msgstr "Vorschläge für Abfragen:"
+msgid "Query suggestions"
+msgstr "Vorschläge für Abfragen"
+
+#: src/docs_manager.py:565
+msgid "Summary"
+msgstr "Zusammenfassung"
 
 #: src/docs_manager.py:567
 msgid "Couldn't generate query suggestions."

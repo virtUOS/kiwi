@@ -1,4 +1,8 @@
 FROM python:3.12
+
+# Update package lists and install poppler-utils
+RUN apt-get update && apt-get install -y poppler-utils
+
 EXPOSE 8501
 
 COPY requirements.txt /kiwi/requirements.txt

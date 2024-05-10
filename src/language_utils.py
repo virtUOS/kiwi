@@ -2,23 +2,27 @@ import streamlit as st
 import gettext
 from streamlit import session_state
 
+languages = {"English": "en", "Deutsch": "de"}
+
+
+def change_language():
+    if session_state["selected_language"] == 'English':
+        set_language(language='en')
+        session_state['_'] = gettext.gettext
+    else:
+        set_language(language='de')
+        session_state['_'] = translate()
+
 
 def initialize_language():
-    languages = {"English": "en", "Deutsch": "de"}
-
-    def change_language():
-        if session_state["selected_language"] == 'English':
-            set_language(language='en')
-            session_state['_'] = gettext.gettext
-        else:
-            set_language(language='de')
-            session_state['_'] = translate()
 
     # If no language is chosen yet set it to German
     if 'selected_language' not in st.session_state or 'lang' not in st.query_params:
         session_state['_'] = translate()
         st.query_params['lang'] = 'de'
 
+
+def language_controls():
     st.radio(
         "Language",
         options=languages,

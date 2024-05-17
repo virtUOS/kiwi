@@ -38,6 +38,8 @@ services:
       # OpenAI settings:
       OPENAI_API_KEY: "CHANGE!"
       OPENAI_MODEL: 'gpt-4'
+      # User settings
+      USER_MODELS: '{"user1":"gpt-3.5","user2":"gpt-3.5"}'
       # App customizations:
       # German service sites
       DATENSCHUTZ_DE: 'https://www.example.org/de/datenschutz/'

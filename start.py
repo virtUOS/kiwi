@@ -53,11 +53,11 @@ with st.sidebar:
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        user_found = ldap_connector.check_auth(username=session_state.username, password=session_state.password)
+        user_found = ldap_connector.check_auth(username=session_state.username_input, password=session_state.password_input)
 
         if user_found:
             session_state["password_correct"] = True
-            del session_state["password"]  # Don't store the password.
+            del session_state["password_input"]  # Don't store the password.
         else:
             session_state["password_correct"] = False
 
@@ -77,12 +77,12 @@ with st.sidebar:
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            session_state['_']("User name"), key="username"
+            session_state['_']("User name"), key="username_input"
         )
 
         # Show input for password.
         st.text_input(
-            session_state['_']("Password"), type="password", key="password"
+            session_state['_']("Password"), type="password", key="password_input"
         )
 
         st.form_submit_button(session_state['_']("Login"), on_click=credentials_entered)
@@ -196,12 +196,16 @@ if cookies.get("session") != 'in':
         # When the password is correct create a persistent session
         # Save cookie for the session. Use username as value, maybe it's useful at some point
         cookies["session"] = 'in'
+        cookies["username"] = session_state['username_input']  # Persist username
         cookies.save()
 
 if cookies['session'] == 'in':
     st.sidebar.success(session_state['_']("Logged in!"))
     # Wait a bit before redirecting
     sleep(0.5)
+
+    # Load username from cookie into state
+    session_state['username'] = cookies['username']
 
     # Redirect to app
     st.switch_page("pages/chatbot_app.py")

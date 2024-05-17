@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -219,7 +220,7 @@ class SidebarManager:
         with st.sidebar:
             if session_state['model_selection'] == 'OpenAI':
                 model_text = session_state['_']("Model:")
-                st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
+                st.write(f"{model_text} {AIClient.get_model()}")
 
     def _show_conversation_controls(self):
         """
@@ -642,7 +643,7 @@ class ChatManager:
         Displays information about the current OpenAI model in use.
         """
         using_text = session_state['_']("You're using the following OpenAI model:")
-        model_info = f"{using_text} **{os.getenv('OPENAI_MODEL')}**."
+        model_info = f"{using_text} **{AIClient.get_model()}**."
         st.write(model_info)
         st.write(session_state['_']("Each time you enter information,"
                                     " a system prompt is sent to the chat model by default."))
@@ -700,7 +701,7 @@ class AIClient:
 
             @st.cache_resource
             def load_openai_data():
-                return OpenAI(), os.getenv('OPENAI_MODEL')
+                return OpenAI(), self.get_model()
 
             self.client, self.model = load_openai_data()
         else:
@@ -711,6 +712,29 @@ class AIClient:
             # self.client = OpenAI(base_url=session_state['inference_server_url'])
             # models = session_state["client"].models.list()
             # self.model = models.data[0].id
+
+    @staticmethod
+    def get_model():
+        """
+        Get the model for the current user
+        """
+        # Return cached user model
+        if 'user_model' in session_state:
+            return session_state['user_model']
+
+        # Load model from config
+        if 'USER_MODELS' in os.environ:
+            user_models = json.loads(os.environ['USER_MODELS'])
+
+            model = user_models.get(session_state.get('username'))
+            if model is not None:
+                session_state['user_model'] = model
+
+        # Use default model if no configured model for this user exists
+        if 'user_model' not in session_state:
+            session_state['user_model'] = os.getenv('OPENAI_MODEL')
+
+        return session_state['user_model']
 
     @staticmethod
     def _generate_response(stream):

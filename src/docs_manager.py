@@ -491,7 +491,10 @@ class DocsManager:
                 st.header(session_state['_']("Please upload your documents on the sidebar."))
 
     @staticmethod
-    def _display_suggestions_if_ready(file_name):
+    def _reset_suggestions(file_name):
+        session_state.pop(f'suggestions_{file_name}')
+
+    def _display_suggestions_if_ready(self, file_name):
         """
         Displays generated query suggestions for a specific document if they are available within the session state.
         If the suggestions have not yet been generated or are still processing, this method displays a loading message
@@ -513,35 +516,49 @@ class DocsManager:
         str or None
             The selected query suggestion by the user, if any, otherwise None.
         """
+        predefined_prompt_selected = None
+        with session_state['column_chat']:
+            column_suggestions, column_button = st.columns([9, 1])
         # When summary is ready, display it
-        if (session_state.get(f'suggestions_{file_name}', False) and
-                session_state[f'suggestions_{file_name}'] != "EMPTY"):
-            with session_state['column_chat']:
-                with st.expander(session_state['_']("Query suggestions")):
-                    predefined_prompt_selected = stp.pills("", session_state[f'suggestions_{file_name}'],
-                                                           session_state[f'icons_{file_name}'],
-                                                           index=session_state.get('pills_index'))
+        if session_state.get(f'suggestions_{file_name}', False):
+            if session_state[f'suggestions_{file_name}'] != "EMPTY":
+                with session_state['column_chat']:
+                    with column_suggestions:
+                        with st.expander(session_state['_']("Query suggestions")):
+                            predefined_prompt_selected = stp.pills("", session_state[f'suggestions_{file_name}'],
+                                                                   session_state[f'icons_{file_name}'],
+                                                                   index=session_state.get('pills_index'))
 
-                # Remove the chosen suggestion from the list after selection
-                if predefined_prompt_selected:
-                    index_to_eliminate = session_state[f'suggestions_{file_name}'].index(predefined_prompt_selected)
-                    session_state[f'suggestions_{file_name}'].pop(index_to_eliminate)
-                    session_state[f'icons_{file_name}'].pop(index_to_eliminate)
+                    # Remove the chosen suggestion from the list after selection
+                    if predefined_prompt_selected:
+                        index_to_eliminate = session_state[f'suggestions_{file_name}'].index(predefined_prompt_selected)
+                        session_state[f'suggestions_{file_name}'].pop(index_to_eliminate)
+                        session_state[f'icons_{file_name}'].pop(index_to_eliminate)
 
-                return predefined_prompt_selected
-        elif session_state[f'suggestions_{file_name}'] == "EMPTY":
-            # Keep displaying a loading message until the summary is ready
+            elif session_state[f'suggestions_{file_name}'] == "EMPTY":
+                # Keep displaying a loading message until the summary is ready
+                with session_state['column_chat']:
+                    with column_suggestions:
+                        st.info(session_state['_']("Couldn't generate query suggestions."))
+
             with session_state['column_chat']:
-                st.info(session_state['_']("Couldn't generate query suggestions."))
+                with column_button:
+                    st.button("🔄", help=session_state['_']("Re-generate suggestions"),
+                              on_click=self._reset_suggestions,
+                              args=(file_name,)
+                              )
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
                 generating_suggestions_text = session_state['_']("Generating query suggestions for document")
                 st.info(f"{generating_suggestions_text} {file_name}...")
-            return None
+        return predefined_prompt_selected
 
     @staticmethod
-    def _display_summary_if_ready(file_name):
+    def _reset_summary(file_name):
+        session_state.pop(f'summary_{file_name}')
+
+    def _display_summary_if_ready(self, file_name):
         """
         Displays the generated summary for a specific document if it is available within the session state.
         If the summary has not yet been generated or is still processing, this method displays a loading message
@@ -559,11 +576,19 @@ class DocsManager:
             summary within the session state. If the summary is available, it is displayed; otherwise, a loading message
             is shown to indicate that the summary generation is still in progress.
         """
+        with session_state['column_chat']:
+            column_summary, column_button = st.columns([9, 1])
         # When summary is ready, display it
         if session_state.get(f'summary_{file_name}', False):
             with session_state['column_chat']:
-                with st.expander(session_state['_']("Summary")):
-                    st.markdown(session_state[f'summary_{file_name}'])
+                with column_summary:
+                    with st.expander(session_state['_']("Summary")):
+                        st.markdown(session_state[f'summary_{file_name}'])
+                with column_button:
+                    st.button("🔄", help=session_state['_']("Re-generate summary"),
+                              on_click=self._reset_suggestions,
+                              args=(file_name,)
+                              )
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:

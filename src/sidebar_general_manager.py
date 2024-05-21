@@ -5,7 +5,6 @@ from streamlit_option_menu import option_menu
 
 import src.streamlit_styling as st_styling
 import src.utils as utils
-from src.session_manager import SessionManager
 
 
 class SidebarManager:

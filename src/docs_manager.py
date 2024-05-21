@@ -1,5 +1,5 @@
 import os
-import threading
+import multiprocessing
 from pdf2image import convert_from_bytes
 from PIL import Image
 
@@ -14,7 +14,7 @@ import src.utils as utils
 import src.docs_utils as docs_utils
 from src.summarization_manager import SummarizationManager
 
-from queue import Queue
+from multiprocessing import Queue
 
 
 class DocsManager:
@@ -396,10 +396,13 @@ class DocsManager:
         map_prompt_template = session_state.get('prompt_options_docs', [{}])[2].get('template', '')
 
         # Start the background task
-        thread = threading.Thread(target=self._background_summary_task, args=(
-            doc_text_data, os.getenv('OPENAI_MODEL_EXTRA'),
-            map_prompt_template, reduce_prompt_template, summary_queue))
-        thread.start()
+        process = multiprocessing.Process(target=self._background_summary_task, args=(
+            doc_text_data,
+            os.getenv('OPENAI_MODEL_EXTRA'),
+            map_prompt_template,
+            reduce_prompt_template,
+            summary_queue))
+        process.start()
 
     def _background_suggestions_task(self, user_message, prompt, vector_store, result_queue):
         """
@@ -456,12 +459,12 @@ class DocsManager:
             application. The suggestions are placed in this queue by the background task upon completion.
         """
         # Start the background task
-        thread = threading.Thread(target=self._background_suggestions_task, args=(
+        process = multiprocessing.Process(target=self._background_suggestions_task, args=(
             session_state['prompt_options_docs'][-1]['queries'],
             session_state['prompt_options_docs'][0],
             session_state['vector_store_docs'],
             suggestions_queue))
-        thread.start()
+        process.start()
 
     def _handle_and_display_annotations_and_sources(self):
         """

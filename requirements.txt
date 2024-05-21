@@ -3,6 +3,7 @@ openai
 python-dotenv
 langchain
 langchain-openai
+langchain-community
 streamlit
 streamlit-option-menu
 streamlit-cookies-manager-hotpatched

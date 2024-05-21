@@ -51,13 +51,13 @@ class DocsManager:
         Populates the session column with thumbnails of uploaded PDF files.
         """
         if not files_set:
-            st.session_state['column_uploaded_files'].write("**No files uploaded**")
+            session_state['column_uploaded_files'].write("**No files uploaded**")
             return
 
-        st.session_state['column_uploaded_files'].write(f"**{len(files_set)} files uploaded**")
+        session_state['column_uploaded_files'].write(f"**{len(files_set)} files uploaded**")
 
         thumbnail_images = {}  # Storing thumbnails to avoid redundancy
-        for file_id, file in st.session_state['uploaded_pdf_files'].items():
+        for file_id, file in session_state['uploaded_pdf_files'].items():
             if file.name not in thumbnail_images:
                 file.seek(0)  # Reset file pointer
                 image = convert_from_bytes(file.read(), first_page=1, last_page=1)[0]
@@ -66,7 +66,7 @@ class DocsManager:
                     thumbnail = image.resize(thumbnail_size, Image.Resampling.BILINEAR)
                     thumbnail_images[file.name] = thumbnail
 
-                    with (st.session_state['column_uploaded_files']):
+                    with (session_state['column_uploaded_files']):
                         st.image(thumbnail)
                         display_status = "✅" if os.path.splitext(file.name)[0] == session_state[
                             'selected_file_name'] else ""
@@ -109,7 +109,7 @@ class DocsManager:
         - annotations: A list of annotations to apply to the displayed PDF.
         """
         with session_state['column_pdf']:
-            pdf_viewer(input=session_state['doc_binary_data'][st.session_state['selected_file_id']],
+            pdf_viewer(input=session_state['doc_binary_data'][session_state['selected_file_id']],
                        annotations=annotations,
                        annotation_outline_size=2,
                        height=1000,

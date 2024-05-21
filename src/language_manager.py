@@ -66,7 +66,7 @@ class LanguageManager:
         Returns:
             str: The current language code if set (e.g., 'en', 'de'), with 'de' as the default value.
         """
-        selected_language = st.session_state.get('selected_language')
+        selected_language = session_state.get('selected_language')
         if not selected_language:
             return "de"
 

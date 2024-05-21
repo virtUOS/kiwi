@@ -57,7 +57,7 @@ class DocsManager:
         st.session_state['column_uploaded_files'].write(f"**{len(files_set)} files uploaded**")
 
         thumbnail_images = {}  # Storing thumbnails to avoid redundancy
-        for i, file in enumerate(st.session_state['uploaded_pdf_files']):
+        for file_id, file in st.session_state['uploaded_pdf_files'].items():
             if file.name not in thumbnail_images:
                 file.seek(0)  # Reset file pointer
                 image = convert_from_bytes(file.read(), first_page=1, last_page=1)[0]
@@ -70,9 +70,7 @@ class DocsManager:
                         st.image(thumbnail)
                         display_status = "✅" if os.path.splitext(file.name)[0] == session_state[
                             'selected_file_name'] else ""
-                        file_text = session_state['_']("File")
-                        file_text += f" {i+1}"
-                        st.write(f"{file_text}: **{file.name}** {display_status}")
+                        st.write(f"{file_id}: **{file.name}** {display_status}")
 
     def display_thumbnails(self):
         """
@@ -97,6 +95,10 @@ class DocsManager:
             key='selected_file_name', index=None  # Setting a default index
         )
 
+        session_state['selected_file_id'] = next((file_id for file_id, file in
+                                                  session_state['uploaded_pdf_files'].items() if
+                                                  file.name.split('.')[0] == session_state['selected_file_name']), None)
+
         self._populate_thumbnails(files_set, thumbnail_size)
 
     def _display_pdf(self, annotations):
@@ -107,7 +109,7 @@ class DocsManager:
         - annotations: A list of annotations to apply to the displayed PDF.
         """
         with session_state['column_pdf']:
-            pdf_viewer(input=session_state['doc_binary_data'][st.session_state['selected_file_name']],
+            pdf_viewer(input=session_state['doc_binary_data'][st.session_state['selected_file_id']],
                        annotations=annotations,
                        annotation_outline_size=2,
                        height=1000,
@@ -448,12 +450,13 @@ class DocsManager:
         Handles the display of annotations and sources to the user based on the current file selection.
         """
         file_stem = session_state['selected_file_name']
+        file_id = session_state['selected_file_id']
 
         # Prepare annotations for the selected file
-        self.annotations = session_state['sources_to_highlight'].get(file_stem, [])
+        self.annotations = session_state['sources_to_highlight'].get(file_id, [])
 
         # Display the PDF with optional annotations and list of sources if available
-        if file_stem in session_state['doc_binary_data'] and st.session_state['selected_file_name']:
+        if file_id in session_state['doc_binary_data'] and file_stem:
             self._display_pdf(self.annotations)
 
     def _load_doc_to_display(self):
@@ -592,11 +595,12 @@ class DocsManager:
                 self._display_chat_title()
 
                 file_name = session_state['selected_file_name']
+                file_id = session_state['selected_file_id']
                 if file_name is not None:
                     if f'summary_{file_name}' not in session_state:
                         session_state[f'summary_{file_name}'] = None  # Create the variable to avoid re-running thread
                         session_state[f'result_summary_queue_{file_name}'] = Queue()
-                        self._generate_summary_background(session_state['doc_text_data'][file_name],
+                        self._generate_summary_background(session_state['doc_text_data'][file_id],
                                                           session_state[f'result_summary_queue_{file_name}'])
 
                     # Check if there are results in the queue

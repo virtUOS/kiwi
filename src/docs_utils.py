@@ -18,6 +18,7 @@ def initialize_docs_session_variables(typ, language):
     required_keys = {
         'uploaded_pdf_files': {},
         'selected_file_name': None,
+        'selected_file_id': None,
         'sources_to_highlight': {},
         'sources_to_display': {},
 
@@ -42,6 +43,7 @@ def reset_docs_variables():
     required_keys = {
         'uploaded_pdf_files': {},
         'selected_file_name': None,
+        'selected_file_id': None,
         'sources_to_highlight': {},
         'sources_to_display': {},
 
@@ -162,8 +164,8 @@ def check_amount_of_uploaded_files_and_set_variables():
                 # Only append the maximum number of files allowed
                 if count_files < MAX_FILES:
                     count_files += 1
-                    file_text = session_state['_']("File")
-                    file_text += f" {count_files}"
-                    session_state['uploaded_pdf_files'][file_text] = file
+                    file_id = session_state['_']("File")
+                    file_id += f" {count_files}"
+                    session_state['uploaded_pdf_files'][file_id] = file
                 else:
                     break

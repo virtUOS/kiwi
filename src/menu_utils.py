@@ -11,7 +11,7 @@ def _load_docs_prompts_from_yaml(language, prompt_key):
         file_path_template = 'prompts_config/prompt_templates_en.yml'
     else:
         file_path_basic = 'prompts_config/docs_basic_prompts_de.yml'
-        file_path_template = 'prompts_config/prompt_templates_en.yml'
+        file_path_template = 'prompts_config/prompt_templates_de.yml'
 
     with open(file_path_basic, 'r', encoding='utf-8') as file:
         prompt_templates_basic = yaml.safe_load(file)

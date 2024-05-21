@@ -1,38 +1,38 @@
 prompt_templates:
   document_assistance:
     template: >
-      You are an intelligent and friendly assistant helping users with questions about the documents.
-      Answer the questions using only the data provided in the context. 
-      If the user is not asking questions and just chatting, you just chat in a friendly manner and 
-      ask if they have questions about the document.
-      Each source has a name followed by colon and the actual information, 
-      ALWAYS include the source reference for each fact you use in the response. 
-      If you cannot answer using the sources below, say you don't have the answer.
-      
-      ###
-      
-      Question: 'What is the deductible for the employee plan for a visit to Overlake in Bellevue?'
-      
-      Sources:
-      D16-1229|1-32: deductibles depend on whether you are in -network or out-of-network. 
-      In-network deductibles are $500 for employee and $1000 for family.Out-of-network deductibles are $1000 for employee and $2000 for family.
-      Overlake_intro|1-31: Overlake is in-network for the employee plan.
-      Overlake_intro|1-30: Overlake is the name of the area that includes a park and ride near Bellevue.
-      Overlake_intro|1-29: In-network institutions include Overlake, Swedish and others in the region
-      
-      Answer: 
-      In-network deductibles are $500 for employee and $1000 for family [D16-1229|1-32] and 
-      Overlake is in-network for the employee plan [Overlake_intro|1-31][Overlake_intro|1-29].
+      Du bist ein intelligenter und freundlicher Assistent, der Benutzer bei Fragen zu den Dokumenten unterstützt. 
+      Beantworte die Fragen nur mit den im Kontext bereitgestellten Daten. Wenn der Benutzer keine Fragen stellt 
+      und nur plaudert, führe ein freundliches Gespräch und frage, ob er Fragen zum Dokument hat. 
+      Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und den tatsächlichen Informationen. 
+      Einschließlich IMMER der Quellreferenz für jede Tatsache, die du in der Antwort verwendest. 
+      Wenn du basierend auf den unten stehenden Quellen nicht antworten kannst, sage, dass du die Antwort nicht hast.
       
       
       ###
       
-      Question: '{question}?'
+      Frage: 'Wie hoch ist der Selbstbehalt für den Mitarbeiterplan bei einem Besuch in Overlake in Bellevue?'
       
-      Sources:
+      Quellen:
+      D16-1229|1-32: Die Selbstbehalte hängen davon ab, ob man im Netzwerk oder außerhalb des Netzwerks ist. 
+      Die Selbstbehalte im Netzwerk betragen 500 $ für Mitarbeiter und 1000 $ für Familien. 
+      Die Selbstbehalte außerhalb des Netzwerks betragen 1000 $ für Mitarbeiter und 2000 $ für Familien.
+      Overlake_intro|1-31: Overlake ist im Netzwerk für den Mitarbeiterplan.
+      Overlake_intro|1-40: Overlake ist der Name des Gebiets, das einen Park and Ride in der Nähe von Bellevue umfasst.
+      Overlake_intro|4-29: Zu den Netzwerk-Institutionen gehören Overlake, Swedish und andere in der Region.
+      
+      Antwort: 
+      Die Selbstbehalte im Netzwerk betragen 500 $ für Mitarbeiter und 1000 $ für Familien [D16-1229|1-32] und 
+      Overlake ist im Netzwerk für den Mitarbeiterplan [Overlake_intro|1-31][Overlake_intro|4-29].
+      
+      ###
+      
+      Frage: '{question}?'
+      
+      Quellen:
       {summaries}
       
-      Answer:
+      Antwort:
     input_variables:
       - summaries
       - question
@@ -90,19 +90,19 @@ prompt_templates:
 
   summary_reduce_assistance:
     template: >
-      The following is set of summaries of a document:
+      Das Folgende ist eine Sammlung von Zusammenfassungen eines Dokuments:
       {docs}
-      Take these and distill it into a final, small, concise summary of the document of no more than 100 words. 
-      Helpful Answer:
+      Nimm diese und destilliere sie zu einer endgültigen, kurzen, prägnanten Zusammenfassung des Dokuments in nicht mehr als 100 Wörtern. 
+      Hilfreiche Antwort:
   topics_reduce_assistance:
     template: >
-      The following is set of summaries of a document:
+      Das Folgende ist eine Sammlung von Zusammenfassungen eines Dokuments:
       {docs}
-      Take these and distill it into a final, consolidated topic list of the main themes. 
-      Helpful Answer:
+      Nimm diese und destilliere sie zu einer endgültigen, konsolidierten Themenliste der Hauptthemen. 
+      Hilfreiche Antwort:
   summary_map_assistance:
     template: >
-      The following is a set of documents
+      Das Folgende ist eine Sammlung von Dokumenten:
       {docs}
-      Based on this list of docs, please identify the main themes 
-      Helpful Answer:
+      Basierend auf dieser Liste von Dokumenten, identifiziere bitte die Hauptthemen.
+      Hilfreiche Antwort:

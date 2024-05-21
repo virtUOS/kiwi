@@ -16,7 +16,7 @@ def initialize_docs_session_variables(typ, language):
     session_state['typ'] = typ
     session_state[f"prompt_options_{session_state['typ']}"] = utils.load_prompts(session_state['typ'], language)
     required_keys = {
-        'uploaded_pdf_files': [],
+        'uploaded_pdf_files': {},
         'selected_file_name': None,
         'sources_to_highlight': {},
         'sources_to_display': {},
@@ -40,7 +40,7 @@ def reset_docs_variables():
         session_state['vector_store_docs'].delete_collection()
 
     required_keys = {
-        'uploaded_pdf_files': [],
+        'uploaded_pdf_files': {},
         'selected_file_name': None,
         'sources_to_highlight': {},
         'sources_to_display': {},
@@ -136,9 +136,9 @@ def format_chunk_info(page_number, chunk_text, chunk_bbox, file_name, chunk_coun
     }
 
 
-def parse_pdf(file: BytesIO, filename):
+def parse_pdf(file: BytesIO, file_name):
     doc = open_pdf(file)
-    return chunk_text_with_bbox_and_overlap(doc, filename)
+    return chunk_text_with_bbox_and_overlap(doc, file_name)
 
 
 def check_amount_of_uploaded_files_and_set_variables():
@@ -156,12 +156,14 @@ def check_amount_of_uploaded_files_and_set_variables():
     if session_state['pdf_files']:
         for file in session_state['pdf_files']:
             # Extract the names of already uploaded files
-            uploaded_file_names = [f.name for f in session_state['uploaded_pdf_files']]
+            uploaded_file_names = [f.name for f_id, f in session_state['uploaded_pdf_files'].items()]
             # Check if the file name is not in the list of already uploaded file names
             if file.name not in uploaded_file_names:  # Avoid duplicate files by name
                 # Only append the maximum number of files allowed
                 if count_files < MAX_FILES:
-                    session_state['uploaded_pdf_files'].append(file)
                     count_files += 1
+                    file_text = session_state['_']("File")
+                    file_text += f" {count_files}"
+                    session_state['uploaded_pdf_files'][file_text] = file
                 else:
                     break

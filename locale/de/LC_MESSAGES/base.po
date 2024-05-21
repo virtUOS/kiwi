@@ -118,6 +118,10 @@ msgstr "Maximale Anzahl von Dateien erreicht"
 msgid "Number of files which will be processed"
 msgstr "Anzahl der Dateien, die verarbeitet werden"
 
+#: src/docs_manager.py:73
+msgid "File"
+msgstr "Datei"
+
 #: src/docs_manager.py:80
 msgid "Uploaded PDF files or UI column for displaying files not found in session state."
 msgstr "Hochgeladene PDF-Dateien oder UI-Spalte zur Anzeige von Dateien, die im Sitzungsstatus nicht gefunden wurden."

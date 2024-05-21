@@ -46,7 +46,7 @@ class DocsManager:
         self.main_dim = st_dimensions(key="main")
 
     @staticmethod
-    def _populate_thumbnails(files_set, thumbnail_size, selected_file_name):
+    def _populate_thumbnails(files_set, thumbnail_size):
         """
         Populates the session column with thumbnails of uploaded PDF files.
         """
@@ -57,7 +57,7 @@ class DocsManager:
         st.session_state['column_uploaded_files'].write(f"**{len(files_set)} files uploaded**")
 
         thumbnail_images = {}  # Storing thumbnails to avoid redundancy
-        for file in st.session_state['uploaded_pdf_files']:
+        for i, file in enumerate(st.session_state['uploaded_pdf_files']):
             if file.name not in thumbnail_images:
                 file.seek(0)  # Reset file pointer
                 image = convert_from_bytes(file.read(), first_page=1, last_page=1)[0]
@@ -66,10 +66,13 @@ class DocsManager:
                     thumbnail = image.resize(thumbnail_size, Image.Resampling.BILINEAR)
                     thumbnail_images[file.name] = thumbnail
 
-                    with st.session_state['column_uploaded_files']:
+                    with (st.session_state['column_uploaded_files']):
                         st.image(thumbnail)
-                        display_status = "✅" if os.path.splitext(file.name)[0] == selected_file_name else ""
-                        st.write(f"File: **{file.name}** {display_status}")
+                        display_status = "✅" if os.path.splitext(file.name)[0] == session_state[
+                            'selected_file_name'] else ""
+                        file_text = session_state['_']("File")
+                        file_text += f" {i+1}"
+                        st.write(f"{file_text}: **{file.name}** {display_status}")
 
     def display_thumbnails(self):
         """
@@ -85,16 +88,16 @@ class DocsManager:
         thumbnail_dim = int(self.main_dim['width'] * 0.05) if self.main_dim else 100
         thumbnail_size = (thumbnail_dim, thumbnail_dim)
 
-        files_set = {file.name for file in session_state['uploaded_pdf_files']}
+        files_set = {file.name for file_id, file in session_state['uploaded_pdf_files'].items()}
         file_names_without_extension = [os.path.splitext(file_name)[0] for file_name in files_set]
 
-        selected_file_name = session_state['column_uploaded_files'].selectbox(
+        session_state['column_uploaded_files'].selectbox(
             label=session_state['_']("Select a file to display:"),
             options=file_names_without_extension,
             key='selected_file_name', index=None  # Setting a default index
         )
 
-        self._populate_thumbnails(files_set, thumbnail_size, selected_file_name)
+        self._populate_thumbnails(files_set, thumbnail_size)
 
     def _display_pdf(self, annotations):
         """
@@ -110,53 +113,27 @@ class DocsManager:
                        height=1000,
                        width=int(self.main_dim['width'] * 0.4) if self.main_dim else 400)
 
-    def _process_uploaded_files(_self, uploaded_pdf_files):
+    def _process_uploaded_files(_self):
         """
         Processes and stores the content of uploaded PDF files into a session state.
-
-        Parameters:
-        uploaded_pdf_files : list
-            A list containing the binary data of uploaded PDF files.
-
         Updates the session state with metadata, binary data, chunk data, and text data for each uploaded PDF.
         """
         text = []
         session_state['doc_binary_data'] = {}
-        for file in uploaded_pdf_files:
-            file_name = file.name
-            file_stem = os.path.splitext(file_name)[0]  # Extracts file name without extension
-
+        for file_id, file in session_state['uploaded_pdf_files'].items():
             # Store binary data of the file
-            session_state['doc_binary_data'][file_stem] = file.getvalue()
+            session_state['doc_binary_data'][file_id] = file.getvalue()
 
             # Parse the PDF and update session state with chunk and text data
-            session_state['doc_chunk_data'][file_stem], session_state['doc_text_data'][file_stem] = \
-                docs_utils.parse_pdf(session_state['doc_binary_data'][file_stem], file_name)
+            session_state['doc_chunk_data'][file_id], session_state['doc_text_data'][file_id] = \
+                docs_utils.parse_pdf(session_state['doc_binary_data'][file_id], file_id)
 
             # Prepare text data for database
-            text.extend(_self.client.prepare_chunks_for_database(session_state['doc_chunk_data'][file_stem]))
+            text.extend(_self.client.prepare_chunks_for_database(session_state['doc_chunk_data'][file_id]))
 
         # Update collection name based on username and initialize vector store for documents
         session_state['collection_name'] = f"docs-{session_state['username']}"
         session_state['vector_store_docs'] = _self.client.get_vectorstore(text)
-
-    @staticmethod
-    def _display_sources(file):
-        """
-        Displays the list of sources for a specific file.
-
-        Parameters:
-        file : str
-            The name of the file for which sources are being displayed.
-        """
-        files_with_sources = ', '.join(list(session_state['sources_to_display']))
-        with session_state['column_pdf']:
-            files_sources_text = session_state['_']("Files with sources")
-            sources_for_file_text = session_state['_']("Sources for file")
-            st.write(f"{files_sources_text}: {files_with_sources}")
-            st.header(f"{sources_for_file_text} {file}:")
-            for i, source in enumerate(session_state['sources_to_display'][file]):
-                st.markdown(f"{i + 1}) {source}")
 
     @staticmethod
     def _display_chat_title():
@@ -478,8 +455,6 @@ class DocsManager:
         # Display the PDF with optional annotations and list of sources if available
         if file_stem in session_state['doc_binary_data'] and st.session_state['selected_file_name']:
             self._display_pdf(self.annotations)
-            if file_stem in session_state['sources_to_display']:
-                self._display_sources(file_stem)
 
     def _load_doc_to_display(self):
         """
@@ -488,7 +463,7 @@ class DocsManager:
         """
         if session_state['uploaded_pdf_files']:
             self.display_thumbnails()
-            self._process_uploaded_files(session_state['uploaded_pdf_files'])
+            self._process_uploaded_files()
         else:
             with session_state['column_pdf']:
                 st.header(session_state['_']("Please upload your documents on the sidebar."))

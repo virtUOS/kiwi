@@ -12,7 +12,7 @@ class SidebarManager:
 
     def __init__(self, session_manager):
         super().__init__()
-        self.version = "beta-2.0.0"
+        self.version = "beta-2.0.2"
         self.ssm = session_manager
 
     @staticmethod

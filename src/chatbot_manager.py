@@ -11,9 +11,6 @@ class ChatManager:
     def __init__(self):
         """
         Initializes the ChatManager instance with the user's identifier.
-
-        Parameters:
-        - user: A string identifier for the user, used to differentiate messages in the conversation.
         """
         super().__init__()
         self.client = None

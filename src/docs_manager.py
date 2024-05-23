@@ -132,7 +132,7 @@ class DocsManager:
 
         # Update collection name based on username and initialize vector store for documents
         session_state['collection_name'] = f"docs-{session_state['username']}"
-        session_state['vector_store_docs'] = _self.client.get_vectorstore(text)
+        session_state['vector_store_docs'] = _self.client.set_vector_store(text)
 
     @staticmethod
     def _display_chat_title():
@@ -201,7 +201,7 @@ class DocsManager:
                 with st.spinner(session_state['_']("Generating response...")):
                     # Get condensed question, sources, and AI response
                     condensed_question = self.client.get_condensed_question(user_message, chat_history_tuples)
-                    sources = self.client.get_sources(session_state['vector_store_docs'], condensed_question)
+                    sources = self.client.get_sources(condensed_question)
                     all_output = self.client.get_answer(session_state['prompt_options_docs'][0], sources,
                                                         condensed_question)
                     ai_response = all_output['output_text']
@@ -348,7 +348,7 @@ class DocsManager:
             print(f"Error in background task: {e}")  # Ensure any errors are logged
             return None
 
-    def _suggestions_task(self, user_message, prompt, vector_store):
+    def _suggestions_task(self, user_message, prompt):
         """
         A background task function designed to process the user's query and generate AI-based suggestions
         related to the content of uploaded documents. The function condenses the query, retrieves relevant
@@ -360,9 +360,6 @@ class DocsManager:
             The user's query regarding the document's content, serving as input for generating suggestions.
         prompt : str
             The prompt directive used to guide the AI model in generating relevant suggestions.
-        vector_store : dict or object
-            A data structure or object that contains vectorized representations of document content, used
-            for retrieving relevant sources related to the user's query.
         result_queue : Queue
             A thread-safe queue where the task places the generated suggestions upon completion, enabling
             their retrieval and display in the Streamlit interface.
@@ -371,7 +368,7 @@ class DocsManager:
         condensed_question = self.client.get_condensed_question(user_message, [])
 
         # Retrieve sources from the document that are relevant to the condensed question
-        sources = self.client.get_sources(vector_store, condensed_question)
+        sources = self.client.get_sources(condensed_question)
 
         # Get the AI-generated answer based on the prompt options, sources, and condensed question
         all_output = self.client.get_answer(
@@ -423,8 +420,7 @@ class DocsManager:
             with st.spinner(f"{generating_suggestions_text} {file_name}..."):
                 session_state[f'suggestions_{file_name}'] = self._suggestions_task(
                     session_state['prompt_options_docs'][-1]['queries'],
-                    session_state['prompt_options_docs'][0],
-                    session_state['vector_store_docs'],
+                    session_state['prompt_options_docs'][0]
                 )
                 # Using list comprehension to directly assign the list
                 session_state[f'icons_{file_name}'] = [

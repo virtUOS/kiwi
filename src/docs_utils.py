@@ -29,9 +29,6 @@ def initialize_docs_session_variables(typ, language):
         'doc_text_data': {},
         'doc_chunk_data': {},
         'doc_binary_data': {},
-
-        # Current vector store
-        'vector_store_docs': None,
     }
 
     for key, default_value in required_keys.items():
@@ -40,9 +37,6 @@ def initialize_docs_session_variables(typ, language):
 
 
 def reset_docs_variables():
-    if session_state['vector_store_docs']:
-        session_state['vector_store_docs'].delete_collection()
-
     required_keys = {
         'uploaded_pdf_files': {},
         'selected_file_name': None,
@@ -54,9 +48,6 @@ def reset_docs_variables():
         'doc_text_data': {},
         'doc_chunk_data': {},
         'doc_binary_data': {},
-
-        # Current vector store
-        'vector_store_docs': None,
     }
 
     for key, default_value in required_keys.items():
@@ -170,8 +161,9 @@ def parse_pdf(file: BytesIO, file_name):
     return chunk_text_with_bbox_and_overlap(doc, file_name)
 
 
-def check_amount_of_uploaded_files_and_set_variables():
+def check_amount_of_uploaded_files_and_set_variables(ai_client):
     reset_docs_variables()
+    ai_client.delete_collection()
 
     if len(session_state['pdf_files']) > MAX_FILES:
         maximum_text = session_state['_']("Maximum number of files reached")

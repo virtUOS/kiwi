@@ -9,7 +9,10 @@ import src.docs_utils as docs_utils
 class SidebarDocsManager:
 
     def __init__(self):
-        super().__init__()
+        self.ai_client = None
+
+    def set_client(self, ai_client):
+        self.ai_client = ai_client
 
     @staticmethod
     def _display_model_information():
@@ -31,8 +34,12 @@ class SidebarDocsManager:
             st.markdown("""---""")
             st.write(session_state['_']("**Options**"))
             st_styling.style_language_uploader(lang=session_state['selected_language'])
-            st.file_uploader(session_state['_']("**Upload PDF file(s)**"), type=['pdf'], accept_multiple_files=True,
-                             key='pdf_files', on_change=docs_utils.check_amount_of_uploaded_files_and_set_variables)
+            st.file_uploader(session_state['_']("**Upload PDF file(s)**"),
+                             type=['pdf'], accept_multiple_files=True,
+                             key='pdf_files',
+                             on_change=docs_utils.check_amount_of_uploaded_files_and_set_variables,
+                             args=(self.ai_client,)
+                             )
 
             with st.expander(session_state['_']("Advanced Options")):
                 st.number_input(

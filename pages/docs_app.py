@@ -38,11 +38,13 @@ class DocsApplication:
         self.sidebar_general_manager.display_logo()
         self.sidebar_general_manager.display_pages_menu(default_id=1)
         self.sidebar_general_manager.display_general_sidebar_controls()
-        self.sidebar_doc_manager.display_docs_sidebar_controls()
-        self.sidebar_general_manager.display_general_sidebar_bottom_controls()
 
         # Initialize the client
         client = AIClient()
+
+        self.sidebar_doc_manager.set_client(client)
+        self.sidebar_doc_manager.display_docs_sidebar_controls()
+        self.sidebar_general_manager.display_general_sidebar_bottom_controls()
 
         # Set and manage chat interface display
         self.docs_manager.set_window_dimensions()

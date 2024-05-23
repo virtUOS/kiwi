@@ -35,6 +35,9 @@ class AIClient:
                 return llm, question_generator
 
             self.client_lc, self.question_generator = load_langchain_data(self.model)
+            self.embeddings = OpenAIEmbeddings(model="text-embedding-3-large",
+                                               openai_api_key=self.openai_key)  # Adjust model as required
+
         else:
             pass
             # Add here client initialization for local model
@@ -43,6 +46,9 @@ class AIClient:
             # self.client = OpenAI(base_url=session_state['inference_server_url'])
             # models = session_state["client"].models.list()
             # self.model = models.data[0].id
+
+        self.vectorstore = None
+        self.persistent_vdb_directory = os.getenv('VDB_PATH')
 
     @staticmethod
     def _generate_response(stream):
@@ -212,12 +218,12 @@ class AIClient:
         )
         return condensed_question
 
-    @staticmethod
-    def get_sources(vectorstore: VectorStore, query: str) -> List[Document]:
+    def get_sources(self, query: str) -> List[Document]:
         """This function performs a similarity search between the user query and the
         indexed document, returning the five most relevant document chunks for the given query
         """
-        docs = vectorstore.similarity_search(query, k=5)
+        self.load_vector_store()
+        docs = self.vectorstore.similarity_search(query, k=5)
         return docs
 
     def get_answer(self, prompt: str, docs: List[Document], query: str, title="") -> Dict[str, Any]:
@@ -232,7 +238,32 @@ class AIClient:
         )
         return answer
 
-    def get_vectorstore(self, docs: List[Document]) -> VectorStore:
+    def delete_collection(self):
+        """Deletes a specific collection from the persistent vector store."""
+        if 'collection_name' in session_state:
+            if self.vectorstore is None:
+                self.load_vector_store()
+
+            try:
+                self.vectorstore.delete_collection(session_state['collection_name'])
+                print(f"Deleted the collection: {session_state['collection_name']}")
+                self.vectorstore = None  # Reset the vector store attribute if the deleted collection is the current one
+            except Exception as e:
+                print(f"Error deleting collection {session_state['collection_name']}: {e}")
+
+    def set_vector_store(self, docs: List[Document]):
+        """Sets the vector store as an attribute of the class instance."""
+        self.vectorstore = self._get_vector_store(docs)
+
+    def load_vector_store(self):
+        """Loads the existing vector store from the persistence directory."""
+        self.vectorstore = Chroma(
+            collection_name=session_state['collection_name'],
+            persist_directory=self.persistent_vdb_directory,
+            embedding_function=self.embeddings
+        )
+
+    def _get_vector_store(self, docs: List[Document]) -> VectorStore:
         """Given as input a document, this function returns the indexed version,
         leveraging the Chroma database"""
         ids = [doc.metadata["source"] for doc in docs]
@@ -241,12 +272,16 @@ class AIClient:
         if len(ids) != len(unique_ids):
             raise ValueError("Duplicate IDs found in document sources. Please ensure all IDs are unique.")
 
+        # Ensure the persistence directory exists
+        os.makedirs(self.persistent_vdb_directory, exist_ok=True)
+
         vectorstore = Chroma.from_documents(
             docs,
-            OpenAIEmbeddings(model="text-embedding-3-large", openai_api_key=self.openai_key),
+            self.embeddings,
             # Generate unique ids
             ids=[doc.metadata["source"] for doc in docs],
             collection_name=session_state['collection_name'],
+            persist_directory=self.persistent_vdb_directory  # Specify the directory for persistence
         )
         return vectorstore
 

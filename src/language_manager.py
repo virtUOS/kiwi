@@ -104,7 +104,6 @@ class LanguageManager:
         to choose between supported languages. This selection automatically updates the application's
         displayed language through a callback on change.
         """
-
         with st.sidebar:
             st.radio(
                 "Language",

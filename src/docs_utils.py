@@ -1,5 +1,8 @@
 import fitz
+import io
 from io import BytesIO
+import pytesseract
+from PIL import Image
 
 import streamlit as st
 from streamlit import session_state
@@ -82,6 +85,25 @@ def get_overlap_size(overlap_size=20):
     return session_state['overlap_size']
 
 
+def extract_text_with_coordinates(image):
+    data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+    words = []
+    for i in range(len(data['text'])):
+        if data['text'][i].strip():
+            x0, y0 = data['left'][i], data['top'][i]
+            x1, y1 = x0 + data['width'][i], y0 + data['height'][i]
+            words.append((x0, y0, x1, y1, data['text'][i]))
+    return words
+
+
+def convert_pdf_page_to_image(page):
+    # Render page to an image
+    pix = page.get_pixmap()
+    img_bytes = pix.tobytes("png")
+    img = Image.open(io.BytesIO(img_bytes))
+    return img
+
+
 def chunk_text_with_bbox_and_overlap(doc, file_name):
     chunks_info = []
     pages_text = []
@@ -91,6 +113,11 @@ def chunk_text_with_bbox_and_overlap(doc, file_name):
 
     for page_number, page in enumerate(doc, start=1):
         words = page.get_text("words")  # Extract words and positions
+
+        if not words:  # If no text found, apply OCR
+            image = convert_pdf_page_to_image(page)
+            words = extract_text_with_coordinates(image)
+
         chunk_text = ''
         chunk_bbox = [float('inf'), float('inf'), 0, 0]  # Init with extreme values
 

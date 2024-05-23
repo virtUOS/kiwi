@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from streamlit import session_state
 
@@ -11,8 +12,22 @@ class SidebarDocsManager:
         super().__init__()
 
     @staticmethod
-    def display_docs_sidebar_controls():
+    def _display_model_information():
+        """
+        Display OpenAI model information in the sidebar if the OpenAI model is the current selection.
+
+        In the sidebar, this static method shows the model name and version pulled from environment variables
+        if 'OpenAI' is selected as the model in the session state. The model information helps users
+        identify the active model configuration.
+        """
+        if session_state['model_selection'] == 'OpenAI':
+            model_text = session_state['_']("Model used for summaries:")
+            st.write(f"{model_text} {os.getenv('OPENAI_MODEL_EXTRA')}")
+
+    def display_docs_sidebar_controls(self):
         with st.sidebar:
+            self._display_model_information()
+
             st.markdown("""---""")
             st.write(session_state['_']("**Options**"))
             st_styling.style_language_uploader(lang=session_state['selected_language'])
@@ -49,6 +64,3 @@ class SidebarDocsManager:
                         )
                     )
                 )
-
-
-

@@ -164,11 +164,11 @@ msgstr "Konnte keine Abfragevorschläge generieren."
 
 #: src/docs_manager.py:571
 msgid "Generating query suggestions for document"
-msgstr "Generierung von Abfragevorschlägen für Dokumente"
+msgstr "Generierung von Abfragevorschlägen für das Dokumente"
 
 #: src/docs_manager.py:602
 msgid "Generate query suggestions for document"
-msgstr "Abfragevorschläge für Dokument generieren"
+msgstr "Generierung von Abfragevorschlägen für das Dokument"
 
 #: src/docs_manager.py:602
 msgid "Generate summary for document"
@@ -176,11 +176,15 @@ msgstr "Zusammenfassung für das Dokument generieren"
 
 #: src/docs_manager.py:602
 msgid "Generating summary for document"
-msgstr "Erstellung einer Zusammenfassung für ein Dokument"
+msgstr "Erstellung einer Zusammenfassung für das Dokument"
 
 #: src/docs_manager.py:678
 msgid "No defined prompt was found. Please define a prompt before using the chat."
 msgstr "Es wurde kein definierter Prompt gefunden. Bitte definieren Sie einen Prompt, bevor Sie den Chat benutzen."
+
+#: src/docs_sidebar_manager.py:19
+msgid "Model used for summaries:"
+msgstr "Für Zusammenfassungen verwendetes Modell:"
 
 #: src/docs_sidebar_manager.py:19
 msgid "**Upload PDF file(s)**"

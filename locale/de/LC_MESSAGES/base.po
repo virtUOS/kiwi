@@ -167,8 +167,16 @@ msgid "Generating query suggestions for document"
 msgstr "Generierung von Abfragevorschlägen für Dokumente"
 
 #: src/docs_manager.py:602
+msgid "Generate query suggestions for document"
+msgstr "Abfragevorschläge für Dokument generieren"
+
+#: src/docs_manager.py:602
+msgid "Generate summary for document"
+msgstr "Zusammenfassung für das Dokument generieren"
+
+#: src/docs_manager.py:602
 msgid "Generating summary for document"
-msgstr "Erstellung einer Zusammenfassung für das Dokument"
+msgstr "Erstellung einer Zusammenfassung für ein Dokument"
 
 #: src/docs_manager.py:678
 msgid "No defined prompt was found. Please define a prompt before using the chat."

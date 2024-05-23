@@ -1,5 +1,4 @@
 import os
-import multiprocessing
 from pdf2image import convert_from_bytes
 from PIL import Image
 
@@ -13,8 +12,6 @@ import src.streamlit_styling as st_styling
 import src.utils as utils
 import src.docs_utils as docs_utils
 from src.summarization_manager import SummarizationManager
-
-from multiprocessing import Queue
 
 
 class DocsManager:
@@ -317,12 +314,12 @@ class DocsManager:
         # Process the user's message
         self._user_message_processing(conversation_history, user_message)
 
-    def _background_summary_task(self,
-                                 doc_text_data,
-                                 model_name,
-                                 map_prompt_template,
-                                 reduce_prompt_template,
-                                 result_queue):
+    def _summary_task(self,
+                      doc_text_data,
+                      model_name,
+                      map_prompt_template,
+                      reduce_prompt_template
+                      ):
         """
         Executes the summarization process in the background for the given document text data.
         The function is designed to run as a background task to not block the main Streamlit thread.
@@ -346,44 +343,12 @@ class DocsManager:
                 model_name=model_name,
                 map_prompt_template=map_prompt_template,
                 reduce_prompt_template=reduce_prompt_template)
-            result_queue.put(summary)
+            return summary
         except Exception as e:
             print(f"Error in background task: {e}")  # Ensure any errors are logged
+            return None
 
-    def _generate_summary_background(self, doc_text_data, summary_queue):
-        """
-        Initiates the asynchronous generation of a document summary by triggering a background task.
-        This method aims to offload intensive summarization processing to a background thread, allowing
-        the Streamlit application to remain responsive. The completion of the task is communicated through
-        a thread-safe queue, specifically instantiated for each document based on its filename.
-
-        The method sets up necessary parameters for the summarization, including model name and summarization
-        templates, and uses these parameters to start the background task. The result of the summarization,
-        once completed, will be placed into a dedicated queue identified by the file name, from which it can
-        be retrieved and displayed in the Streamlit UI.
-
-        Parameters:
-        doc_text_data : str
-            The textual content of the document for which a summary is requested. This data will be processed
-            by the background task to generate the summary.
-        summary_queue : Queue
-            A thread-safe queue through which the generated summary will be communicated back to the application.
-            This queue is used to safely pass the summary data from the background thread to the Streamlit main thread.
-        """
-        # Define templates outside the thread
-        reduce_prompt_template = session_state.get('prompt_options_docs', [{}])[1].get('template', '')
-        map_prompt_template = session_state.get('prompt_options_docs', [{}])[2].get('template', '')
-
-        # Start the background task
-        process = multiprocessing.Process(target=self._background_summary_task, args=(
-            doc_text_data,
-            os.getenv('OPENAI_MODEL_EXTRA'),
-            map_prompt_template,
-            reduce_prompt_template,
-            summary_queue))
-        process.start()
-
-    def _background_suggestions_task(self, user_message, prompt, vector_store, result_queue):
+    def _suggestions_task(self, user_message, prompt, vector_store):
         """
         A background task function designed to process the user's query and generate AI-based suggestions
         related to the content of uploaded documents. The function condenses the query, retrieves relevant
@@ -424,26 +389,7 @@ class DocsManager:
         if not processed_response:
             processed_response = "EMPTY"
 
-        result_queue.put(processed_response)
-
-    def _generate_suggestions_background(self, suggestions_queue):
-        """
-        Triggers the background generation of query suggestions based on the document's content. This function
-        initiates a background task that asynchronously generates suggestions, allowing the Streamlit application
-        to stay responsive. The generated suggestions are communicated back via the provided thread-safe queue.
-
-        Parameters:
-        suggestions_queue : Queue
-            A thread-safe queue through which the generated suggestions are communicated back to the Streamlit
-            application. The suggestions are placed in this queue by the background task upon completion.
-        """
-        # Start the background task
-        process = multiprocessing.Process(target=self._background_suggestions_task, args=(
-            session_state['prompt_options_docs'][-1]['queries'],
-            session_state['prompt_options_docs'][0],
-            session_state['vector_store_docs'],
-            suggestions_queue))
-        process.start()
+        return processed_response
 
     def _handle_and_display_annotations_and_sources(self):
         """
@@ -471,9 +417,20 @@ class DocsManager:
             with session_state['column_pdf']:
                 st.header(session_state['_']("Please upload your documents on the sidebar."))
 
-    @staticmethod
-    def _reset_suggestions(file_name):
-        session_state.pop(f'suggestions_{file_name}')
+    def _suggestions_callback(self, file_name):
+        generating_suggestions_text = session_state['_']("Generating suggestions for document")
+        with session_state['column_chat']:
+            with st.spinner(f"{generating_suggestions_text} {file_name}..."):
+                session_state[f'suggestions_{file_name}'] = self._suggestions_task(
+                    session_state['prompt_options_docs'][-1]['queries'],
+                    session_state['prompt_options_docs'][0],
+                    session_state['vector_store_docs'],
+                )
+                # Using list comprehension to directly assign the list
+                session_state[f'icons_{file_name}'] = [
+                    session_state['prompt_options_docs'][-1]['icon']
+                    for _ in session_state[f'suggestions_{file_name}']
+                ]
 
     def _display_suggestions_if_ready(self, file_name):
         """
@@ -525,21 +482,32 @@ class DocsManager:
             with session_state['column_chat']:
                 with column_button:
                     st.button("🔄", help=session_state['_']("Re-generate suggestions"),
-                              on_click=self._reset_suggestions,
+                              on_click=self._suggestions_callback,
                               args=(file_name,)
                               )
         else:
             # Keep displaying a loading message until the summary is ready
             with session_state['column_chat']:
-                generating_suggestions_text = session_state['_']("Generating query suggestions for document")
-                st.info(f"{generating_suggestions_text} {file_name}...")
+                generate_suggestions_text = session_state['_']("Generate query suggestions for document")
+                st.button(
+                    label=f"{generate_suggestions_text} {file_name}",
+                    on_click=self._suggestions_callback,
+                    args=(file_name,)
+                )
         return predefined_prompt_selected
 
-    @staticmethod
-    def _reset_summary(file_name):
-        session_state.pop(f'summary_{file_name}')
+    def _summary_callback(self, file_name, file_id):
+        generating_summary_text = session_state['_']("Generating summary for document")
+        with session_state['column_chat']:
+            with st.spinner(f"{generating_summary_text} {file_name}..."):
+                session_state[f'summary_{file_name}'] = self._summary_task(
+                    session_state['doc_text_data'][file_id],
+                    os.getenv('OPENAI_MODEL_EXTRA'),
+                    session_state.get('prompt_options_docs', [{}])[2].get('template', ''),
+                    session_state.get('prompt_options_docs', [{}])[1].get('template', ''),
+                )
 
-    def _display_summary_if_ready(self, file_name):
+    def _display_summary_if_ready(self, file_name, file_id):
         """
         Displays the generated summary for a specific document if it is available within the session state.
         If the summary has not yet been generated or is still processing, this method displays a loading message
@@ -567,14 +535,18 @@ class DocsManager:
                         st.markdown(session_state[f'summary_{file_name}'])
                 with column_button:
                     st.button("🔄", help=session_state['_']("Re-generate summary"),
-                              on_click=self._reset_suggestions,
-                              args=(file_name,)
+                              on_click=self._summary_callback,
+                              args=(file_name, file_id,)
                               )
         else:
             # Keep displaying a loading message until the summary is ready
+            generate_summary_text = session_state['_']("Generate summary for document")
             with session_state['column_chat']:
-                generating_summary_text = session_state['_']("Generating summary for document")
-                st.info(f"{generating_summary_text} {file_name}...")
+                st.button(
+                    label=f"{generate_summary_text} {file_name}",
+                    on_click=self._summary_callback,
+                    args=(file_name, file_id,)
+                )
 
     def display_chat_interface(self):
         """
@@ -597,43 +569,13 @@ class DocsManager:
                 file_name = session_state['selected_file_name']
                 file_id = session_state['selected_file_id']
                 if file_name is not None:
-                    if f'summary_{file_name}' not in session_state:
-                        session_state[f'summary_{file_name}'] = None  # Create the variable to avoid re-running thread
-                        session_state[f'result_summary_queue_{file_name}'] = Queue()
-                        self._generate_summary_background(session_state['doc_text_data'][file_id],
-                                                          session_state[f'result_summary_queue_{file_name}'])
 
-                    # Check if there are results in the queue
-                    if (f'result_summary_queue_{file_name}' in session_state and
-                            not session_state[f'result_summary_queue_{file_name}'].empty() and
-                            not session_state[f'summary_{file_name}']):
-                        # Retrieve the result from the queue
-                        summary = session_state[f'result_summary_queue_{file_name}'].get()
-
-                        # Safely update session_state in the main thread
-                        session_state[f'summary_{file_name}'] = summary
-
-                    self._display_summary_if_ready(file_name)
+                    self._display_summary_if_ready(file_name, file_id)
 
                     # Generate and display suggestions if not already present for the file
                     if f'suggestions_{file_name}' not in session_state:
                         session_state[f'suggestions_{file_name}'] = []  # Create the variable to avoid re-running thread
                         session_state[f'icons_{file_name}'] = []
-                        session_state[f'result_suggestions_queue_{file_name}'] = Queue()
-                        self._generate_suggestions_background(session_state[f'result_suggestions_queue_{file_name}'])
-                    if (f'result_suggestions_queue_{file_name}' in session_state and
-                            not session_state[f'result_suggestions_queue_{file_name}'].empty() and
-                            not session_state[f'suggestions_{file_name}']):
-                        # Retrieve the result from the queue
-                        queries = session_state[f'result_suggestions_queue_{file_name}'].get()
-
-                        if queries != "EMPTY":
-                            for query in queries:
-                                session_state[f'suggestions_{file_name}'].append(query)
-                                session_state[f'icons_{file_name}'].append(session_state[
-                                                                               'prompt_options_docs'][-1]['icon'])
-                        else:
-                            session_state[f'suggestions_{file_name}'] = queries
 
                     predefined_prompt_selected = self._display_suggestions_if_ready(file_name)
 

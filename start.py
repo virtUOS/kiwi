@@ -204,8 +204,5 @@ if cookies['session'] == 'in':
     # Wait a bit before redirecting
     sleep(0.5)
 
-    # Load username from cookie into state
-    session_state['username'] = cookies['username']
-
     # Redirect to app
     st.switch_page("pages/chatbot_app.py")

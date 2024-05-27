@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -59,15 +60,15 @@ class SidebarManager:
         if self.cookies.get("session") != 'in':
             st.switch_page("start.py")
 
-    @staticmethod
-    def initialize_session_variables():
+    def initialize_session_variables(self):
         """
         Initialize essential session variables with default values.
 
-        Sets up the initial state for model selection, chatbot paths, conversation histories,
+        Sets up the initial state for username, model selection, chatbot paths, conversation histories,
         prompt options, etc., essential for the application to function correctly from the start.
         """
         required_keys = {
+            'username': self.cookies.get('username'),
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},
@@ -218,8 +219,15 @@ class SidebarManager:
         """
         with st.sidebar:
             if session_state['model_selection'] == 'OpenAI':
-                model_text = session_state['_']("Model:")
-                st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
+                accessible_models = AIClient.get_accessible_models()
+
+                # Show dropdown when multiple models are available
+                if len(accessible_models) > 1:
+                    model_label = session_state['_']("Model:")
+                    st.selectbox(model_label, accessible_models, key='selected_model')
+                else:
+                    model_text = session_state['_']("Model:")
+                    st.write(f"{model_text} {AIClient.get_selected_model()}")
 
     def _show_conversation_controls(self):
         """
@@ -642,7 +650,7 @@ class ChatManager:
         Displays information about the current OpenAI model in use.
         """
         using_text = session_state['_']("You're using the following OpenAI model:")
-        model_info = f"{using_text} **{os.getenv('OPENAI_MODEL')}**."
+        model_info = f"{using_text} **{AIClient.get_selected_model()}**."
         st.write(model_info)
         st.write(session_state['_']("Each time you enter information,"
                                     " a system prompt is sent to the chat model by default."))
@@ -700,9 +708,9 @@ class AIClient:
 
             @st.cache_resource
             def load_openai_data():
-                return OpenAI(), os.getenv('OPENAI_MODEL')
+                return OpenAI()
 
-            self.client, self.model = load_openai_data()
+            self.client = load_openai_data()
         else:
             pass
             # Add here client initialization for local model
@@ -711,6 +719,38 @@ class AIClient:
             # self.client = OpenAI(base_url=session_state['inference_server_url'])
             # models = session_state["client"].models.list()
             # self.model = models.data[0].id
+
+    @staticmethod
+    def get_accessible_models():
+        """
+        Get accessible models for the current user
+        """
+        # Load accessible user models from environment variables
+        if 'accessible_models' not in session_state and {'USER_ROLES', 'MODELS_PER_ROLE'} <= os.environ.keys():
+            user_roles = json.loads(os.environ['USER_ROLES'])
+            user_role = user_roles.get(session_state.get('username'))
+
+            models_per_role = json.loads(os.environ['MODELS_PER_ROLE'])
+            session_state['accessible_models'] = models_per_role.get(user_role, [os.getenv('OPENAI_DEFAULT_MODEL')])
+
+        # Get default model if no configurations found
+        if 'accessible_models' not in session_state:
+            session_state['accessible_models'] = [os.getenv('OPENAI_DEFAULT_MODEL')]
+
+        return session_state['accessible_models']
+
+    @staticmethod
+    def get_selected_model():
+        """
+        Get the selected model for the current user
+        """
+        accessible_models = AIClient.get_accessible_models()
+
+        # Get selected model from dropdown
+        if 'selected_model' in session_state and session_state['selected_model'] in accessible_models:
+            return session_state['selected_model']
+
+        return os.getenv('OPENAI_DEFAULT_MODEL')
 
     @staticmethod
     def _generate_response(stream):
@@ -768,7 +808,7 @@ class AIClient:
             with st.chat_message("assistant"):
                 with st.spinner(session_state['_']("Generating response...")):
                     stream = self.client.chat.completions.create(
-                        model=self.model,
+                        model=self.get_selected_model(),
                         messages=messages,
                         stream=True,
                     )

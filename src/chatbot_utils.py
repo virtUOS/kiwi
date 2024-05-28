@@ -184,7 +184,7 @@ class SidebarManager:
 
         self._show_conversation_controls()
 
-        if 'selected_model' in session_state and session_state['selected_model'] == "gpt-4o":
+        if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
             self._show_images_controls()
 
         self._add_custom_css()
@@ -225,7 +225,7 @@ class SidebarManager:
         if 'OpenAI' is selected as the model in the session state. The model information helps users
         identify the active model configuration.
         """
-        with (st.sidebar):
+        with st.sidebar:
             if session_state['model_selection'] == 'OpenAI':
                 accessible_models = AIClient.get_accessible_models()
 
@@ -272,7 +272,6 @@ class SidebarManager:
             st.markdown("---")
             st.write(session_state['_']("**Options**"))
             col1, col2, col3 = st.columns([1, 1, 1])
-            # with st.expander(session_state['_']("**Options**"), expanded=True):
             if conversation_key in session_state['conversation_histories'] and session_state[
                     'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col3)

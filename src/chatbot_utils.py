@@ -78,7 +78,7 @@ class SidebarManager:
             'edited_prompts': {},
             'disable_custom': False,
             'images_key': 0,
-            'image_urls': None,
+            'image_urls': [],
             'uploaded_images': None,
         }
 
@@ -249,7 +249,7 @@ class SidebarManager:
                     if session_state['selected_model'] != self.advanced_model and (
                             session_state['image_urls'] or session_state['uploaded_images']):
                         session_state['images_key'] += 1
-                        session_state['image_urls'] = None
+                        session_state['image_urls'] = []
                         session_state['uploaded_images'] = None
                         st.rerun()
 
@@ -293,8 +293,15 @@ class SidebarManager:
                                                                     accept_multiple_files=True,
                                                                     key=session_state['images_key'])
 
-            # Text area for image URLs
-            session_state['image_urls'] = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
+                # Text area for image URLs
+                urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
+
+                if st.button(session_state['_']("Add URLs")):
+                    # Process the URLs
+                    url_list = urls.strip().split('\n')
+                    if 'image_urls' not in session_state:
+                        session_state['image_urls'] = []
+                    session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
     @staticmethod
     def _delete_conversation_callback():
@@ -724,7 +731,8 @@ class ChatManager:
 
                 # Check if there are any uploaded images
                 uploaded_images = session_state.get('uploaded_images', [])
-                if uploaded_images:
+                image_urls = session_state.get('image_urls', [])
+                if uploaded_images or image_urls:
                     col1, col2 = st.columns([2, 1], gap="medium")
                 else:
                     col1 = st.container()
@@ -748,11 +756,16 @@ class ChatManager:
                                                                                        [])
                     self._display_conversation(conversation_history)
 
-                if uploaded_images and col2:
+                if col2:
                     with col2:
-                        st.markdown(session_state['_']("**Uploaded Images**"))
-                        for image in uploaded_images:
-                            st.image(image)
+                        if uploaded_images:
+                            st.markdown(session_state['_']("### Uploaded Images"))
+                            for image in uploaded_images:
+                                st.image(image)
+                        if 'image_urls' in session_state and session_state['image_urls']:
+                            st.markdown(session_state['_']("### Image URLs"))
+                            for url in session_state['image_urls']:
+                                st.write(url)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use)

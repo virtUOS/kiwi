@@ -78,6 +78,10 @@ msgstr "**Konversation Hochladen**"
 msgid "Upload Conversation"
 msgstr "Konversation hochladen"
 
+#: src/chatbot_utils.py:299
+msgid "Add URLs"
+msgstr "URLs hinzufügen"
+
 #: src/chatbot_utils.py:303
 msgid "The uploaded file is missing one or more required columns: 'Speaker', 'Message', 'System prompt'"
 msgstr "In der hochgeladenen Datei fehlen eine oder mehrere erforderliche Spalten: 'Sprecher', 'Nachricht', 'System-Prompt'"
@@ -115,8 +119,12 @@ msgid "The System Prompt should be a string and not empty."
 msgstr "Die System-Prompt sollte eine String und nicht leer sein."
 
 #: src/chatbot_utils.py:729
-msgid "**Uploaded Images**"
-msgstr "**Hochgeladene Bilder**"
+msgid "### Uploaded Images"
+msgstr "### Hochgeladene Bilder"
+
+#: src/chatbot_utils.py:729
+msgid "### Image URLs"
+msgstr "### Bild-URLs"
 
 #: start.py:68
 msgid "Login with your university credentials."

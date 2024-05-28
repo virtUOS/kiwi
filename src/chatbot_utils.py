@@ -29,6 +29,7 @@ class SidebarManager:
                                    "always check the answers for their accuracy. Remember not to enter "
                                    "any personal information and copyrighted materials."))
         language_controls()
+        self.advanced_model = "gpt-4o"
 
     @staticmethod
     def initialize_cookies():
@@ -76,6 +77,9 @@ class SidebarManager:
             'prompt_options': menu_utils.load_prompts_from_yaml(),
             'edited_prompts': {},
             'disable_custom': False,
+            'images_key': 0,
+            'image_urls': None,
+            'uploaded_images': None,
         }
 
         for key, default_value in required_keys.items():
@@ -176,7 +180,12 @@ class SidebarManager:
 
         self._display_model_information()
 
+        self._style_language_uploader()
+
         self._show_conversation_controls()
+
+        if 'selected_model' in session_state and session_state['selected_model'] == "gpt-4o":
+            self._show_images_controls()
 
         self._add_custom_css()
 
@@ -208,8 +217,7 @@ class SidebarManager:
             serialized_path = '/'.join(session_state['selected_chatbot_path'])
             session_state['selected_chatbot_path_serialized'] = serialized_path
 
-    @staticmethod
-    def _display_model_information():
+    def _display_model_information(self):
         """
         Display OpenAI model information in the sidebar if the OpenAI model is the current selection.
 
@@ -217,14 +225,34 @@ class SidebarManager:
         if 'OpenAI' is selected as the model in the session state. The model information helps users
         identify the active model configuration.
         """
-        with st.sidebar:
+        with (st.sidebar):
             if session_state['model_selection'] == 'OpenAI':
                 accessible_models = AIClient.get_accessible_models()
 
                 # Show dropdown when multiple models are available
                 if len(accessible_models) > 1:
                     model_label = session_state['_']("Model:")
-                    st.selectbox(model_label, accessible_models, key='selected_model')
+                    index = 0
+                    if self.advanced_model in accessible_models:  # Use most advanced model as default
+                        index = accessible_models.index('gpt-4o')
+                    st.selectbox(model_label,
+                                 accessible_models,
+                                 index=index,
+                                 key='selected_model')
+
+                    # If the model is changed to one that doesn't support images
+                    # we have to clear the widgets from images. For the upload widget,
+                    # the way to do this is by generating a new widget with a new key
+                    # as described in:
+                    # https://discuss.streamlit.io/t/
+                    # are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903
+                    if session_state['selected_model'] != self.advanced_model and (
+                            session_state['image_urls'] or session_state['uploaded_images']):
+                        session_state['images_key'] += 1
+                        session_state['image_urls'] = None
+                        session_state['uploaded_images'] = None
+                        st.rerun()
+
                 else:
                     model_text = session_state['_']("Model:")
                     st.write(f"{model_text} {AIClient.get_selected_model()}")
@@ -246,10 +274,28 @@ class SidebarManager:
             col1, col2, col3 = st.columns([1, 1, 1])
             # with st.expander(session_state['_']("**Options**"), expanded=True):
             if conversation_key in session_state['conversation_histories'] and session_state[
-                'conversation_histories'][conversation_key]:
+                    'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col3)
                 self._download_conversation_button(col2, conversation_key)
             self._upload_conversation_button(col1, conversation_key)
+
+    @staticmethod
+    def _show_images_controls():
+        """
+        Display buttons for image management, including uploading images, in the sidebar.
+
+        This method presents an expander with the label "Images Controls" in the sidebar,
+        inside which there is an option to upload multiple images of supported formats.
+        """
+        with st.sidebar:
+            with st.expander(session_state['_']("Images Controls")):
+                session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
+                                                                    type=['png', 'jpeg', 'gif', 'webp'],
+                                                                    accept_multiple_files=True,
+                                                                    key=session_state['images_key'])
+
+            # Text area for image URLs
+            session_state['image_urls'] = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
 
     @staticmethod
     def _delete_conversation_callback():
@@ -364,11 +410,11 @@ class SidebarManager:
         languages = {
             "en": {
                 "instructions": "Drag and drop files here",
-                "limits": "Limit 200MB per file",
+                "limits": "Limit 20MB per file",
             },
             "de": {
                 "instructions": "Dateien hierher ziehen und ablegen",
-                "limits": "Limit 200MB pro Datei",
+                "limits": "Limit 20MB pro Datei",
             },
         }
 
@@ -411,7 +457,6 @@ class SidebarManager:
         - conversation_key: The key that uniquely identifies the conversation in the session state's
         conversation histories.
         """
-        self._style_language_uploader()
         container.file_uploader(session_state['_']("**Upload Conversation**"),
                                 type=['csv'],
                                 key='file_uploader_conversation',
@@ -435,7 +480,6 @@ class SidebarManager:
                     z-index: 1;
                     background: {color};
                 }}
-                ... (rest of CSS)
                 """
         with st.sidebar:
             st.markdown("---")
@@ -679,21 +723,37 @@ class ChatManager:
 
             if isinstance(description, str) and len(description.strip()) > 0:
 
-                # Display chat interface header and model information if applicable
-                self._display_chat_interface_header()
+                # Check if there are any uploaded images
+                uploaded_images = session_state.get('uploaded_images', [])
+                if uploaded_images:
+                    col1, col2 = st.columns([2, 1], gap="medium")
+                else:
+                    col1 = st.container()
+                    col2 = None
 
-                with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
-                    self._display_prompt_editor(description)
+                with col1:
 
-                st.markdown("""---""")
+                    # Display chat interface header and model information if applicable
+                    self._display_chat_interface_header()
 
-                description_to_use = self._get_description_to_use(description)
+                    with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
+                        self._display_prompt_editor(description)
 
-                # Displays the existing conversation history
-                conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                       'selected_chatbot_path_serialized'],
-                                                                                   [])
-                self._display_conversation(conversation_history)
+                    st.markdown("""---""")
+
+                    description_to_use = self._get_description_to_use(description)
+
+                    # Displays the existing conversation history
+                    conversation_history = session_state['conversation_histories'].get(session_state[
+                                                                                    'selected_chatbot_path_serialized'],
+                                                                                       [])
+                    self._display_conversation(conversation_history)
+
+                if uploaded_images and col2:
+                    with col2:
+                        st.markdown(session_state['_']("**Uploaded Images**"))
+                        for image in uploaded_images:
+                            st.image(image)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use)
@@ -721,7 +781,7 @@ class AIClient:
             # self.model = models.data[0].id
 
     @staticmethod
-    def get_accessible_models():
+    def get_accessible_models() -> list:
         """
         Get accessible models for the current user
         """

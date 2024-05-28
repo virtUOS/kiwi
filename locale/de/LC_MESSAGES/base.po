@@ -58,6 +58,18 @@ msgstr "System-Prompt"
 msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
+#: src/chatbot_utils.py:265
+msgid "Images Controls"
+msgstr "Bilder Kontrollen"
+
+#: src/chatbot_utils.py:266
+msgid "Upload Images"
+msgstr "Bilder hochladen"
+
+#: src/chatbot_utils.py:275
+msgid "Enter Image URLs (one per line)"
+msgstr "Bild-URLs eingeben (eine pro Zeile)"
+
 #: src/chatbot_utils.py:290
 msgid "**Upload Conversation**"
 msgstr "**Konversation Hochladen**"
@@ -101,6 +113,10 @@ msgstr "Antwort wird generiert..."
 #: src/chatbot_utils.py:467
 msgid "The System Prompt should be a string and not empty."
 msgstr "Die System-Prompt sollte eine String und nicht leer sein."
+
+#: src/chatbot_utils.py:729
+msgid "**Uploaded Images**"
+msgstr "**Hochgeladene Bilder**"
 
 #: start.py:68
 msgid "Login with your university credentials."

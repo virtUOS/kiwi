@@ -4,3 +4,6 @@ toolbarMode = "minimal"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+maxUploadSize = 20

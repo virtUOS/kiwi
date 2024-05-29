@@ -854,16 +854,17 @@ class AIClient:
         Get accessible models for the current user
         """
         # Load accessible user models from environment variables
+        default_models = json.loads(os.environ['OPENAI_DEFAULT_MODEL'])
         if 'accessible_models' not in session_state and {'USER_ROLES', 'MODELS_PER_ROLE'} <= os.environ.keys():
             user_roles = json.loads(os.environ['USER_ROLES'])
             user_role = user_roles.get(session_state.get('username'))
 
             models_per_role = json.loads(os.environ['MODELS_PER_ROLE'])
-            session_state['accessible_models'] = models_per_role.get(user_role, [os.getenv('OPENAI_DEFAULT_MODEL')])
+            session_state['accessible_models'] = models_per_role.get(user_role, default_models['models'])
 
         # Get default model if no configurations found
         if 'accessible_models' not in session_state:
-            session_state['accessible_models'] = [os.getenv('OPENAI_DEFAULT_MODEL')]
+            session_state['accessible_models'] = default_models['models']
 
         return session_state['accessible_models']
 

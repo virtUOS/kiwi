@@ -110,6 +110,10 @@ msgstr "Bei jeder Ihrer Eingaben wird standardmäßig ein System-Prompt mit an d
 msgid "View or edit system prompt"
 msgstr "System-Prompt einsehen oder bearbeiten"
 
+#: src/chatbot_utils.py:324
+msgid "Activate camera to take a photo"
+msgstr "Aktivieren Sie die Kamera, um ein Foto zu machen"
+
 #: src/chatbot_utils.py:312
 msgid "Take a photo"
 msgstr "Ein Foto machen"
@@ -131,7 +135,7 @@ msgid "### Image URLs"
 msgstr "### Bild-URLs"
 
 #: src/chatbot_utils.py:778
-msgid "### Your photo"
+msgid "### Your Photo"
 msgstr "### Ihr Foto"
 
 

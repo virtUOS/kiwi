@@ -310,7 +310,10 @@ class SidebarManager:
                         session_state['image_urls'] = []
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
-                session_state['your_photo'] = st.camera_input(session_state['_']("Take a photo"))
+                # Checkbox to activate camera input
+                activate_camera = st.checkbox(session_state['_']("Activate camera to take a photo"))
+                if activate_camera:
+                    session_state['your_photo'] = st.camera_input(session_state['_']("Take a photo"))
 
     @staticmethod
     def _delete_conversation_callback():

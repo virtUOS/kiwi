@@ -286,7 +286,17 @@ class SidebarManager:
             self._upload_conversation_button(col1, conversation_key)
 
     @staticmethod
-    def _show_images_controls():
+    def _get_rid_of_submit_text():
+        hide_submit_text = """
+        <style>
+        div[data-testid="InputInstructions"] > span:nth-child(1) {
+            visibility: hidden;
+        }
+        </style>
+        """
+        st.markdown(hide_submit_text, unsafe_allow_html=True)
+
+    def _show_images_controls(self):
         """
         Display buttons for image management, including uploading images, in the sidebar.
 
@@ -300,7 +310,8 @@ class SidebarManager:
                                                                     accept_multiple_files=True,
                                                                     key=session_state['images_key'])
 
-                # Text area for image URLs
+                # Text area for image URLs (Get rid of the submit text on the text area because it's useless here)
+                self._get_rid_of_submit_text()
                 urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
 
                 if st.button(session_state['_']("Add URLs")):

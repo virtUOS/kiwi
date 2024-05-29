@@ -37,7 +37,7 @@ services:
       APP_NAME_DE: "Kiwi"
       # OpenAI settings:
       OPENAI_API_KEY: "CHANGE!"
-      OPENAI_DEFAULT_MODEL: 'gpt-4'
+      OPENAI_DEFAULT_MODEL: '{"models":["gpt-3.5-turbo","gpt-4o"]}'
       # User settings
       USER_ROLES: '{"user1":"open","user2":"restricted"}'
       MODELS_PER_ROLE: '{"restricted":["gpt-3.5-turbo"],"open":["gpt-3.5-turbo","gpt-4o"]}'

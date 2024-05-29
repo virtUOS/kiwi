@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import base64
 
 import pandas as pd
 from openai import OpenAI
@@ -79,7 +80,9 @@ class SidebarManager:
             'disable_custom': False,
             'images_key': 0,
             'image_urls': [],
-            'uploaded_images': None,
+            'uploaded_images': [],
+            'your_photo': None,
+            'image_content': [],
         }
 
         for key, default_value in required_keys.items():
@@ -132,8 +135,8 @@ class SidebarManager:
         This involves resetting cookies and session variables that signify the user's logged-in state,
         thereby securely logging out the user.
         """
-        self.cookies["session"] = 'out'
-        session_state["password_correct"] = False
+        self.cookies['session'] = 'out'
+        session_state['password_correct'] = False
         session_state['credentials_checked'] = False
         st.switch_page('start.py')
 
@@ -247,10 +250,14 @@ class SidebarManager:
                     # https://discuss.streamlit.io/t/
                     # are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903
                     if session_state['selected_model'] != self.advanced_model and (
-                            session_state['image_urls'] or session_state['uploaded_images']):
+                            session_state['image_urls'] or
+                            session_state['uploaded_images'] or
+                            session_state['your_photo']):
                         session_state['images_key'] += 1
                         session_state['image_urls'] = []
-                        session_state['uploaded_images'] = None
+                        session_state['uploaded_images'] = []
+                        session_state['your_photo'] = None
+                        session_state['image_content'] = []
                         st.rerun()
 
                 else:
@@ -302,6 +309,8 @@ class SidebarManager:
                     if 'image_urls' not in session_state:
                         session_state['image_urls'] = []
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
+
+                session_state['your_photo'] = st.camera_input(session_state['_']("Take a photo"))
 
     @staticmethod
     def _delete_conversation_callback():
@@ -661,28 +670,35 @@ class ChatManager:
         # Add AI response to the history
         current_history.append(('Assistant', response, ""))
 
-    def _handle_user_input(self, description_to_use):
+    def _handle_user_input(self, description_to_use, container_chat):
         """
         Handles the user input: sends the message to OpenAI, prints it, and updates the conversation history.
 
+        This method is responsible for capturing the user input from the chat interface, sending it to the
+        language model for a response, displaying the user message immediately, and updating the conversation
+        history to include both the user message and the model's response. It ensures that the user input is
+        processed only once per new message.
+
         Parameters:
-        - description_to_use: The current system description or prompt used alongside user messages.
+        - description_to_use (str): The current system description or prompt used alongside user messages.
+        - container_chat (streamlit.container): The Streamlit container where the chat messages are displayed.
         """
         if user_message := st.chat_input(session_state['USER']):
             current_history = self._get_current_conversation_history()
 
-            # Ensures unique submission to prevent re-running on refresh
-            if self._is_new_message(current_history, user_message):
-                self._append_user_message_to_history(current_history, user_message, description_to_use)
+            with container_chat:
+                # Ensures unique submission to prevent re-running on refresh
+                if self._is_new_message(current_history, user_message):
+                    self._append_user_message_to_history(current_history, user_message, description_to_use)
 
-                # Print user message immediately after getting entered because we're streaming the chatbot output
-                with st.chat_message("user"):
-                    st.markdown(user_message)
+                    # Print user message immediately after getting entered because we're streaming the chatbot output
+                    with st.chat_message("user"):
+                        st.markdown(user_message)
 
-                # Process and display response
-                self._process_response(current_history, user_message, description_to_use)
-                self._update_conversation_history(current_history)
-                st.rerun()
+                    # Process and display response
+                    self._process_response(current_history, user_message, description_to_use)
+                    self._update_conversation_history(current_history)
+                    st.rerun()
 
     @staticmethod
     def _fetch_chatbot_description():
@@ -716,38 +732,84 @@ class ChatManager:
             if session_state['model_selection'] == 'OpenAI':
                 self._display_openai_model_info()
 
+    @staticmethod
+    def _display_images_column(uploaded_images, image_urls, your_photo):
+        """
+        Displays uploaded images, image URLs, and user photo in a specified column.
+
+        Parameters:
+        - uploaded_images (list): List of uploaded images.
+        - image_urls (list): List of image URLs.
+        - your_photo (file): User's uploaded photo, if any.
+        """
+        session_state['image_content'] = []
+
+        if uploaded_images:
+            st.markdown(session_state['_']("### Uploaded Images"))
+            for image in uploaded_images:
+                image64 = base64.b64encode(image.getvalue()).decode()
+                session_state['image_content'].append({
+                    'type': "image_url",
+                    'image_url': {"url": f"data:image/jpeg;base64,{image64}"}
+                })
+                st.image(image)
+
+        if image_urls:
+            st.markdown(session_state['_']("### Image URLs"))
+            for url in image_urls:
+                session_state['image_content'].append({
+                    'type': "image_url",
+                    'image_url': {"url": url}
+                })
+                st.write(url)
+
+        if your_photo:
+            st.markdown(session_state['_']("### Your Photo"))
+            your_image64 = base64.b64encode(your_photo.getvalue()).decode()
+            session_state['image_content'].append({
+                'type': "image_url",
+                'image_url': {"url": f"data:image/jpeg;base64,{your_image64}"}
+            })
+            st.image(your_photo)
+
     def display_chat_interface(self):
         """
         Displays the chat interface, manages the display of conversation history, and handles user input.
 
-        This method sets up the interface for the chat, including fetching and displaying the system prompt,
-        updating session states as necessary, and calling methods to display conversation history and handle user input.
+        This method sets up the interface for the chat, including:
+        - Fetching and displaying the system prompt.
+        - Updating session states as necessary.
+        - Displaying conversation history if any.
+        - Handling user input.
+        - Displaying uploaded images and URLs if provided.
+
+        It also provides an option to view or edit the system prompt through an expander in the layout.
         """
         if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
 
             description = self._fetch_chatbot_description()
 
-            if isinstance(description, str) and len(description.strip()) > 0:
-
-                # Check if there are any uploaded images
+            if isinstance(description, str) and description.strip():
+                # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
                 image_urls = session_state.get('image_urls', [])
-                if uploaded_images or image_urls:
+                your_photo = session_state.get('your_photo', None)
+
+                # Set layout columns based on whether there are images or URLs
+                if uploaded_images or image_urls or your_photo:
                     col1, col2 = st.columns([2, 1], gap="medium")
                 else:
-                    col1 = st.container()
-                    col2 = None
+                    col1, col2 = st.container(), None
 
                 with col1:
-
                     # Display chat interface header and model information if applicable
                     self._display_chat_interface_header()
 
+                    # Option to view or edit the system prompt
                     with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
                         self._display_prompt_editor(description)
 
                     st.markdown("""---""")
-
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history
@@ -756,19 +818,13 @@ class ChatManager:
                                                                                        [])
                     self._display_conversation(conversation_history)
 
+                # If col2 is defined, show uploaded images and URLs
                 if col2:
                     with col2:
-                        if uploaded_images:
-                            st.markdown(session_state['_']("### Uploaded Images"))
-                            for image in uploaded_images:
-                                st.image(image)
-                        if 'image_urls' in session_state and session_state['image_urls']:
-                            st.markdown(session_state['_']("### Image URLs"))
-                            for url in session_state['image_urls']:
-                                st.write(url)
+                        self._display_images_column(uploaded_images, image_urls, your_photo)
 
                 # Handles the user's input and interaction with the LLM
-                self._handle_user_input(description_to_use)
+                self._handle_user_input(description_to_use, col1)
             else:
                 st.error(session_state['_']("The System Prompt should be a string and not empty."))
 
@@ -928,14 +984,15 @@ class AIClient:
     @staticmethod
     def _prepare_full_prompt_and_messages(user_prompt, description_to_use):
         """
-        Prepares the full prompt and messages combining user input and additional descriptions.
+        Prepares the full prompt and messages combining user input and additional descriptions, including image content
+        in the specified format.
 
         Parameters:
-            user_prompt (str): The original prompt from the user.
-            description_to_use (str): Additional context or instructions to provide to the model.
+        - user_prompt (str): The original prompt from the user.
+        - description_to_use (str): Additional context or instructions to provide to the model.
 
         Returns:
-            list: List of dictionaries containing messages for the chat completion.
+        - list: List of dictionaries containing messages for the chat completion.
         """
 
         if session_state["model_selection"] == 'OpenAI':
@@ -948,13 +1005,17 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+                session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 
+        # Combine user prompt and image content
+        user_message_content = [{"type": "text", "text": user_prompt}]
+        user_message_content.extend(session_state['image_content'])
+
         # Building the messages with the "system" message based on expertise area
         if session_state["model_selection"] == 'OpenAI':
-            messages.append({"role": "user", "content": user_prompt})
+            messages.append({"role": "user", "content": user_message_content})
         else:
             # Add the description to the current user message to simulate a system prompt.
             # This is for models that were trained with no system prompt: LLaMA/Mistral/Mixtral.

@@ -83,6 +83,7 @@ class SidebarManager:
             'uploaded_images': [],
             'your_photo': None,
             'image_content': [],
+            'activate_camera': False,
         }
 
         for key, default_value in required_keys.items():
@@ -258,6 +259,7 @@ class SidebarManager:
                         session_state['uploaded_images'] = []
                         session_state['your_photo'] = None
                         session_state['image_content'] = []
+                        session_state['activate_camera'] = False
                         st.rerun()
 
                 else:
@@ -322,9 +324,7 @@ class SidebarManager:
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
                 # Checkbox to activate camera input
-                activate_camera = st.checkbox(session_state['_']("Activate camera to take a photo"))
-                if activate_camera:
-                    session_state['your_photo'] = st.camera_input(session_state['_']("Take a photo"))
+                session_state['activate_camera'] = st.checkbox(session_state['_']("Activate camera to take a photo"))
 
     @staticmethod
     def _delete_conversation_callback():
@@ -747,14 +747,13 @@ class ChatManager:
                 self._display_openai_model_info()
 
     @staticmethod
-    def _display_images_column(uploaded_images, image_urls, your_photo):
+    def _display_images_column(uploaded_images, image_urls):
         """
         Displays uploaded images, image URLs, and user photo in a specified column.
 
         Parameters:
         - uploaded_images (list): List of uploaded images.
         - image_urls (list): List of image URLs.
-        - your_photo (file): User's uploaded photo, if any.
         """
         session_state['image_content'] = []
 
@@ -777,14 +776,15 @@ class ChatManager:
                 })
                 st.write(url)
 
-        if your_photo:
-            st.markdown(session_state['_']("### Your Photo"))
-            your_image64 = base64.b64encode(your_photo.getvalue()).decode()
+    @staticmethod
+    def _store_camera_photo_info():
+        session_state['image_content'] = []  # If we want a sequence of pictures don't reinitialize this
+        if session_state['your_photo']:
+            your_image64 = base64.b64encode(session_state['your_photo'].getvalue()).decode()
             session_state['image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{your_image64}"}
             })
-            st.image(your_photo)
 
     def display_chat_interface(self):
         """
@@ -807,10 +807,9 @@ class ChatManager:
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
                 image_urls = session_state.get('image_urls', [])
-                your_photo = session_state.get('your_photo', None)
 
                 # Set layout columns based on whether there are images or URLs
-                if uploaded_images or image_urls or your_photo:
+                if uploaded_images or image_urls:
                     col1, col2 = st.columns([2, 1], gap="medium")
                 else:
                     col1, col2 = st.container(), None
@@ -824,18 +823,27 @@ class ChatManager:
                         self._display_prompt_editor(description)
 
                     st.markdown("""---""")
+                    if session_state['activate_camera']:
+                        col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1, 1])
+                        col5.camera_input(
+                            session_state['_']("Take a photo"),
+                            on_change=self._store_camera_photo_info,
+                            key='your_photo')
+                        #if session_state['your_photo']:
+                        #    col5.markdown(session_state['_']("### Your Photo"))
+                        #    col5.image(session_state['your_photo'])
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                    'selected_chatbot_path_serialized'],
+                                                                                'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history)
 
                 # If col2 is defined, show uploaded images and URLs
                 if col2:
                     with col2:
-                        self._display_images_column(uploaded_images, image_urls, your_photo)
+                        self._display_images_column(uploaded_images, image_urls)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use, col1)

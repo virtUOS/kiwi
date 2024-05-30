@@ -29,6 +29,7 @@ class SidebarManager:
                                    "always check the answers for their accuracy. Remember not to enter "
                                    "any personal information and copyrighted materials."))
         language_controls()
+        self.advanced_model = 'gpt-4o'
 
     @staticmethod
     def initialize_cookies():
@@ -208,26 +209,29 @@ class SidebarManager:
             serialized_path = '/'.join(session_state['selected_chatbot_path'])
             session_state['selected_chatbot_path_serialized'] = serialized_path
 
-    @staticmethod
-    def _display_model_information():
+    def _display_model_information(self):
         """
         Display OpenAI model information in the sidebar if the OpenAI model is the current selection.
 
-        In the sidebar, this static method shows the model name and version pulled from environment variables
+        In the sidebar, this method shows the model name and version pulled from environment variables
         if 'OpenAI' is selected as the model in the session state. The model information helps users
         identify the active model configuration.
         """
         with st.sidebar:
             if session_state['model_selection'] == 'OpenAI':
-                accessible_models = AIClient.get_accessible_models()
+                AIClient.set_accessible_models()
 
                 # Show dropdown when multiple models are available
-                if len(accessible_models) > 1:
+                index = 0
+                if self.advanced_model in session_state['accessible_models']:  # Use most advanced model as default
+                    index = session_state['accessible_models'].index(self.advanced_model)
+
+                # Show dropdown when multiple models are available
+                if session_state['accessible_models']:
                     model_label = session_state['_']("Model:")
-                    st.selectbox(model_label, accessible_models, key='selected_model')
-                else:
-                    model_text = session_state['_']("Model:")
-                    st.write(f"{model_text} {AIClient.get_selected_model()}")
+                    st.selectbox(model_label, session_state['accessible_models'],
+                                 index=index,
+                                 key='selected_model')
 
     def _show_conversation_controls(self):
         """
@@ -650,7 +654,7 @@ class ChatManager:
         Displays information about the current OpenAI model in use.
         """
         using_text = session_state['_']("You're using the following OpenAI model:")
-        model_info = f"{using_text} **{AIClient.get_selected_model()}**."
+        model_info = f"{using_text} **{session_state['selected_model']}**."
         st.write(model_info)
         st.write(session_state['_']("Each time you enter information,"
                                     " a system prompt is sent to the chat model by default."))
@@ -721,33 +725,30 @@ class AIClient:
             # self.model = models.data[0].id
 
     @staticmethod
-    def get_accessible_models():
+    def set_accessible_models():
         """
         Get accessible models for the current user
         """
         # Load accessible user models from environment variables
+        default_models = json.loads(os.environ['OPENAI_DEFAULT_MODEL'])
         if 'accessible_models' not in session_state and {'USER_ROLES', 'MODELS_PER_ROLE'} <= os.environ.keys():
             user_roles = json.loads(os.environ['USER_ROLES'])
             user_role = user_roles.get(session_state.get('username'))
 
             models_per_role = json.loads(os.environ['MODELS_PER_ROLE'])
-            session_state['accessible_models'] = models_per_role.get(user_role, [os.getenv('OPENAI_DEFAULT_MODEL')])
+            session_state['accessible_models'] = models_per_role.get(user_role, default_models['models'])
 
         # Get default model if no configurations found
         if 'accessible_models' not in session_state:
-            session_state['accessible_models'] = [os.getenv('OPENAI_DEFAULT_MODEL')]
-
-        return session_state['accessible_models']
+            session_state['accessible_models'] = default_models['models']
 
     @staticmethod
     def get_selected_model():
         """
         Get the selected model for the current user
         """
-        accessible_models = AIClient.get_accessible_models()
-
         # Get selected model from dropdown
-        if 'selected_model' in session_state and session_state['selected_model'] in accessible_models:
+        if 'selected_model' in session_state and session_state['selected_model'] in session_state['accessible_models']:
             return session_state['selected_model']
 
         return os.getenv('OPENAI_DEFAULT_MODEL')
@@ -767,8 +768,7 @@ class AIClient:
                 chunk_content = chunk.choices[0].delta.content
                 yield chunk_content
 
-    
-    def _concatenate_partial_response(self,response_type):
+    def _concatenate_partial_response(self, response_type):
         """
         Concatenates the partial response into a single string.
 
@@ -789,13 +789,10 @@ class AIClient:
             st.latex(str_response)
         else:
             raise ValueError("Invalid response type. Please provide a valid response type.")
-        
+
         self.special_text = False
         self.partial_response = []
         self.response += str_response
-
-    
-    
 
     def get_response(self, prompt, description_to_use):
         """
@@ -856,7 +853,7 @@ class AIClient:
                                         self._concatenate_partial_response('latex')
                                 except StopIteration:
                                     break
-                        
+
                         elif chunk_content == '\\':
                             self.partial_response.append(chunk_content)
                             self.special_text = True
@@ -864,25 +861,26 @@ class AIClient:
                                 try:
                                     chunk_content = next(gen_stream)
                                     self.partial_response.append(chunk_content)
-                                    # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty} F(\\omega) e^{i\\omega t} d\\omega\n\\]
-                                    if ']' in chunk_content and '\\' in  self.partial_response[-1]:
+                                    # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty}
+                                    # F(\\omega) e^{i\\omega t} d\\omega\n\\]
+                                    if ']' in chunk_content and '\\' in self.partial_response[-1]:
                                         # show partial response to the user and keep it  for later use
                                         self._concatenate_partial_response('latex')
 
                                 except StopIteration:
                                     break
-                        
+
                         else:
                             # If the chunk is not a code or math block, append it to the partial response
                             self.partial_response.append(chunk_content)
                             if chunk_content:
                                 if '\n' in chunk_content:
                                     self._concatenate_partial_response('text')
-                                 
+
                 # If there is a partial response left, concatenate it and render it
                 if self.partial_response:
                     self._concatenate_partial_response('text')
-              
+
             return self.response
 
         except Exception as e:
@@ -890,10 +888,6 @@ class AIClient:
             # Optionally, return a default error message or handle the error appropriately.
             return "Sorry, I couldn't process that request."
 
-    
-
-
-    
     @staticmethod
     def _prepare_full_prompt_and_messages(user_prompt, output_parser_instructions):
         """
@@ -906,14 +900,14 @@ class AIClient:
         Returns:
             list: List of dictionaries containing messages for the chat completion.
         """
-        
+
         output_parser_instructions += """\n\n If the response contains any mathematical expressions, for example, formulas or functions, provide these mathematical expressions in LateX. 
         These are some examples of mathematical expressions written in LateX syntax:
         - $$y = a + bx + e$$
         - $y$ 
         -$a$
         \n\n"""
-        
+
         if session_state["model_selection"] == 'OpenAI':
             messages = [{
                 'role': "system",
@@ -924,7 +918,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+                session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

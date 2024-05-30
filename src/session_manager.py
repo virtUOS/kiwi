@@ -29,6 +29,9 @@ class SessionManager:
 
         self.cookies = cookies
 
+        session_state['username'] = self.cookies.get('username')
+
+
     def verify_and_set_user_session(self):
         """
         Verify the user's session validity. If cookies indicate the session is not yet initiated,

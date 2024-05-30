@@ -22,86 +22,6 @@ msgstr "Eingabe"
 msgid "The outputs of the chat assistant may be erroneous - therefore, always check the answers for their accuracy. Remember not to enter any personal information and copyrighted materials."
 msgstr "Die Ausgaben des Chat-Assistenten können fehlerhaft sein - überprüfen Sie die Antworten daher unbedingt auf ihre Korrektheit. Denken Sie daran, keine persönlichen Informationen und urheberrechtlich geschützten Materialien einzugeben."
 
-#: src/chatbot_utils.py:131
-msgid "Model:"
-msgstr "Modell:"
-
-#: src/chatbot_utils.py:141
-msgid "**Options**"
-msgstr "**Optionen**"
-
-#: src/chatbot_utils.py:143
-msgid "Delete Conversation"
-msgstr "Konversation löschen"
-
-#: src/chatbot_utils.py:153
-msgid "Message"
-msgstr "Nachricht"
-
-#: src/chatbot_utils.py:153
-msgid "Speaker"
-msgstr "Sprecher"
-
-#: src/chatbot_utils.py:159
-msgid "Download Conversation"
-msgstr "Konversation downloaden"
-
-#: src/chatbot_utils.py:188
-msgid "Logout"
-msgstr "Abmelden"
-
-#: src/chatbot_utils.py:215
-msgid "System prompt"
-msgstr "System-Prompt"
-
-#: src/chatbot_utils.py:221
-msgid "Restore Original Prompt"
-msgstr "Ursprünglichen Prompt wiederherstellen"
-
-#: src/chatbot_utils.py:290
-msgid "**Upload Conversation**"
-msgstr "**Konversation Hochladen**"
-
-#: src/chatbot_utils.py:290
-msgid "Upload Conversation"
-msgstr "Konversation hochladen"
-
-#: src/chatbot_utils.py:303
-msgid "The uploaded file is missing one or more required columns: 'Speaker', 'Message', 'System prompt'"
-msgstr "In der hochgeladenen Datei fehlen eine oder mehrere erforderliche Spalten: 'Sprecher', 'Nachricht', 'System-Prompt'"
-
-#: src/chatbot_utils.py:313
-msgid "Successfully uploaded the conversation."
-msgstr "Die Konversation wurde erfolgreich hochgeladen."
-
-#: src/chatbot_utils.py:315
-msgid "Failed to process the uploaded file. Error: "
-msgstr "Die hochgeladene Datei konnte nicht verarbeitet werden. Fehler: "
-
-#: src/chatbot_utils.py:294
-msgid "How can I help you?"
-msgstr "Wie kann ich Ihnen helfen?"
-
-#: src/chatbot_utils.py:296
-msgid "You're using the following OpenAI model:"
-msgstr "Sie benutzen das folgende Modell von OpenAI:"
-
-#: src/chatbot_utils.py:301
-msgid "Each time you enter information, a system prompt is sent to the chat model by default."
-msgstr "Bei jeder Ihrer Eingaben wird standardmäßig ein System-Prompt mit an das Chat-Modell übermittelt."
-
-#: src/chatbot_utils.py:302
-msgid "View or edit system prompt"
-msgstr "System-Prompt einsehen oder bearbeiten"
-
-#: src/chatbot_utils.py:386
-msgid "Generating response..."
-msgstr "Antwort wird generiert..."
-
-#: src/chatbot_utils.py:467
-msgid "The System Prompt should be a string and not empty."
-msgstr "Die System-Prompt sollte eine String und nicht leer sein."
-
 #: src/utils.py:285
 msgid "Chatbot"
 msgstr "Chat-Bot"
@@ -209,6 +129,14 @@ msgstr "Größe der Überlappung"
 #: src/docs_sidebar_manager.py:26
 msgid "The overlap size specifies the number of characters that will overlap between consecutive chunks. For example, with an overlap size of 20, the last 20 characters of one chunk will be the first 20 characters of the next chunk.\n\n**Why it's important**: The overlap helps maintain context between chunks. Without adequate overlap, some important details may be lost between chunks. Too much overlap can lead to redundant information."
 msgstr "Die Überlappungsgröße gibt die Anzahl der Zeichen an, die sich zwischen aufeinanderfolgenden Chunks überlappen. Bei einer Überlappungsgröße von 20 sind beispielsweise die letzten 20 Zeichen eines Chunks die ersten 20 Zeichen des nächsten Chunks.\n\n**Warum das wichtig ist**: Die Überlappung trägt dazu bei, dass der Kontext zwischen den Chunks erhalten bleibt. Ohne ausreichende Überlappung können einige wichtige Details zwischen den Chunks verloren gehen. Eine zu große Überlappung kann zu redundanten Informationen führen."
+
+#: src/sidebar_general_manager.py:72
+msgid "Model:"
+msgstr "Modell:"
+
+#: src/sidebar_general_manager.py:82
+msgid "Model for Summaries:"
+msgstr "Modell für Zusammenfassungen:"
 
 #: start.py:68
 msgid "Login with your university credentials."

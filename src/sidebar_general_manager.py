@@ -1,10 +1,10 @@
-import os
 import streamlit as st
 from streamlit import session_state
 from streamlit_option_menu import option_menu
 
 import src.streamlit_styling as st_styling
 import src.utils as utils
+from src.ai_client import AIClient
 
 
 class SidebarManager:
@@ -12,6 +12,7 @@ class SidebarManager:
     def __init__(self, session_manager):
         super().__init__()
         self.version = "beta-2.0.3"
+        self.advanced_model = "gpt-4o"
         self.ssm = session_manager
 
     @staticmethod
@@ -37,8 +38,7 @@ class SidebarManager:
 
     @staticmethod
     def display_pages_menu(default_id):
-
-        pages = [session_state['_']("Chatbot"), session_state['_']("Chat with Documents")]
+        pages = [session_state['_']("Chat with Documents")]
 
         with st.sidebar:
             page = option_menu("", pages, icons=['chat-dots'] * len(pages),
@@ -48,20 +48,7 @@ class SidebarManager:
         session_state['chosen_page_index'] = pages.index(page)
         session_state['selected_chatbot_path'] = [page]
 
-        if ('current_page_index' not in session_state or
-                session_state['chosen_page_index'] == session_state['current_page_index']):
-            session_state['current_page_index'] = session_state['chosen_page_index']
-        elif session_state['chosen_page_index'] == 0 and session_state['current_page_index'] != 0:
-            session_state['current_page_index'] = 0
-            session_state['typ'] = 'chat'
-            st.switch_page("pages/chatbot_app.py")
-        elif session_state['chosen_page_index'] == 1 and session_state['current_page_index'] != 1:
-            session_state['current_page_index'] = 1
-            session_state['typ'] = 'docs'
-            st.switch_page("pages/docs_app.py")
-
-    @staticmethod
-    def _display_model_information():
+    def _display_model_information(self):
         """
         Display OpenAI model information in the sidebar if the OpenAI model is the current selection.
 
@@ -71,8 +58,25 @@ class SidebarManager:
         """
         with st.sidebar:
             if session_state['model_selection'] == 'OpenAI':
-                model_text = session_state['_']("Model:")
-                st.write(f"{model_text} {os.getenv('OPENAI_MODEL')}")
+                AIClient.set_accessible_models()
+
+                model_label = session_state['_']("Model:")
+                # Show dropdown when multiple models are available
+                index = 0
+                if self.advanced_model in session_state['accessible_models']:  # Use most advanced model as default
+                    index = session_state['accessible_models'].index('gpt-4o')
+                st.selectbox(model_label,
+                             session_state['accessible_models'],
+                             index=index,
+                             key='selected_model')
+
+                model_label_extra = session_state['_']("Model for Summaries:")
+                index_extra = 0
+                # Show dropdown when multiple models are available
+                st.selectbox(model_label_extra,
+                             session_state['accessible_models_extra'],
+                             index=index_extra,
+                             key='selected_model_extra')
 
     def display_general_sidebar_controls(self):
         """

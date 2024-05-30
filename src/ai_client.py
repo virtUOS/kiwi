@@ -1,4 +1,5 @@
 import os
+import json
 
 import streamlit as st
 from streamlit import session_state
@@ -24,7 +25,7 @@ class AIClient:
 
             @st.cache_resource
             def load_openai_data():
-                return OpenAI(), os.getenv('OPENAI_MODEL'), os.getenv('OPENAI_API_KEY')
+                return OpenAI(), session_state['selected_model'], os.getenv('OPENAI_API_KEY')
 
             self.client, self.model, self.openai_key = load_openai_data()
 
@@ -49,6 +50,29 @@ class AIClient:
 
         self.vectorstore = None
         self.persistent_vdb_directory = os.getenv('VDB_PATH')
+
+    @staticmethod
+    def set_accessible_models():
+        """
+        Get accessible models for the current user
+        """
+        # Load accessible user models from environment variables
+        default_models = json.loads(os.environ['OPENAI_DEFAULT_MODEL'])
+        default_extra_models = json.loads(os.environ['OPENAI_MODEL_EXTRA'])
+        if 'accessible_models' not in session_state and {'USER_ROLES', 'MODELS_PER_ROLE'} <= os.environ.keys():
+            user_roles = json.loads(os.environ['USER_ROLES'])
+            user_role = user_roles.get(session_state.get('username'))
+
+            models_per_role = json.loads(os.environ['MODELS_PER_ROLE'])
+            session_state['accessible_models'] = models_per_role.get(user_role, default_models['models'])
+
+        # Get default model if no configurations found
+        if 'accessible_models' not in session_state:
+            session_state['accessible_models'] = default_models['models']
+
+        # Get default model if no configurations found
+        if 'accessible_models_extra' not in session_state:
+            session_state['accessible_models_extra'] = default_extra_models['models']
 
     @staticmethod
     def _generate_response(stream):

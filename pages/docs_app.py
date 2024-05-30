@@ -36,7 +36,7 @@ class DocsApplication:
         self.session_manager.initialize_cookies()
         self.session_manager.verify_and_set_user_session()
         self.sidebar_general_manager.display_logo()
-        self.sidebar_general_manager.display_pages_menu(default_id=1)
+        self.sidebar_general_manager.display_pages_menu(default_id=0)
         self.sidebar_general_manager.display_general_sidebar_controls()
 
         # Initialize the client

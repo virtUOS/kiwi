@@ -498,7 +498,7 @@ class DocsManager:
             with st.spinner(f"{generating_summary_text} {file_name}..."):
                 session_state[f'summary_{file_name}'] = self._summary_task(
                     session_state['doc_text_data'][file_id],
-                    os.getenv('OPENAI_MODEL_EXTRA'),
+                    session_state['selected_model_extra'],
                     session_state.get('prompt_options_docs', [{}])[2].get('template', ''),
                     session_state.get('prompt_options_docs', [{}])[1].get('template', ''),
                 )

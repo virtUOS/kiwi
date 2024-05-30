@@ -68,7 +68,7 @@ class SidebarManager:
         prompt options, etc., essential for the application to function correctly from the start.
         """
         required_keys = {
-            'username': self.cookies.get('username'),
+            'username': 'Anonymous',
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},
@@ -767,25 +767,35 @@ class AIClient:
                 chunk_content = chunk.choices[0].delta.content
                 yield chunk_content
 
-    @staticmethod
-    def _concatenate_partial_response(partial_response):
+    
+    def _concatenate_partial_response(self,response_type):
         """
         Concatenates the partial response into a single string.
 
         Parameters:
+            response_type (str): whether the response is a text or a latex expression.
             partial_response (list): The chunks of the response from the OpenAI API.
 
-        Returns:
-            str: The concatenated response.
         """
+        # The concatenated response.
         str_response = ""
-        for i in partial_response:
+        for i in self.partial_response:
             if isinstance(i, str):
                 str_response += i
 
-        st.markdown(str_response)
+        if response_type == 'text':
+            st.markdown(str_response)
+        elif response_type == 'latex':
+            st.latex(str_response)
+        else:
+            raise ValueError("Invalid response type. Please provide a valid response type.")
+        
+        self.special_text = False
+        self.partial_response = []
+        self.response += str_response
 
-        return str_response
+    
+    
 
     def get_response(self, prompt, description_to_use):
         """
@@ -804,7 +814,9 @@ class AIClient:
 
             # Send the request to the OpenAI API
             # Display assistant response in chat message container
-            response = ""
+            self.response = ""
+            # true if the response contains a special text like code block or math expression
+            self.special_text = False
             with st.chat_message("assistant"):
                 with st.spinner(session_state['_']("Generating response...")):
                     stream = self.client.chat.completions.create(
@@ -812,49 +824,78 @@ class AIClient:
                         messages=messages,
                         stream=True,
                     )
-                    partial_response = []
+                    self.partial_response = []
 
                     gen_stream = self._generate_response(stream)
                     for chunk_content in gen_stream:
                         # check if the chunk is a code block
                         if chunk_content == '```':
-                            partial_response.append(chunk_content)
-                            code_block = True
-                            while code_block:
+                            self.partial_response.append(chunk_content)
+                            self.special_text = True
+                            while self.special_text:
                                 try:
                                     chunk_content = next(gen_stream)
-                                    partial_response.append(chunk_content)
+                                    self.partial_response.append(chunk_content)
                                     if chunk_content == "`\n\n":
-                                        code_block = False
-                                        str_response = self._concatenate_partial_response(partial_response)
-                                        partial_response = []
-                                        response += str_response
-
+                                        # show partial response to the user and keep it  for later use
+                                        self._concatenate_partial_response('text')
                                 except StopIteration:
                                     break
 
+                        # inline formula or math expression
+                        elif chunk_content == ' \\(':
+                            self.partial_response.append(chunk_content)
+                            self.special_text = True
+                            while self.special_text:
+                                try:
+                                    chunk_content = next(gen_stream)
+                                    self.partial_response.append(chunk_content)
+                                    # example of inline math expression \\(f(t)\\) 
+                                    if chunk_content == ')' and '\\' in self.partial_response[-1]:
+                                        # show partial response to the user and keep it  for later use
+                                        self._concatenate_partial_response('latex')
+                                except StopIteration:
+                                    break
+                        
+                        elif chunk_content == '\\':
+                            self.partial_response.append(chunk_content)
+                            self.special_text = True
+                            while self.special_text:
+                                try:
+                                    chunk_content = next(gen_stream)
+                                    self.partial_response.append(chunk_content)
+                                    # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty} F(\\omega) e^{i\\omega t} d\\omega\n\\]
+                                    if ']' in chunk_content and '\\' in  self.partial_response[-1]:
+                                        # show partial response to the user and keep it  for later use
+                                        self._concatenate_partial_response('latex')
+
+                                except StopIteration:
+                                    break
+                        
                         else:
-                            # If the chunk is not a code block, append it to the partial response
-                            partial_response.append(chunk_content)
+                            # If the chunk is not a code or math block, append it to the partial response
+                            self.partial_response.append(chunk_content)
                             if chunk_content:
                                 if '\n' in chunk_content:
-                                    str_response = self._concatenate_partial_response(partial_response)
-                                    partial_response = []
-                                    response += str_response
+                                    self._concatenate_partial_response('text')
+                                 
                 # If there is a partial response left, concatenate it and render it
-                if partial_response:
-                    str_response = self._concatenate_partial_response(partial_response)
-                    response += str_response
-
-            return response
+                if self.partial_response:
+                    self._concatenate_partial_response('text')
+              
+            return self.response
 
         except Exception as e:
             print(f"An error occurred while fetching the OpenAI response: {e}")
             # Optionally, return a default error message or handle the error appropriately.
             return "Sorry, I couldn't process that request."
 
+    
+
+
+    
     @staticmethod
-    def _prepare_full_prompt_and_messages(user_prompt, description_to_use):
+    def _prepare_full_prompt_and_messages(user_prompt, output_parser_instructions):
         """
         Prepares the full prompt and messages combining user input and additional descriptions.
 
@@ -865,11 +906,18 @@ class AIClient:
         Returns:
             list: List of dictionaries containing messages for the chat completion.
         """
-
+        
+        output_parser_instructions += """\n\n If the response contains any mathematical expressions, for example, formulas or functions, provide these mathematical expressions in LateX. 
+        These are some examples of mathematical expressions written in LateX syntax:
+        - $$y = a + bx + e$$
+        - $y$ 
+        -$a$
+        \n\n"""
+        
         if session_state["model_selection"] == 'OpenAI':
             messages = [{
                 'role': "system",
-                'content': description_to_use
+                'content': output_parser_instructions
             }]
         else:  # Add here conditions for different types of models
             messages = []
@@ -888,7 +936,7 @@ class AIClient:
             # This is for models that were trained with no system prompt: LLaMA/Mistral/Mixtral.
             # Source: https://github.com/huggingface/transformers/issues/28366
             # Maybe find a better solution or avoid any system prompt for these models
-            messages.append({"role": "user", "content": description_to_use + "\n\n" + user_prompt})
+            messages.append({"role": "user", "content": output_parser_instructions + "\n\n" + user_prompt})
 
         # This method can be expanded based on how you want to structure the prompt
         # For example, you might prepend the description_to_use before the user_prompt

@@ -176,16 +176,6 @@ else:
 
 st.markdown(md_msg, unsafe_allow_html=True)
 
-if current_language == 'en':
-    st.write("This application doesn't fully support the Safari Browser. "
-             "For the best experience, please consider using a different browser such as "
-             "Google Chrome, Firefox, or Microsoft Edge.")
-else:
-    st.write("Diese Anwendung unterstützt den Safari-Browser bisher nicht vollständig. "
-             "Für ein optimales Erlebnis sollten Sie einen anderen Browser wie "
-             "Google Chrome, Firefox oder Microsoft Edge verwenden.")
-
-
 # First check if there's a session already started
 if cookies.get("session") != 'in':
 

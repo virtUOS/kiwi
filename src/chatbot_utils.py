@@ -710,8 +710,9 @@ class ChatManager:
                         st.markdown(user_message)
 
                     # Process and display response
-                    self._process_response(current_history, user_message, description_to_use)
                     self._update_conversation_history(current_history)
+                    self._process_response(current_history, user_message, description_to_use)
+                    st.rerun()
 
     @staticmethod
     def _fetch_chatbot_description():

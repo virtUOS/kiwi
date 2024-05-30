@@ -83,6 +83,7 @@ class SidebarManager:
             'uploaded_images': [],
             'your_photo': None,
             'image_content': [],
+            'camera_image_content': [],
             'activate_camera': False,
         }
 
@@ -259,6 +260,7 @@ class SidebarManager:
                         session_state['uploaded_images'] = []
                         session_state['your_photo'] = None
                         session_state['image_content'] = []
+                        session_state['camera_image_content'] = []
                         session_state['activate_camera'] = False
                         st.rerun()
 
@@ -778,10 +780,10 @@ class ChatManager:
 
     @staticmethod
     def _store_camera_photo_info():
-        session_state['image_content'] = []  # If we want a sequence of pictures don't reinitialize this
+        session_state['camera_image_content'] = []  # Don't reinitialize if you want image sequences
         if session_state['your_photo']:
             your_image64 = base64.b64encode(session_state['your_photo'].getvalue()).decode()
-            session_state['image_content'].append({
+            session_state['camera_image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{your_image64}"}
             })
@@ -829,16 +831,13 @@ class ChatManager:
                             session_state['_']("Take a photo"),
                             on_change=self._store_camera_photo_info,
                             key='your_photo')
-                        #if session_state['your_photo']:
-                        #    col5.markdown(session_state['_']("### Your Photo"))
-                        #    col5.image(session_state['your_photo'])
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
                                                                                 'selected_chatbot_path_serialized'],
                                                                                        [])
-                    self._display_conversation(conversation_history)
+                    self._display_conversation(conversation_history, col1)
 
                 # If col2 is defined, show uploaded images and URLs
                 if col2:
@@ -1035,6 +1034,7 @@ class AIClient:
         # Combine user prompt and image content
         user_message_content = [{"type": "text", "text": user_prompt}]
         user_message_content.extend(session_state['image_content'])
+        user_message_content.extend(session_state['camera_image_content'])
 
         # Building the messages with the "system" message based on expertise area
         if session_state["model_selection"] == 'OpenAI':

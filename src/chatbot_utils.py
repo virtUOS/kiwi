@@ -712,7 +712,7 @@ class ChatManager:
                     # Process and display response
                     self._process_response(current_history, user_message, description_to_use)
                     self._update_conversation_history(current_history)
-                    st.rerun()
+                    #st.rerun()
 
     @staticmethod
     def _fetch_chatbot_description():
@@ -824,8 +824,8 @@ class ChatManager:
 
                     st.markdown("""---""")
                     if session_state['activate_camera']:
-                        col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1, 1])
-                        col5.camera_input(
+                        col3, col4, col5 = st.columns([1, 2, 1])
+                        col4.camera_input(
                             session_state['_']("Take a photo"),
                             on_change=self._store_camera_photo_info,
                             key='your_photo')
@@ -1002,7 +1002,7 @@ class AIClient:
         except Exception as e:
             print(f"An error occurred while fetching the OpenAI response: {e}")
             # Optionally, return a default error message or handle the error appropriately.
-            return "Sorry, I couldn't process that request."
+            return session_state['_']("Sorry, I couldn't process that request.")
 
     @staticmethod
     def _prepare_full_prompt_and_messages(user_prompt, description_to_use):

@@ -81,7 +81,6 @@ class SidebarManager:
             'images_key': 0,
             'image_urls': [],
             'uploaded_images': [],
-            'your_photo': None,
             'image_content': [],
             'camera_image_content': [],
             'activate_camera': False,
@@ -258,7 +257,6 @@ class SidebarManager:
                         session_state['images_key'] += 1
                         session_state['image_urls'] = []
                         session_state['uploaded_images'] = []
-                        session_state['your_photo'] = None
                         session_state['image_content'] = []
                         session_state['camera_image_content'] = []
                         session_state['activate_camera'] = False
@@ -714,7 +712,6 @@ class ChatManager:
                     # Process and display response
                     self._process_response(current_history, user_message, description_to_use)
                     self._update_conversation_history(current_history)
-                    #st.rerun()
 
     @staticmethod
     def _fetch_chatbot_description():
@@ -806,6 +803,12 @@ class ChatManager:
             description = self._fetch_chatbot_description()
 
             if isinstance(description, str) and description.strip():
+                if session_state['activate_camera']:
+                    col3, col4, col5 = st.columns([1, 2, 1])
+                    col4.camera_input(
+                        session_state['_']("Take a photo"),
+                        on_change=self._store_camera_photo_info,
+                        key='your_photo')
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
                 image_urls = session_state.get('image_urls', [])
@@ -825,12 +828,7 @@ class ChatManager:
                         self._display_prompt_editor(description)
 
                     st.markdown("""---""")
-                    if session_state['activate_camera']:
-                        col3, col4, col5 = st.columns([1, 2, 1])
-                        col4.camera_input(
-                            session_state['_']("Take a photo"),
-                            on_change=self._store_camera_photo_info,
-                            key='your_photo')
+
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history

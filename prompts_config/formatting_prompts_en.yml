@@ -1,0 +1,6 @@
+Formatting: "If the response contains any mathematical expressions, for example, formulas or functions, provide these mathematical expressions in LateX.\n
+        These are some examples of mathematical expressions written in LateX syntax:\n
+        - $$y = a + bx + e$$\n
+        - $y$\n
+        - $a$\n
+        "

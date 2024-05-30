@@ -120,7 +120,8 @@ class SidebarManager:
             language = "de"
 
         """Load chat prompts based on language."""
-        session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
+        session_state['prompt_options'] = menu_utils.load_prompts_from_yaml(language=language)
+        session_state['formatting_prompts'] = menu_utils.load_formatting_prompts_from_yaml(language=language)
 
     def logout_and_redirect(self):
         """
@@ -743,17 +744,6 @@ class AIClient:
             session_state['accessible_models'] = default_models['models']
 
     @staticmethod
-    def get_selected_model():
-        """
-        Get the selected model for the current user
-        """
-        # Get selected model from dropdown
-        if 'selected_model' in session_state and session_state['selected_model'] in session_state['accessible_models']:
-            return session_state['selected_model']
-
-        return os.getenv('OPENAI_DEFAULT_MODEL')
-
-    @staticmethod
     def _generate_response(stream):
         """
         Extracts the content from the stream of responses from the OpenAI API.
@@ -761,7 +751,6 @@ class AIClient:
             stream: The stream of responses from the OpenAI API.
 
         """
-
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:
@@ -774,8 +763,6 @@ class AIClient:
 
         Parameters:
             response_type (str): whether the response is a text or a latex expression.
-            partial_response (list): The chunks of the response from the OpenAI API.
-
         """
         # The concatenated response.
         str_response = ""
@@ -805,91 +792,91 @@ class AIClient:
         Returns:
             str: The response from the chatbot.
         """
-        try:
-            # Prepare the full prompt and messages with context or instructions
-            messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
+        #try:
+        # Prepare the full prompt and messages with context or instructions
+        messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
 
-            # Send the request to the OpenAI API
-            # Display assistant response in chat message container
-            self.response = ""
-            # true if the response contains a special text like code block or math expression
-            self.special_text = False
-            with st.chat_message("assistant"):
-                with st.spinner(session_state['_']("Generating response...")):
-                    stream = self.client.chat.completions.create(
-                        model=self.get_selected_model(),
-                        messages=messages,
-                        stream=True,
-                    )
-                    self.partial_response = []
+        # Send the request to the OpenAI API
+        # Display assistant response in chat message container
+        self.response = ""
+        # true if the response contains a special text like code block or math expression
+        self.special_text = False
+        with st.chat_message("assistant"):
+            with st.spinner(session_state['_']("Generating response...")):
+                stream = self.client.chat.completions.create(
+                    model=session_state['selected_model'],
+                    messages=messages,
+                    stream=True,
+                )
+                self.partial_response = []
 
-                    gen_stream = self._generate_response(stream)
-                    for chunk_content in gen_stream:
-                        # check if the chunk is a code block
-                        if chunk_content == '```':
-                            self.partial_response.append(chunk_content)
-                            self.special_text = True
-                            while self.special_text:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    self.partial_response.append(chunk_content)
-                                    if chunk_content == "`\n\n":
-                                        # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response('text')
-                                except StopIteration:
-                                    break
-
-                        # inline formula or math expression
-                        elif chunk_content == ' \\(':
-                            self.partial_response.append(chunk_content)
-                            self.special_text = True
-                            while self.special_text:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    self.partial_response.append(chunk_content)
-                                    # example of inline math expression \\(f(t)\\) 
-                                    if chunk_content == ')' and '\\' in self.partial_response[-1]:
-                                        # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response('latex')
-                                except StopIteration:
-                                    break
-
-                        elif chunk_content == '\\':
-                            self.partial_response.append(chunk_content)
-                            self.special_text = True
-                            while self.special_text:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    self.partial_response.append(chunk_content)
-                                    # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty}
-                                    # F(\\omega) e^{i\\omega t} d\\omega\n\\]
-                                    if ']' in chunk_content and '\\' in self.partial_response[-1]:
-                                        # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response('latex')
-
-                                except StopIteration:
-                                    break
-
-                        else:
-                            # If the chunk is not a code or math block, append it to the partial response
-                            self.partial_response.append(chunk_content)
-                            if chunk_content:
-                                if '\n' in chunk_content:
+                gen_stream = self._generate_response(stream)
+                for chunk_content in gen_stream:
+                    # check if the chunk is a code block
+                    if chunk_content == '```':
+                        self.partial_response.append(chunk_content)
+                        self.special_text = True
+                        while self.special_text:
+                            try:
+                                chunk_content = next(gen_stream)
+                                self.partial_response.append(chunk_content)
+                                if chunk_content == "`\n\n":
+                                    # show partial response to the user and keep it  for later use
                                     self._concatenate_partial_response('text')
+                            except StopIteration:
+                                break
 
-                # If there is a partial response left, concatenate it and render it
-                if self.partial_response:
-                    self._concatenate_partial_response('text')
+                    # inline formula or math expression
+                    elif chunk_content == ' \\(':
+                        self.partial_response.append(chunk_content)
+                        self.special_text = True
+                        while self.special_text:
+                            try:
+                                chunk_content = next(gen_stream)
+                                self.partial_response.append(chunk_content)
+                                # example of inline math expression \\(f(t)\\)
+                                if chunk_content == ')' and '\\' in self.partial_response[-1]:
+                                    # show partial response to the user and keep it  for later use
+                                    self._concatenate_partial_response('latex')
+                            except StopIteration:
+                                break
 
-            return self.response
+                    elif chunk_content == '\\':
+                        self.partial_response.append(chunk_content)
+                        self.special_text = True
+                        while self.special_text:
+                            try:
+                                chunk_content = next(gen_stream)
+                                self.partial_response.append(chunk_content)
+                                # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty}
+                                # F(\\omega) e^{i\\omega t} d\\omega\n\\]
+                                if ']' in chunk_content and '\\' in self.partial_response[-1]:
+                                    # show partial response to the user and keep it  for later use
+                                    self._concatenate_partial_response('latex')
 
-        except Exception as e:
-            print(f"An error occurred while fetching the OpenAI response: {e}")
-            # Optionally, return a default error message or handle the error appropriately.
-            return "Sorry, I couldn't process that request."
+                            except StopIteration:
+                                break
+
+                    else:
+                        # If the chunk is not a code or math block, append it to the partial response
+                        self.partial_response.append(chunk_content)
+                        if chunk_content:
+                            if '\n' in chunk_content:
+                                self._concatenate_partial_response('text')
+
+            # If there is a partial response left, concatenate it and render it
+            if self.partial_response:
+                self._concatenate_partial_response('text')
+
+        return self.response
+
+        #except Exception as e:
+        print(f"An error occurred while fetching the OpenAI response: {e}")
+        # Optionally, return a default error message or handle the error appropriately.
+        return session_state['_']("Sorry, I couldn't process that request.")
 
     @staticmethod
-    def _prepare_full_prompt_and_messages(user_prompt, output_parser_instructions):
+    def _prepare_full_prompt_and_messages(user_prompt, description_to_use):
         """
         Prepares the full prompt and messages combining user input and additional descriptions.
 
@@ -901,17 +888,13 @@ class AIClient:
             list: List of dictionaries containing messages for the chat completion.
         """
 
-        output_parser_instructions += """\n\n If the response contains any mathematical expressions, for example, formulas or functions, provide these mathematical expressions in LateX. 
-        These are some examples of mathematical expressions written in LateX syntax:
-        - $$y = a + bx + e$$
-        - $y$ 
-        -$a$
-        \n\n"""
+        full_instructions_prompt = description_to_use + "\n\n\n" + session_state['formatting_prompts']['Formatting']
+        print(full_instructions_prompt)
 
         if session_state["model_selection"] == 'OpenAI':
             messages = [{
                 'role': "system",
-                'content': output_parser_instructions
+                'content': full_instructions_prompt
             }]
         else:  # Add here conditions for different types of models
             messages = []
@@ -930,7 +913,7 @@ class AIClient:
             # This is for models that were trained with no system prompt: LLaMA/Mistral/Mixtral.
             # Source: https://github.com/huggingface/transformers/issues/28366
             # Maybe find a better solution or avoid any system prompt for these models
-            messages.append({"role": "user", "content": output_parser_instructions + "\n\n" + user_prompt})
+            messages.append({"role": "user", "content": full_instructions_prompt + "\n\n" + user_prompt})
 
         # This method can be expanded based on how you want to structure the prompt
         # For example, you might prepend the description_to_use before the user_prompt

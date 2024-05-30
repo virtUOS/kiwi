@@ -5,11 +5,21 @@ import streamlit as st
 # Function to load prompts from a YAML file
 @st.cache_data
 def load_prompts_from_yaml(language='de'):
-
     if language == 'en':
         file_path = 'prompts_config/chat_basic_prompts_en.yml'
     else:
         file_path = 'prompts_config/chat_basic_prompts_de.yml'
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return yaml.safe_load(file)
+
+
+@st.cache_data
+def load_formatting_prompts_from_yaml(language='de'):
+    if language == 'en':
+        file_path = 'prompts_config/formatting_prompts_en.yml'
+    else:
+        file_path = 'prompts_config/formatting_prompts_de.yml'
 
     with open(file_path, 'r', encoding='utf-8') as file:
         return yaml.safe_load(file)

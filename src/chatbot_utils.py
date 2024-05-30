@@ -68,7 +68,7 @@ class SidebarManager:
         prompt options, etc., essential for the application to function correctly from the start.
         """
         required_keys = {
-            'username': 'Anonymous',
+            'username': self.cookies.get('username'),
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},

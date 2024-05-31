@@ -302,6 +302,8 @@ class SidebarManager:
     def _close_sidepanel_callback():
         if session_state['activate_camera']:
             session_state['sidebar_state'] = "collapsed"
+        else:
+            session_state['sidebar_state'] = "expanded"
 
     def _show_images_controls(self):
         """

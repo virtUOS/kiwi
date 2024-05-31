@@ -59,8 +59,8 @@ msgid "Restore Original Prompt"
 msgstr "Ursprünglichen Prompt wiederherstellen"
 
 #: src/chatbot_utils.py:265
-msgid "Images Controls"
-msgstr "Bilder Kontrollen"
+msgid "Images"
+msgstr "Bilder"
 
 #: src/chatbot_utils.py:266
 msgid "Upload Images"
@@ -69,6 +69,10 @@ msgstr "Bilder hochladen"
 #: src/chatbot_utils.py:275
 msgid "Enter Image URLs (one per line)"
 msgstr "Bild-URLs eingeben (eine pro Zeile)"
+
+#: src/chatbot_utils.py:284
+msgid "Chat history"
+msgstr "Chat-Verlauf"
 
 #: src/chatbot_utils.py:290
 msgid "**Upload Conversation**"
@@ -111,8 +115,8 @@ msgid "View or edit system prompt"
 msgstr "System-Prompt einsehen oder bearbeiten"
 
 #: src/chatbot_utils.py:324
-msgid "Activate camera to take a photo"
-msgstr "Aktivieren Sie die Kamera, um ein Foto zu machen"
+msgid "Activate camera"
+msgstr "Kamera aktivieren"
 
 #: src/chatbot_utils.py:312
 msgid "Take a photo"

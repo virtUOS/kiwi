@@ -280,12 +280,13 @@ class SidebarManager:
         with st.sidebar:
             st.markdown("---")
             st.write(session_state['_']("**Options**"))
-            col1, col2, col3 = st.columns([1, 1, 1])
-            if conversation_key in session_state['conversation_histories'] and session_state[
-                    'conversation_histories'][conversation_key]:
-                self._delete_conversation_button(col3)
-                self._download_conversation_button(col2, conversation_key)
-            self._upload_conversation_button(col1, conversation_key)
+            with st.expander(session_state['_']("Chat history")):
+                col1, col2, col3 = st.columns([1, 1, 1])
+                if conversation_key in session_state['conversation_histories'] and session_state[
+                        'conversation_histories'][conversation_key]:
+                    self._delete_conversation_button(col3)
+                    self._download_conversation_button(col2, conversation_key)
+                self._upload_conversation_button(col1, conversation_key)
 
     @staticmethod
     def _get_rid_of_submit_text():
@@ -306,7 +307,7 @@ class SidebarManager:
         inside which there is an option to upload multiple images of supported formats.
         """
         with st.sidebar:
-            with st.expander(session_state['_']("Images Controls")):
+            with st.expander(session_state['_']("Images")):
                 session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
                                                                     type=['png', 'jpeg', 'gif', 'webp'],
                                                                     accept_multiple_files=True,
@@ -324,7 +325,7 @@ class SidebarManager:
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
                 # Checkbox to activate camera input
-                session_state['activate_camera'] = st.toggle(session_state['_']("Activate camera to take a photo"))
+                session_state['activate_camera'] = st.toggle(session_state['_']("Activate camera"))
 
     @staticmethod
     def _delete_conversation_callback():

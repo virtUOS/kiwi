@@ -186,10 +186,14 @@ class SidebarManager:
 
         self._style_language_uploader()
 
-        self._show_conversation_controls()
+        with st.sidebar:
+            st.markdown("---")
+            st.write(session_state['_']("**Options**"))
 
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
             self._show_images_controls()
+
+        self._show_conversation_controls()
 
         self._add_custom_css()
 
@@ -278,15 +282,13 @@ class SidebarManager:
         """
         conversation_key = session_state['selected_chatbot_path_serialized']
         with st.sidebar:
-            st.markdown("---")
-            st.write(session_state['_']("**Options**"))
             with st.expander(session_state['_']("Chat history")):
                 col1, col2, col3 = st.columns([1, 1, 1])
+                self._upload_conversation_button(col1, conversation_key)
                 if conversation_key in session_state['conversation_histories'] and session_state[
                         'conversation_histories'][conversation_key]:
-                    self._delete_conversation_button(col3)
                     self._download_conversation_button(col2, conversation_key)
-                self._upload_conversation_button(col1, conversation_key)
+                    self._delete_conversation_button(col3)
 
     @staticmethod
     def _get_rid_of_submit_text():
@@ -308,6 +310,10 @@ class SidebarManager:
         """
         with st.sidebar:
             with st.expander(session_state['_']("Images")):
+                # Checkbox to activate camera input
+                session_state['activate_camera'] = st.toggle(session_state['_']("Activate camera"))
+
+                # Widget to upload images
                 session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
                                                                     type=['png', 'jpeg', 'gif', 'webp'],
                                                                     accept_multiple_files=True,
@@ -324,9 +330,6 @@ class SidebarManager:
                         session_state['image_urls'] = []
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
-                # Checkbox to activate camera input
-                session_state['activate_camera'] = st.toggle(session_state['_']("Activate camera"))
-
     @staticmethod
     def _delete_conversation_callback():
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
@@ -342,9 +345,8 @@ class SidebarManager:
         :param column: The column in Streamlit where the button should be placed.
         This should be a Streamlit column object.
         """
-        column.button("🗑️",
-                      on_click=self._delete_conversation_callback,
-                      help=session_state['_']("Delete Conversation"))
+        delete_label = session_state['_']("Delete Conversation")
+        st.button(f"🗑️ {delete_label}", on_click=self._delete_conversation_callback, help=delete_label)
 
     def _upload_conversation_button(self, container, conversation_key):
         """
@@ -358,7 +360,8 @@ class SidebarManager:
         - conversation_key (str): A unique string identifier for the conversation history to be uploaded. This
           is used to correctly associate the uploaded conversation with its relevant session state.
         """
-        if container.button("⬆️", help=session_state['_']("Upload Conversation")):
+        upload_label = session_state['_']("Upload Conversation")
+        if st.button(f"⬆ {upload_label}️", help=upload_label):
             self._upload_conversation_file(st, conversation_key)
 
     @staticmethod
@@ -374,14 +377,16 @@ class SidebarManager:
         - conversation_key (str): The key used to identify the conversation history within the session state,
           ensuring the correct conversation history is made downloadable.
         """
+        download_label = session_state['_']("Download Conversation")
         conversation_to_download = session_state['conversation_histories'][conversation_key]
         conversation_df = pd.DataFrame(conversation_to_download,
                                        columns=[session_state['_']('Speaker'),
                                                 session_state['_']('Message'),
                                                 session_state['_']('System prompt')])
         conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-        container.download_button("⬇️", data=conversation_csv, file_name="conversation.csv", mime="text/csv",
-                                  help=session_state['_']("Download Conversation"))
+        st.download_button(f"⬇ {download_label}️", data=conversation_csv, file_name="conversation.csv",
+                           mime="text/csv",
+                           help=download_label)
 
     @staticmethod
     def _process_uploaded_conversation_file(container, conversation_key):
@@ -835,7 +840,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                'selected_chatbot_path_serialized'],
+                                                                                           'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 
@@ -1027,7 +1032,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

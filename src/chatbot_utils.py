@@ -190,10 +190,10 @@ class SidebarManager:
             st.markdown("---")
             st.write(session_state['_']("**Options**"))
 
+        self._show_conversation_controls()
+
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
             self._show_images_controls()
-
-        self._show_conversation_controls()
 
         self._add_custom_css()
 
@@ -282,13 +282,12 @@ class SidebarManager:
         """
         conversation_key = session_state['selected_chatbot_path_serialized']
         with st.sidebar:
-            with st.expander(session_state['_']("Chat history")):
-                col1, col2, col3 = st.columns([1, 1, 1])
-                self._upload_conversation_button(col1, conversation_key)
-                if conversation_key in session_state['conversation_histories'] and session_state[
-                        'conversation_histories'][conversation_key]:
-                    self._download_conversation_button(col2, conversation_key)
-                    self._delete_conversation_button(col3)
+            col1, col2, col3 = st.columns([1, 1, 1])
+            self._upload_conversation_button(col1, conversation_key)
+            if conversation_key in session_state['conversation_histories'] and session_state[
+                    'conversation_histories'][conversation_key]:
+                self._download_conversation_button(col2, conversation_key)
+                self._delete_conversation_button(col3)
 
     @staticmethod
     def _get_rid_of_submit_text():
@@ -334,7 +333,7 @@ class SidebarManager:
     def _delete_conversation_callback():
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
-    def _delete_conversation_button(self, column):
+    def _delete_conversation_button(self, container):
         """
         Render a button in the specified column that allows the user
         to delete the active chatbot's conversation history.
@@ -342,11 +341,11 @@ class SidebarManager:
         On button click, this static method removes the conversation history from the session state for the
         current chatbot path and triggers a page rerun to refresh the state.
 
-        :param column: The column in Streamlit where the button should be placed.
+        :param container: The container in Streamlit where the button should be placed.
         This should be a Streamlit column object.
         """
         delete_label = session_state['_']("Delete Conversation")
-        st.button(f"🗑️ {delete_label}", on_click=self._delete_conversation_callback, help=delete_label)
+        container.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
     def _upload_conversation_button(self, container, conversation_key):
         """
@@ -361,7 +360,7 @@ class SidebarManager:
           is used to correctly associate the uploaded conversation with its relevant session state.
         """
         upload_label = session_state['_']("Upload Conversation")
-        if st.button(f"⬆ {upload_label}️", help=upload_label):
+        if container.button("⬆️", help=upload_label):
             self._upload_conversation_file(st, conversation_key)
 
     @staticmethod
@@ -384,9 +383,9 @@ class SidebarManager:
                                                 session_state['_']('Message'),
                                                 session_state['_']('System prompt')])
         conversation_csv = conversation_df.to_csv(index=False).encode('utf-8')
-        st.download_button(f"⬇ {download_label}️", data=conversation_csv, file_name="conversation.csv",
-                           mime="text/csv",
-                           help=download_label)
+        container.download_button("⬇️️", data=conversation_csv, file_name="conversation.csv",
+                                  mime="text/csv",
+                                  help=download_label)
 
     @staticmethod
     def _process_uploaded_conversation_file(container, conversation_key):
@@ -840,7 +839,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                           'selected_chatbot_path_serialized'],
+                                                                                    'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 

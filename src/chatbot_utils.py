@@ -300,7 +300,8 @@ class SidebarManager:
 
     @staticmethod
     def _close_sidepanel_callback():
-        session_state['sidebar_state'] = "collapsed"
+        if session_state['activate_camera']:
+            session_state['sidebar_state'] = "collapsed"
 
     def _show_images_controls(self):
         """

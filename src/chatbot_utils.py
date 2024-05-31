@@ -324,7 +324,7 @@ class SidebarManager:
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
                 # Checkbox to activate camera input
-                session_state['activate_camera'] = st.checkbox(session_state['_']("Activate camera to take a photo"))
+                session_state['activate_camera'] = st.toggle(session_state['_']("Activate camera to take a photo"))
 
     @staticmethod
     def _delete_conversation_callback():

@@ -35,8 +35,8 @@ language_controls()
 
 current_language = st.query_params['lang']
 
-if "password_correct" not in session_state:
-    session_state["password_correct"] = False
+if 'password_correct' not in session_state:
+    session_state['password_correct'] = False
 
 if 'credentials_checked' not in session_state:
     session_state['credentials_checked'] = False
@@ -53,14 +53,14 @@ with st.sidebar:
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        #user_found = ldap_connector.check_auth(username=session_state.username_input, password=session_state.password_input)
-        user_found = True
+        user_found = ldap_connector.check_auth(username=session_state['username_input'],
+                                               password=session_state['password_input'])
 
         if user_found:
-            session_state["password_correct"] = True
-            del session_state["password_input"]  # Don't store the password.
+            session_state['password_correct'] = True
+            del session_state['password_input']  # Don't store the password.
         else:
-            session_state["password_correct"] = False
+            session_state['password_correct'] = False
 
         session_state['credentials_checked'] = True
 
@@ -78,12 +78,12 @@ with st.sidebar:
     with st.form("login-form"):
         # Show input for password.
         st.text_input(
-            session_state['_']("User name"), key="username_input"
+            session_state['_']("User name"), key='username_input'
         )
 
         # Show input for password.
         st.text_input(
-            session_state['_']("Password"), type="password", key="password_input"
+            session_state['_']("Password"), type="password", key='password_input'
         )
 
         st.form_submit_button(session_state['_']("Login"), on_click=credentials_entered)
@@ -178,7 +178,7 @@ else:
 st.markdown(md_msg, unsafe_allow_html=True)
 
 # First check if there's a session already started
-if cookies.get("session") != 'in':
+if cookies.get('session') != 'in':
 
     # If no session, then check password
     if not check_password():
@@ -186,8 +186,8 @@ if cookies.get("session") != 'in':
     else:
         # When the password is correct create a persistent session
         # Save cookie for the session. Use username as value, maybe it's useful at some point
-        cookies["session"] = 'in'
-        cookies["username"] = session_state['username_input']  # Persist username
+        cookies['session'] = 'in'
+        cookies['username'] = session_state['username_input']  # Persist username
         cookies.save()
 
 if cookies['session'] == 'in':

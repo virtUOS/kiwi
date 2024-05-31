@@ -6,8 +6,14 @@ from src.chatbot_utils import SidebarManager, ChatManager, AIClient
 # Load environment variables
 load_dotenv()
 
+if 'sidebar_state' not in session_state:
+    session_state['sidebar_state'] = "expanded"
+
 # Streamlit page config
-st.set_page_config(page_title="kiwi", layout="wide", page_icon="🥝")
+st.set_page_config(page_title="kiwi",
+                   layout="wide",
+                   page_icon="🥝",
+                   initial_sidebar_state=session_state['sidebar_state'])
 
 
 # Main Application Class

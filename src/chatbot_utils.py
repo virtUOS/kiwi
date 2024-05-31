@@ -83,7 +83,6 @@ class SidebarManager:
             'uploaded_images': [],
             'image_content': [],
             'camera_image_content': [],
-            'activate_camera': False,
         }
 
         for key, default_value in required_keys.items():
@@ -263,7 +262,6 @@ class SidebarManager:
                         session_state['uploaded_images'] = []
                         session_state['image_content'] = []
                         session_state['camera_image_content'] = []
-                        session_state['activate_camera'] = False
                         st.rerun()
 
                 else:
@@ -300,6 +298,10 @@ class SidebarManager:
         """
         st.markdown(hide_submit_text, unsafe_allow_html=True)
 
+    @staticmethod
+    def _close_sidepanel_callback():
+        session_state['sidebar_state'] = "collapsed"
+
     def _show_images_controls(self):
         """
         Display buttons for image management, including uploading images, in the sidebar.
@@ -310,7 +312,9 @@ class SidebarManager:
         with st.sidebar:
             with st.expander(session_state['_']("Images")):
                 # Checkbox to activate camera input
-                session_state['activate_camera'] = st.toggle(session_state['_']("Activate camera"))
+                st.toggle(session_state['_']("Activate camera"),
+                          key='activate_camera',
+                          on_change=self._close_sidepanel_callback)
 
                 # Widget to upload images
                 session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),

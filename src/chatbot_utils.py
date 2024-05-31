@@ -257,7 +257,7 @@ class SidebarManager:
                     if session_state['selected_model'] != self.advanced_model and (
                             session_state['image_urls'] or
                             session_state['uploaded_images'] or
-                            session_state['your_photo']):
+                            session_state['camera_image_content']):
                         session_state['images_key'] += 1
                         session_state['image_urls'] = []
                         session_state['uploaded_images'] = []

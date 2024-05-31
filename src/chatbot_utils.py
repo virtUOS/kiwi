@@ -281,11 +281,11 @@ class SidebarManager:
         conversation_key = session_state['selected_chatbot_path_serialized']
         with st.sidebar:
             col1, col2, col3 = st.columns([1, 1, 1])
-            self._upload_conversation_button(col1, conversation_key)
-            if conversation_key in session_state['conversation_histories'] and session_state[
-                    'conversation_histories'][conversation_key]:
-                self._download_conversation_button(col2, conversation_key)
-                self._delete_conversation_button(col3)
+        self._upload_conversation_button(col1, conversation_key)
+        if conversation_key in session_state['conversation_histories'] and session_state[
+                'conversation_histories'][conversation_key]:
+            self._download_conversation_button(col2, conversation_key)
+            self._delete_conversation_button(col3)
 
     @staticmethod
     def _get_rid_of_submit_text():
@@ -367,8 +367,14 @@ class SidebarManager:
           is used to correctly associate the uploaded conversation with its relevant session state.
         """
         upload_label = session_state['_']("Upload Conversation")
-        if container.button("⬆️", help=upload_label):
-            self._upload_conversation_file(st, conversation_key)
+        with container:
+            with st.popover("⬆️", help=upload_label):
+                st.file_uploader(session_state['_']("**Upload Conversation**"),
+                                 type=['csv'],
+                                 key='file_uploader_conversation',
+                                 on_change=self._process_uploaded_conversation_file,
+                                 args=(conversation_key,)
+                                 )
 
     @staticmethod
     def _download_conversation_button(container, conversation_key):
@@ -395,15 +401,13 @@ class SidebarManager:
                                   help=download_label)
 
     @staticmethod
-    def _process_uploaded_conversation_file(container, conversation_key):
+    def _process_uploaded_conversation_file(conversation_key):
         """
         Handles the processing of a conversation history file uploaded by the user. Validates the uploaded CSV
         file for required columns, updates the session state with the uploaded conversation, and extracts
         the latest 'System prompt' based on user's message from the uploaded conversation for further processing.
 
         Parameters:
-        - container (st.delta_generator.DeltaGenerator): The Streamlit container displaying status messages
-          regarding the uploading process.
         - conversation_key (str): A unique identifier for the conversation history to correctly update the session
           state with the uploaded content.
         """
@@ -417,7 +421,7 @@ class SidebarManager:
                                     session_state['_']('Message'),
                                     session_state['_']('System prompt')]
                 if not all(column in conversation_df.columns for column in required_columns):
-                    container.error(
+                    st.error(
                         session_state['_']("The uploaded file is missing one or more required columns:"
                                            " 'Speaker', 'Message', 'System prompt'"))
                     return
@@ -437,10 +441,10 @@ class SidebarManager:
                     session_state['edited_prompts'][conversation_key] = last_user_prompt
                 else:
                     return
-                container.success(session_state['_']("Successfully uploaded the conversation."))
+                st.success(session_state['_']("Successfully uploaded the conversation."))
                 time.sleep(2)
             except Exception as e:
-                container.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
+                st.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
 
     @staticmethod
     def _style_language_uploader():
@@ -484,26 +488,6 @@ class SidebarManager:
         )
 
         st.markdown(hide_label, unsafe_allow_html=True)
-
-    def _upload_conversation_file(self, container, conversation_key):
-        """
-        Render a file uploader in the specified container allowing users to upload a conversation history CSV file.
-
-        This static method parses the uploaded CSV file to extract the conversation history and updates the
-        session state's conversation history for the current conversation_key with the uploaded data.
-
-        Parameters:
-        - container: The Streamlit container (e.g., st.sidebar, st) where the uploader should be placed.
-        This should be a Streamlit container object.
-        - conversation_key: The key that uniquely identifies the conversation in the session state's
-        conversation histories.
-        """
-        container.file_uploader(session_state['_']("**Upload Conversation**"),
-                                type=['csv'],
-                                key='file_uploader_conversation',
-                                on_change=self._process_uploaded_conversation_file,
-                                args=(container, conversation_key)
-                                )
 
     @staticmethod
     def _add_custom_css():
@@ -846,7 +830,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                    'selected_chatbot_path_serialized'],
+                                                                                           'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 

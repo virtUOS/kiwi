@@ -5,10 +5,10 @@ import base64
 
 import pandas as pd
 from openai import OpenAI
-import streamlit as st
 from streamlit import session_state
 from streamlit_option_menu import option_menu
 from streamlit_cookies_manager import EncryptedCookieManager
+from streamlit_float import *
 from src import menu_utils
 from dotenv import load_dotenv
 
@@ -31,6 +31,8 @@ class SidebarManager:
                                    "any personal information and copyrighted materials."))
         language_controls()
         self.advanced_model = "gpt-4o"
+        # Float feature initialization
+        float_init()
 
     @staticmethod
     def initialize_cookies():
@@ -774,6 +776,10 @@ class ChatManager:
 
     @staticmethod
     def _store_camera_photo_info():
+        """
+        Stores base64 encoded URL of the photo taken by the camera into the session state.
+        If there is existing photo within the session state, it appends the new image to the sequence.
+        """
         session_state['camera_image_content'] = []  # Don't reinitialize if you want image sequences
         if session_state['your_photo']:
             your_image64 = base64.b64encode(session_state['your_photo'].getvalue()).decode()
@@ -781,6 +787,23 @@ class ChatManager:
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{your_image64}"}
             })
+
+    def _display_camera(self):
+        """
+        Renders the camera input widget and displays the captured photo.
+        """
+        col3, col4, col5 = st.columns([1, 1, 1])
+        camera_container = col5.container()
+        with camera_container:
+            # Get custom theme background color if set, otherwise default to white
+            bg_color = st.get_option('theme.backgroundColor')
+            if bg_color is None:
+                bg_color = "white"
+            st.camera_input(
+                session_state['_']("Take a photo"),
+                on_change=self._store_camera_photo_info,
+                key='your_photo')
+            float_parent(f"bottom: 35rem;background-color: {bg_color}; padding-top: 1rem;")
 
     def display_chat_interface(self):
         """
@@ -801,11 +824,8 @@ class ChatManager:
 
             if isinstance(description, str) and description.strip():
                 if session_state['activate_camera']:
-                    col3, col4, col5 = st.columns([1, 2, 1])
-                    col4.camera_input(
-                        session_state['_']("Take a photo"),
-                        on_change=self._store_camera_photo_info,
-                        key='your_photo')
+                    self._display_camera()
+
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
                 image_urls = session_state.get('image_urls', [])

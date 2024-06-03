@@ -1,6 +1,7 @@
-Formatting: "Wenn die Antwort mathematische Formeln enthält, zum Beispiel Formeln oder Funktionen, verwenden Sie bitte LateX-Syntax. Hier sind einige Beispiele für mathematische Ausdrücke in LateX-Syntax.\n
-        Hier sind einige Beispiele für mathematische Ausdrücke in LateX-Syntax:\n
+Formatting: "Wenn die Antwort mathematische Formeln enthält, zum Beispiel Formeln oder Funktionen, verwenden Sie bitte LateX-Syntax. Hier sind einige Beispiele für mathematische Ausdrücke in LateX-Syntax.
+        Schließen Sie die mathematischen Formeln in Dollarzeichen ein, um anzuzeigen, dass sie sich im Mathematikmodus befinden.\n
         - $$y = a + bx + e$$\n
         - $y$\n
-        - $a$\n
+        - $x$\n
+        Fügen Sie KEINE Leerzeichen zwischen den Dollarzeichen und den mathematischen Ausdrücken hinzu. Schreiben Sie beispielsweise $y = mx + c$ anstelle von $ y = mx + c $.
         "

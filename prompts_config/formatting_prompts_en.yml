@@ -1,6 +1,8 @@
-Formatting: "If the response contains any mathematical expressions, for example, formulas or functions, provide these mathematical expressions in LateX.\n
+Formatting: "If the response contains any mathematical expressions, for example, formulas or functions, provide these mathematical expressions in LateX. 
+        Enclose the mathematical expressions in dollar signs to indicate that they are in math mode. Enclose inline math expressions using the dollar sign as well\n  
         These are some examples of mathematical expressions written in LateX syntax:\n
         - $$y = a + bx + e$$\n
         - $y$\n
-        - $a$\n
+        - $x$\n
+        DO NOT add any spaces between the dollar signs and the mathematical expressions. For example, write $y = mx + c$ instead of $ y = mx + c $.
         "

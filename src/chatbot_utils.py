@@ -69,7 +69,7 @@ class SidebarManager:
         prompt options, etc., essential for the application to function correctly from the start.
         """
         required_keys = {
-            'username': self.cookies.get('username'),
+            'username': 'Anonymous',
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},
@@ -121,7 +121,7 @@ class SidebarManager:
 
         """Load chat prompts based on language."""
         session_state['prompt_options'] = menu_utils.load_prompts_from_yaml(language=language)
-        session_state['formatting_prompts'] = menu_utils.load_formatting_prompts_from_yaml(language=language)
+        
 
     def logout_and_redirect(self):
         """
@@ -755,9 +755,12 @@ class AIClient:
             delta = chunk.choices[0].delta
             if delta:
                 chunk_content = chunk.choices[0].delta.content
-                yield chunk_content
+                if isinstance(chunk_content,str):
+                    yield chunk_content
+                else:
+                    continue
 
-    def _concatenate_partial_response(self, response_type):
+    def _concatenate_partial_response(self):
         """
         Concatenates the partial response into a single string.
 
@@ -769,14 +772,9 @@ class AIClient:
         for i in self.partial_response:
             if isinstance(i, str):
                 str_response += i
-
-        if response_type == 'text':
-            st.markdown(str_response)
-        elif response_type == 'latex':
-            st.latex(str_response)
-        else:
-            raise ValueError("Invalid response type. Please provide a valid response type.")
-
+                
+        st.markdown(str_response)
+        
         self.special_text = False
         self.partial_response = []
         self.response += str_response
@@ -812,8 +810,9 @@ class AIClient:
 
                 gen_stream = self._generate_response(stream)
                 for chunk_content in gen_stream:
-                    # check if the chunk is a code block
+                     # check if the chunk is a code block
                     if chunk_content == '```':
+                        self._concatenate_partial_response()
                         self.partial_response.append(chunk_content)
                         self.special_text = True
                         while self.special_text:
@@ -822,51 +821,41 @@ class AIClient:
                                 self.partial_response.append(chunk_content)
                                 if chunk_content == "`\n\n":
                                     # show partial response to the user and keep it  for later use
-                                    self._concatenate_partial_response('text')
+                                    self._concatenate_partial_response()
+                                    self.special_text = False
                             except StopIteration:
                                 break
 
                     # inline formula or math expression
-                    elif chunk_content == ' \\(':
-                        self.partial_response.append(chunk_content)
-                        self.special_text = True
-                        while self.special_text:
-                            try:
-                                chunk_content = next(gen_stream)
-                                self.partial_response.append(chunk_content)
-                                # example of inline math expression \\(f(t)\\)
-                                if chunk_content == ')' and '\\' in self.partial_response[-1]:
-                                    # show partial response to the user and keep it  for later use
-                                    self._concatenate_partial_response('latex')
-                            except StopIteration:
-                                break
-
-                    elif chunk_content == '\\':
-                        self.partial_response.append(chunk_content)
-                        self.special_text = True
-                        while self.special_text:
-                            try:
-                                chunk_content = next(gen_stream)
-                                self.partial_response.append(chunk_content)
-                                # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty}
-                                # F(\\omega) e^{i\\omega t} d\\omega\n\\]
-                                if ']' in chunk_content and '\\' in self.partial_response[-1]:
-                                    # show partial response to the user and keep it  for later use
-                                    self._concatenate_partial_response('latex')
-
-                            except StopIteration:
-                                break
-
+                    elif  '\\(' in chunk_content:
+                        self.partial_response.append(chunk_content.replace('\\(','$'))
+                        
+                    elif ')' in chunk_content and '\\' in self.partial_response[-1]:
+                            join_str = self.partial_response[-1] + chunk_content   
+                            self.partial_response = self.partial_response[:-1]           
+                            self.partial_response.append(join_str.replace('\\)','$'))
+                           
+                    
+                    # block formula or math expression
+                    elif  '\\[' in chunk_content:
+                        self.partial_response.append(chunk_content.replace('\\[','$$'))
+                        
+                    elif   ']' in chunk_content and '\\' in self.partial_response[-1]:
+                        join_str = self.partial_response[-1] + chunk_content   
+                        self.partial_response = self.partial_response[:-1]     
+                        self.partial_response.append(join_str.replace('\\]','$$'))
+                        
+                
                     else:
                         # If the chunk is not a code or math block, append it to the partial response
                         self.partial_response.append(chunk_content)
                         if chunk_content:
                             if '\n' in chunk_content:
-                                self._concatenate_partial_response('text')
+                                self._concatenate_partial_response()
 
             # If there is a partial response left, concatenate it and render it
             if self.partial_response:
-                self._concatenate_partial_response('text')
+                self._concatenate_partial_response()
 
         return self.response
 
@@ -888,7 +877,8 @@ class AIClient:
             list: List of dictionaries containing messages for the chat completion.
         """
 
-        full_instructions_prompt = description_to_use + "\n\n\n" + session_state['formatting_prompts']['Formatting']
+        
+        full_instructions_prompt = description_to_use + "\n\n\n" 
         print(full_instructions_prompt)
 
         if session_state["model_selection"] == 'OpenAI':

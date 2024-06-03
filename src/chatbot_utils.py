@@ -793,8 +793,7 @@ class ChatManager:
         Renders the camera input widget and displays the captured photo.
         """
         col3, col4, col5 = st.columns([1, 1, 1])
-        camera_container = col5.container()
-        with camera_container:
+        with col5:
             # Get custom theme background color if set, otherwise default to white
             bg_color = st.get_option('theme.backgroundColor')
             if bg_color is None:

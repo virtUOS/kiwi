@@ -446,7 +446,8 @@ class SidebarManager:
                 st.success(session_state['_']("Successfully uploaded the conversation."))
                 time.sleep(2)
             except Exception as e:
-                st.error(session_state['_']("Failed to process the uploaded file. Error: "), e)
+                st.error(session_state['_']("Failed to process the uploaded file. Error: "))
+                st.error(e)
 
     @staticmethod
     def _style_language_uploader():

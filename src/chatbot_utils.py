@@ -794,15 +794,11 @@ class ChatManager:
         """
         col3, col4, col5 = st.columns([1, 1, 1])
         with col5:
-            # Get custom theme background color if set, otherwise default to white
-            bg_color = st.get_option('theme.backgroundColor')
-            if bg_color is None:
-                bg_color = "white"
             st.camera_input(
                 session_state['_']("Take a photo"),
                 on_change=self._store_camera_photo_info,
                 key='your_photo')
-            float_parent(f"bottom: 35rem;background-color: {bg_color}; padding-top: 1rem;")
+            float_parent(f"bottom: 35rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
 
     def display_chat_interface(self):
         """

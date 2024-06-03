@@ -522,7 +522,7 @@ class SidebarManager:
         with st.sidebar:
             if st.button(session_state['_']('Logout')):
                 self.logout_and_redirect()
-            st.write(f"Version: *v1.1.1*")
+            st.write(f"Version: *v1.1.5*")
 
 
 class ChatManager:
@@ -850,7 +850,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                           'selected_chatbot_path_serialized'],
+                                                                                'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 

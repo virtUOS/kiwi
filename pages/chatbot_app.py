@@ -21,7 +21,6 @@ class ChatbotApplication:
         """Initializes the app configurations, verifies user session, and sets up the UI components."""
 
         # Set and manage sidebar interface controls
-        self.sidebar_manager.verify_user_session()
         self.sidebar_manager.initialize_session_variables()
         self.sidebar_manager.display_logo()
         self.sidebar_manager.display_sidebar_controls()
@@ -31,6 +30,7 @@ class ChatbotApplication:
 
         # Set and manage chat interface display
         self.chat_manager.set_client(client)
+        self.sidebar_manager.verify_user_session()
         self.chat_manager.display_chat_interface()
 
     def run(self):

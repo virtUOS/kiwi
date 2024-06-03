@@ -32,11 +32,15 @@ services:
     ports:
       - '127.0.0.1:8501:8501'
     environment:
-      # App name:
-      APP_NAME: "Kiwi"
+      # App name (english, german):
+      APP_NAME_EN: "Kiwi"
+      APP_NAME_DE: "Kiwi"
       # OpenAI settings:
       OPENAI_API_KEY: "CHANGE!"
-      OPENAI_MODEL: 'gpt-4'
+      OPENAI_DEFAULT_MODEL: 'gpt-4'
+      # User settings
+      USER_ROLES: '{"user1":"open","user2":"restricted"}'
+      MODELS_PER_ROLE: '{"restricted":["gpt-3.5-turbo"],"open":["gpt-3.5-turbo","gpt-4o"]}'
       # App customizations:
       # German service sites
       DATENSCHUTZ_DE: 'https://www.example.org/de/datenschutz/'

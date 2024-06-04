@@ -91,6 +91,7 @@ class SidebarManager:
             'video_content': [],
             'camera_image_content': [],
             'video_error': False,
+            'image_error': False,
         }
 
         for key, default_value in required_keys.items():
@@ -274,6 +275,7 @@ class SidebarManager:
                         session_state['video_content'] = []
                         session_state['camera_image_content'] = []
                         session_state['video_error'] = False
+                        session_state['image_error'] = False
                         st.rerun()
 
                 else:
@@ -317,6 +319,24 @@ class SidebarManager:
         else:
             session_state['sidebar_state'] = "expanded"
 
+    @staticmethod
+    def _process_uploaded_images():
+        """Process uploaded images to ensure they are not larger than 20MB."""
+        max_size = 20 * 1024 * 1024  # 20MB in bytes
+        images = session_state['uploaded_images']
+
+        for image in images:
+            # Check the size of the uploaded image
+            image.seek(0, os.SEEK_END)  # Move the cursor to the end of the file
+            file_size = image.tell()  # Get the size of the file
+            image.seek(0)  # Reset the cursor to the start of the file
+
+            if file_size > max_size:
+                session_state['image_error'] = image.name
+                session_state['uploaded_images'] = []
+                session_state['images_key'] += 1
+                st.rerun()
+
     def _show_images_controls(self):
         """
         Display buttons for image management, including uploading images, in the sidebar.
@@ -336,6 +356,13 @@ class SidebarManager:
                                                                     type=['png', 'jpeg', 'gif', 'webp'],
                                                                     accept_multiple_files=True,
                                                                     key=session_state['images_key'])
+
+                if session_state['uploaded_images']:
+                    self._process_uploaded_images()
+
+                if session_state['image_error']:
+                    st.error(session_state['image_error'] +
+                             session_state['_']("is larger than 20MB. Please upload a smaller image."))
 
                 # Text area for image URLs (Get rid of the submit text on the text area because it's useless here)
                 self._get_rid_of_submit_text()
@@ -411,10 +438,15 @@ class SidebarManager:
                                                                    key=session_state['video_key'])
 
                 if session_state['uploaded_video']:
-                    self._process_video_frames()
+                    with st.spinner(session_state['_']("Processing uploaded video...")):
+                        self._process_video_frames()
                 elif session_state['video_error']:
                     st.error(
                         session_state['_']("The uploaded video is larger than 100MB. Please upload a smaller video."))
+                    session_state['video_error'] = False
+                    session_state['video_content'] = []
+                else:
+                    session_state['video_content'] = []
 
     @staticmethod
     def _delete_conversation_callback():

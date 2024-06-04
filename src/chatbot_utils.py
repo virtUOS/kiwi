@@ -195,6 +195,7 @@ class SidebarManager:
 
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
             self._show_images_controls()
+            self._show_videos_controls()
 
         self._add_custom_css()
 
@@ -337,6 +338,23 @@ class SidebarManager:
                     if 'image_urls' not in session_state:
                         session_state['image_urls'] = []
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
+
+    def _show_videos_controls(self):
+        """
+        Display buttons for video management, including uploading videos, in the sidebar.
+
+        This method presents an expander with the label "Videos" in the sidebar,
+        inside which there is an option to upload a video of supported formats.
+        """
+        with st.sidebar:
+            with st.expander(session_state['_']("Videos")):
+
+                # Widget to upload images
+                session_state['uploaded_videos'] = st.file_uploader(session_state['_']("Upload Video"),
+                                                                    type=['png', 'jpeg', 'gif', 'webp'],
+                                                                    accept_multiple_files=False,
+                                                                    key=session_state['video_key'])
+
 
     @staticmethod
     def _delete_conversation_callback():

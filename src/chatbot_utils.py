@@ -2,6 +2,9 @@ import json
 import os
 import time
 import base64
+import imageio as iio
+import numpy as np
+from io import BytesIO
 
 import pandas as pd
 from openai import OpenAI
@@ -81,10 +84,13 @@ class SidebarManager:
             'edited_prompts': {},
             'disable_custom': False,
             'images_key': 0,
+            'video_key': -1,
             'image_urls': [],
             'uploaded_images': [],
             'image_content': [],
+            'video_content': [],
             'camera_image_content': [],
+            'video_error': False,
         }
 
         for key, default_value in required_keys.items():
@@ -185,8 +191,6 @@ class SidebarManager:
 
         self._display_model_information()
 
-        self._style_language_uploader()
-
         with st.sidebar:
             st.markdown("---")
             st.write(session_state['_']("**Options**"))
@@ -194,6 +198,7 @@ class SidebarManager:
         self._show_conversation_controls()
 
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
+            self._style_uploader()
             self._show_images_controls()
             self._show_videos_controls()
 
@@ -261,10 +266,14 @@ class SidebarManager:
                             session_state['uploaded_images'] or
                             session_state['camera_image_content']):
                         session_state['images_key'] += 1
+                        session_state['video_key'] -= 1
                         session_state['image_urls'] = []
                         session_state['uploaded_images'] = []
+                        session_state['uploaded_video'] = []
                         session_state['image_content'] = []
+                        session_state['video_content'] = []
                         session_state['camera_image_content'] = []
+                        session_state['video_error'] = False
                         st.rerun()
 
                 else:
@@ -339,6 +348,53 @@ class SidebarManager:
                         session_state['image_urls'] = []
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
+    @staticmethod
+    def _store_video_info(frames_to_append):
+        """ Stores base64 encoded URL of the frames of a video. """
+        if not session_state['video_content']:
+            content_text = session_state['_']("These are frames from a video that I want to upload. "
+                                              "Take them into account to answer questions if required.")
+            formatted_frames = [{"image": x, "resize": 768} for x in frames_to_append]
+            session_state['video_content'].append(content_text)
+            session_state['video_content'].extend(formatted_frames)
+
+    def _process_video_frames(self):
+        uploaded_video = session_state['uploaded_video']
+
+        # Check the size of the uploaded video
+        uploaded_video.seek(0, os.SEEK_END)  # Move the cursor to the end of the file
+        file_size = uploaded_video.tell()  # Get the size of the file
+        uploaded_video.seek(0)  # Reset the cursor to the start of the file
+
+        if file_size <= 100 * 1024 * 1024:  # Check if file size is equal or less than 100MB
+            # read all frames from the bytes string
+            frames = np.stack(iio.mimread(session_state['uploaded_video'].read(), memtest=False))
+            if frames.any():
+                frames_to_append = []
+                for f in frames[0::50]:
+                    # Convert the frame to an image format (e.g., PNG)
+                    buffered = BytesIO()
+                    iio.imwrite(buffered, f, format='png')
+
+                    # Base64 encode the image
+                    base64_frame = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+                    # Add Base64 encoded frame to the frames_to_append list
+                    frames_to_append.append(base64_frame)
+
+                # Ensure only 10 frames are kept
+                if len(frames_to_append) > 10:
+                    indices = np.linspace(0, len(frames_to_append) - 1, 10, dtype=int)
+                    frames_to_append = [frames_to_append[i] for i in indices]
+
+                # Store video information
+                self._store_video_info(frames_to_append)
+        else:
+            session_state['video_error'] = True
+            session_state['uploaded_video'] = []
+            session_state['video_key'] -= 1
+            st.rerun()
+
     def _show_videos_controls(self):
         """
         Display buttons for video management, including uploading videos, in the sidebar.
@@ -348,13 +404,17 @@ class SidebarManager:
         """
         with st.sidebar:
             with st.expander(session_state['_']("Videos")):
-
                 # Widget to upload images
-                session_state['uploaded_videos'] = st.file_uploader(session_state['_']("Upload Video"),
-                                                                    type=['png', 'jpeg', 'gif', 'webp'],
-                                                                    accept_multiple_files=False,
-                                                                    key=session_state['video_key'])
+                session_state['uploaded_video'] = st.file_uploader(session_state['_']("Upload Video"),
+                                                                   type=["mp4", "avi", "mov"],
+                                                                   accept_multiple_files=False,
+                                                                   key=session_state['video_key'])
 
+                if session_state['uploaded_video']:
+                    self._process_video_frames()
+                elif session_state['video_error']:
+                    st.error(
+                        session_state['_']("The uploaded video is larger than 100MB. Please upload a smaller video."))
 
     @staticmethod
     def _delete_conversation_callback():
@@ -468,7 +528,7 @@ class SidebarManager:
                 st.error(e)
 
     @staticmethod
-    def _style_language_uploader():
+    def _style_uploader():
         lang = 'de'
         if 'lang' in st.query_params:
             lang = st.query_params['lang']
@@ -476,11 +536,11 @@ class SidebarManager:
         languages = {
             "en": {
                 "instructions": "Drag and drop files here",
-                "limits": "Limit 20MB per file",
+                "limits": "",
             },
             "de": {
                 "instructions": "Dateien hierher ziehen und ablegen",
-                "limits": "Limit 20MB pro Datei",
+                "limits": "",
             },
         }
 
@@ -819,6 +879,16 @@ class ChatManager:
                 key='your_photo')
             float_parent(f"bottom: 35rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
 
+    @staticmethod
+    def _display_video():
+        """
+        Displays the video.
+        """
+        col3, col4, col5 = st.columns([1, 1, 1])
+        with col5:
+            st.video(session_state['uploaded_video'])
+            float_parent(f"bottom: 35rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
+
     def display_chat_interface(self):
         """
         Displays the chat interface, manages the display of conversation history, and handles user input.
@@ -839,6 +909,8 @@ class ChatManager:
             if isinstance(description, str) and description.strip():
                 if session_state['activate_camera']:
                     self._display_camera()
+                if session_state['uploaded_video']:
+                    self._display_video()
 
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
@@ -864,7 +936,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                'selected_chatbot_path_serialized'],
+                                                                                           'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 
@@ -1064,6 +1136,7 @@ class AIClient:
         user_message_content = [{"type": "text", "text": user_prompt}]
         user_message_content.extend(session_state['image_content'])
         user_message_content.extend(session_state['camera_image_content'])
+        user_message_content.extend(session_state['video_content'])
 
         # Building the messages with the "system" message based on expertise area
         if session_state["model_selection"] == 'OpenAI':

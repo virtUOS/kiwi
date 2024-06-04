@@ -6,4 +6,4 @@ toolbarMode = "minimal"
 gatherUsageStats = false
 
 [server]
-maxUploadSize = 20
+maxUploadSize = 200

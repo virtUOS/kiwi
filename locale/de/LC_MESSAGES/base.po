@@ -122,9 +122,17 @@ msgstr "Kamera aktivieren"
 msgid "Take a photo"
 msgstr "Ein Foto machen"
 
+#: src/chatbot_utils.py:352
+msgid "These are frames from a video that I want to upload. Take them into account to answer questions if required."
+msgstr "Dies sind Bilder aus einem Video, das ich hochladen möchte. Berücksichtigen Sie sie bei der Beantwortung von Fragen, falls erforderlich."
+
 #: src/chatbot_utils.py:386
 msgid "Generating response..."
 msgstr "Antwort wird generiert..."
+
+#: src/chatbot_utils.py:386
+msgid "The uploaded video is larger than 100MB. Please upload a smaller video."
+msgstr "Das hochgeladene Video ist größer als 100 MB. Bitte laden Sie ein kleineres Video hoch."
 
 #: src/chatbot_utils.py:467
 msgid "The System Prompt should be a string and not empty."

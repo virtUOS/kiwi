@@ -751,6 +751,7 @@ class AIClient:
             stream: The stream of responses from the OpenAI API.
 
         """
+        print('----------------------Start response----------------------')
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:
@@ -833,51 +834,21 @@ class AIClient:
                                 break
 
                     # inline formula or math expression
-                    elif chunk_content == ' \\(' or chunk_content == ' \(':
-                      
-                        self.partial_response.append(' $')
-                        self.special_text = True
-                        while self.special_text:
-                            try:
-                                chunk_content = next(gen_stream)
-                                self.partial_response.append(chunk_content)
-                                # example of inline math expression \\(f(t) \\)
-                               
-                                # if chunk_content == ')' and ' \\' in self.partial_response[-1]:
-                                if chunk_content == ' \\' or chunk_content ==  '\\\\' :
-                                    # show partial response to the user and keep it  for later use
-                                    next(gen_stream)
-                                    self.partial_response = self.partial_response[:-1]
-                                    self.partial_response.append('$')
-                                    print('----------------------Math expression:--------------------',self.partial_response)
-                                    self.special_text = False
-                            except StopIteration:
-                                break
+                    elif  '\\(' in chunk_content:
+                        self.partial_response.append(chunk_content.replace('\\(','$'))
+                    elif ')' in chunk_content and '\\' in self.partial_response[-1]:
+                            join_str = self.partial_response[-1] + chunk_content   
+                            self.partial_response = self.partial_response[:-1]           
+                            self.partial_response.append(join_str.replace('\\)','$'))
                     
                     # block formula or math expression
-                    elif chunk_content == '\\[':
-                        self.partial_response.append('$$')
-                        self.special_text = True
-                        while self.special_text:
-                            try:
-                                chunk_content = next(gen_stream)
-                                self.partial_response.append(chunk_content)
-                                # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty}
-                                # F(\\omega) e^{i\\omega t} d\\omega\n\\]
-                                if ']' in chunk_content and ' \\' in self.partial_response[-1]:
-                                    # show partial response to the user and keep it  for later use
-                                    self.partial_response = self.partial_response[:-2]
-                                    self.partial_response.append('$$')
-                                    self._concatenate_partial_response('text')
-                                    print('-------------------Math expression:---------------------------',self.partial_response)
-                                    self.special_text = False
-                            except StopIteration:
-                                break
-                            except Exception as e:
-                                print(f"An error occurred while fetching the OpenAI response: {e}")
-                                # Optionally, return a default error message or handle the error appropriately.
-                                return session_state['_']("Sorry, I couldn't process that request.")
-
+                    elif  '\\[' in chunk_content:
+                        self.partial_response.append(chunk_content.replace('\\[','$$'))
+                    elif ']' in chunk_content and '\\' in self.partial_response[-1]:
+                        join_str = self.partial_response[-1] + chunk_content   
+                        self.partial_response = self.partial_response[:-1]     
+                        self.partial_response.append(join_str.replace('\\]','$$'))
+                
                     else:
                         # If the chunk is not a code or math block, append it to the partial response
                         self.partial_response.append(chunk_content)
@@ -909,7 +880,8 @@ class AIClient:
             list: List of dictionaries containing messages for the chat completion.
         """
 
-        full_instructions_prompt = description_to_use + "\n\n\n" + session_state['formatting_prompts']['Formatting']
+        # full_instructions_prompt = description_to_use + "\n\n\n" + session_state['formatting_prompts']['Formatting']
+        full_instructions_prompt = description_to_use + "\n\n\n" 
         print(full_instructions_prompt)
 
         if session_state["model_selection"] == 'OpenAI':

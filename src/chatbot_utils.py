@@ -819,7 +819,7 @@ class ChatManager:
             description = self._fetch_chatbot_description()
 
             if isinstance(description, str) and description.strip():
-                if session_state['activate_camera']:
+                if session_state.get('activate_camera', None):
                     self._display_camera()
 
                 # Initialize variables for uploaded content
@@ -921,32 +921,30 @@ class AIClient:
             stream: The stream of responses from the OpenAI API.
 
         """
-
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:
                 chunk_content = chunk.choices[0].delta.content
-                yield chunk_content
+                if isinstance(chunk_content, str):
+                    yield chunk_content
+                else:
+                    continue
 
-    @staticmethod
-    def _concatenate_partial_response(partial_response):
+    def _concatenate_partial_response(self):
         """
         Concatenates the partial response into a single string.
-
-        Parameters:
-            partial_response (list): The chunks of the response from the OpenAI API.
-
-        Returns:
-            str: The concatenated response.
         """
+        # The concatenated response.
         str_response = ""
-        for i in partial_response:
+        for i in self.partial_response:
             if isinstance(i, str):
                 str_response += i
 
         st.markdown(str_response)
 
-        return str_response
+        self.special_text = False
+        self.partial_response = []
+        self.response += str_response
 
     def get_response(self, prompt, description_to_use):
         """
@@ -965,49 +963,67 @@ class AIClient:
 
             # Send the request to the OpenAI API
             # Display assistant response in chat message container
-            response = ""
+            self.response = ""
+            # true if the response contains a special text like code block or math expression
+            self.special_text = False
             with st.chat_message("assistant"):
                 with st.spinner(session_state['_']("Generating response...")):
                     stream = self.client.chat.completions.create(
-                        model=self.get_selected_model(),
+                        model=session_state['selected_model'],
                         messages=messages,
                         stream=True,
                     )
-                    partial_response = []
+                    self.partial_response = []
 
                     gen_stream = self._generate_response(stream)
                     for chunk_content in gen_stream:
                         # check if the chunk is a code block
                         if chunk_content == '```':
-                            partial_response.append(chunk_content)
-                            code_block = True
-                            while code_block:
+                            self._concatenate_partial_response()
+                            self.partial_response.append(chunk_content)
+                            self.special_text = True
+                            while self.special_text:
                                 try:
                                     chunk_content = next(gen_stream)
-                                    partial_response.append(chunk_content)
+                                    self.partial_response.append(chunk_content)
                                     if chunk_content == "`\n\n":
-                                        code_block = False
-                                        str_response = self._concatenate_partial_response(partial_response)
-                                        partial_response = []
-                                        response += str_response
-
+                                        # show partial response to the user and keep it  for later use
+                                        self._concatenate_partial_response()
+                                        self.special_text = False
                                 except StopIteration:
                                     break
 
+                        # inline formula or math expression
+                        elif '\\(' in chunk_content:
+                            self.partial_response.append(chunk_content.replace('\\(', '$'))
+
+                        elif ')' in chunk_content and '\\' in self.partial_response[-1]:
+                            join_str = self.partial_response[-1] + chunk_content
+                            self.partial_response = self.partial_response[:-1]
+                            self.partial_response.append(join_str.replace('\\)', '$'))
+
+                        # block formula or math expression
+                        elif '\\[' in chunk_content:
+                            self.partial_response.append(chunk_content.replace('\\[', '$$'))
+
+                        elif ']' in chunk_content and '\\' in self.partial_response[-1]:
+                            join_str = self.partial_response[-1] + chunk_content
+                            self.partial_response = self.partial_response[:-1]
+                            self.partial_response.append(join_str.replace('\\]', '$$'))
+
+
                         else:
-                            # If the chunk is not a code block, append it to the partial response
-                            partial_response.append(chunk_content)
+                            # If the chunk is not a code or math block, append it to the partial response
+                            self.partial_response.append(chunk_content)
                             if chunk_content:
                                 if '\n' in chunk_content:
-                                    str_response = self._concatenate_partial_response(partial_response)
-                                    partial_response = []
-                                    response += str_response
-                # If there is a partial response left, concatenate it and render it
-                if partial_response:
-                    str_response = self._concatenate_partial_response(partial_response)
-                    response += str_response
+                                    self._concatenate_partial_response()
 
-            return response
+                # If there is a partial response left, concatenate it and render it
+                if self.partial_response:
+                    self._concatenate_partial_response()
+
+            return self.response
 
         except Exception as e:
             print(f"An error occurred while fetching the OpenAI response: {e}")
@@ -1038,7 +1054,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+                session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

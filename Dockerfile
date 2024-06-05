@@ -1,9 +1,6 @@
 FROM python:3.12-slim
 EXPOSE 8501
 
-# Update and install ffmpeg
-RUN apt-get update && apt-get install -y ffmpeg
-
 COPY requirements.txt /kiwi/requirements.txt
 RUN pip install --no-cache-dir -r /kiwi/requirements.txt
 

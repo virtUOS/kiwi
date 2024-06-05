@@ -85,6 +85,7 @@ class SidebarManager:
             'disable_custom': False,
             'images_key': 0,
             'video_key': -1,
+            'camera_key': 10000,
             'image_urls': [],
             'uploaded_images': [],
             'image_content': [],
@@ -92,6 +93,7 @@ class SidebarManager:
             'camera_image_content': [],
             'video_error': False,
             'image_error': False,
+            'activate_camera': False
         }
 
         for key, default_value in required_keys.items():
@@ -265,9 +267,12 @@ class SidebarManager:
                     if session_state['selected_model'] != self.advanced_model and (
                             session_state['image_urls'] or
                             session_state['uploaded_images'] or
-                            session_state['camera_image_content']):
+                            session_state['camera_image_content'] or
+                            session_state['uploaded_video'] or
+                            session_state['activate_camera']):
                         session_state['images_key'] += 1
                         session_state['video_key'] -= 1
+                        session_state['camera_key'] += 1
                         session_state['image_urls'] = []
                         session_state['uploaded_images'] = []
                         session_state['uploaded_video'] = []
@@ -276,6 +281,8 @@ class SidebarManager:
                         session_state['camera_image_content'] = []
                         session_state['video_error'] = False
                         session_state['image_error'] = False
+                        session_state['activate_camera'] = False
+                        session_state['sidebar_state'] = "expanded"
                         st.rerun()
 
                 else:
@@ -313,9 +320,29 @@ class SidebarManager:
         st.markdown(hide_submit_text, unsafe_allow_html=True)
 
     @staticmethod
-    def _close_sidepanel_callback():
-        if session_state['activate_camera']:
+    def _reset_video_content():
+        session_state['video_content'] = []
+        session_state['video_key'] -= 1
+        session_state['video_error'] = False
+        session_state['uploaded_video'] = []
+
+    @staticmethod
+    def _reset_image_content():
+        session_state['image_content'] = []
+        session_state['images_key'] += 1
+        session_state['image_error'] = False
+        session_state['camera_image_content'] = []
+        session_state['image_urls'] = []
+        session_state['uploaded_images'] = []
+        session_state['activate_camera'] = False
+        session_state['camera_key'] += 1
+
+    def _close_sidepanel_callback(self):
+        if session_state['sidebar_state'] == "expanded":
             session_state['sidebar_state'] = "collapsed"
+            if session_state['video_content']:
+                self._reset_video_content()
+
         else:
             session_state['sidebar_state'] = "expanded"
 
@@ -347,15 +374,18 @@ class SidebarManager:
         with st.sidebar:
             with st.expander(session_state['_']("Images")):
                 # Checkbox to activate camera input
-                st.toggle(session_state['_']("Activate camera"),
-                          key='activate_camera',
-                          on_change=self._close_sidepanel_callback)
+                session_state['activate_camera'] = st.toggle(
+                    session_state['_']("Activate camera"),
+                    key=session_state['camera_key'],
+                    on_change=self._close_sidepanel_callback
+                )
 
                 # Widget to upload images
                 session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
                                                                     type=['png', 'jpeg', 'gif', 'webp'],
                                                                     accept_multiple_files=True,
-                                                                    key=session_state['images_key'])
+                                                                    key=session_state['images_key'],
+                                                                    on_change=self._reset_video_content)
 
                 if session_state['uploaded_images']:
                     self._process_uploaded_images()
@@ -371,9 +401,8 @@ class SidebarManager:
                 if st.button(session_state['_']("Add URLs")):
                     # Process the URLs
                     url_list = urls.strip().split('\n')
-                    if 'image_urls' not in session_state:
-                        session_state['image_urls'] = []
                     session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
+                    self._reset_video_content()
 
     @staticmethod
     def _store_video_info(frames_to_append):
@@ -435,7 +464,8 @@ class SidebarManager:
                 session_state['uploaded_video'] = st.file_uploader(session_state['_']("Upload Video"),
                                                                    type=["mp4", "avi", "mov"],
                                                                    accept_multiple_files=False,
-                                                                   key=session_state['video_key'])
+                                                                   key=session_state['video_key'],
+                                                                   on_change=self._reset_image_content)
 
                 if session_state['uploaded_video']:
                     with st.spinner(session_state['_']("Processing uploaded video...")):
@@ -968,7 +998,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                           'selected_chatbot_path_serialized'],
+                                                                                    'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 
@@ -1160,7 +1190,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+                session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

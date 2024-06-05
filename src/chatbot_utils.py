@@ -70,6 +70,7 @@ class SidebarManager:
         """
         required_keys = {
             'username': 'Anonymous',
+            'username': 'Anonymous',
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},
@@ -751,6 +752,7 @@ class AIClient:
             stream: The stream of responses from the OpenAI API.
 
         """
+        print('----------------------Start response----------------------')
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:
@@ -810,6 +812,7 @@ class AIClient:
 
                 gen_stream = self._generate_response(stream)
                 for chunk_content in gen_stream:
+                     # check if the chunk is a code block
                      # check if the chunk is a code block
                     if chunk_content == '```':
                         self._concatenate_partial_response()

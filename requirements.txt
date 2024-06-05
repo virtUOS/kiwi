@@ -8,3 +8,7 @@ streamlit-option-menu
 streamlit-cookies-manager-hotpatched
 streamlit-float
 PyYAML
+aiohttp
+aioice
+aiortc
+av

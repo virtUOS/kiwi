@@ -2,6 +2,7 @@ ldap3
 openai
 python-dotenv
 imageio
+imageio[ffmpeg]
 streamlit
 streamlit-option-menu
 streamlit-cookies-manager-hotpatched

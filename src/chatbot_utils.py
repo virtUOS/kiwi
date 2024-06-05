@@ -69,8 +69,8 @@ class SidebarManager:
         prompt options, etc., essential for the application to function correctly from the start.
         """
         required_keys = {
-            'username': 'Anonymous',
-            'username': 'Anonymous',
+            # 'username': self.cookies.get('username'),
+            'username': 'User',
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},
@@ -752,7 +752,7 @@ class AIClient:
             stream: The stream of responses from the OpenAI API.
 
         """
-        print('----------------------Start response----------------------')
+        
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:

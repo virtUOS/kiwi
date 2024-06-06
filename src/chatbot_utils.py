@@ -2,6 +2,7 @@ import json
 import os
 import time
 import base64
+import re
 
 import pandas as pd
 from openai import OpenAI
@@ -170,14 +171,36 @@ class SidebarManager:
         """
         Display sidebar controls and settings for chatbot conversations.
 
-        This function performs the following steps:
-        1. Loads prompt options to display in the chatbots' menu.
-        2. Checks for changes in the selected chatbot path to update the session state accordingly.
-        3. Displays model information for the selected model, e.g., OpenAI.
-        4. Provides options for the user to interact with the conversation history,
-        including deleting and downloading conversations.
-        5. Adds custom CSS to stylize the sidebar.
-        6. Offers a logout option.
+        This function performs the following steps to provide an interactive and informative sidebar for the chatbot
+         application:
+
+        1. **Load and Display Prompts**:
+           - Calls `_load_and_display_prompts` to load prompt options and display them in the chatbot's menu.
+
+        2. **Update Path in Session State**:
+           - Calls `_update_path_in_session_state` to check for changes in the selected chatbot path and update the
+            session state accordingly.
+
+        3. **Display Model Information**:
+           - Calls `_display_model_information` to display model information for the selected model (e.g., OpenAI).
+
+        4. **Style Language Uploader**:
+           - Calls `_style_language_uploader` to customize the appearance of the file uploader component based on the
+            selected language.
+
+        5. **Show Conversation Controls**:
+           - Uses `_show_conversation_controls` to provide options for the user to interact with the conversation
+            history, including deleting and downloading conversations.
+
+        6. **Show Images Controls** (Conditional):
+           - If the selected model is the advanced model, calls `_show_images_controls` to provide options for managing
+            images (uploading images, entering image URLs).
+
+        7. **Add Custom CSS**:
+           - Applies custom CSS by calling `_add_custom_css` to stylize the sidebar for better user experience.
+
+        8. **Logout Option**:
+           - Finally, calls `_logout_option` to offer a logout option to the user.
         """
         self._load_and_display_prompts()
 
@@ -291,6 +314,13 @@ class SidebarManager:
 
     @staticmethod
     def _get_rid_of_submit_text():
+        """
+        Hides the default submit text in the Streamlit text area component.
+
+        This method injects custom CSS into the Streamlit app to hide the default submit text
+        that appears in the text area component.
+        This enhances the user interface by removing unnecessary visual elements.
+        """
         hide_submit_text = """
         <style>
         div[data-testid="InputInstructions"] > span:nth-child(1) {
@@ -302,6 +332,13 @@ class SidebarManager:
 
     @staticmethod
     def _close_sidepanel_callback():
+        """
+        Callback function to manage the state of the sidebar based on camera activation.
+
+        This method sets the state of the sidebar (collapsed or expanded) based
+        on whether the camera input is active or not.
+        If the camera is activated, the sidebar is collapsed; otherwise, it is expanded.
+        """
         if session_state['activate_camera']:
             session_state['sidebar_state'] = "collapsed"
         else:
@@ -311,8 +348,15 @@ class SidebarManager:
         """
         Display buttons for image management, including uploading images, in the sidebar.
 
-        This method presents an expander with the label "Images Controls" in the sidebar,
-        inside which there is an option to upload multiple images of supported formats.
+        This method presents an expander with the label "Images Controls" in the sidebar, inside which there are various options
+        to manage images. Users can activate camera input, upload multiple images of supported formats, and enter image URLs manually.
+
+        Functionalities provided:
+        - Toggle to activate camera input.
+        - File uploader to upload images with supported formats.
+        - Text area to manually enter image URLs, which are processed and stored in the session state on button click.
+
+        The method also makes sure to remove any unnecessary submit text from the text area widget.
         """
         with st.sidebar:
             with st.expander(session_state['_']("Images")):
@@ -340,6 +384,12 @@ class SidebarManager:
 
     @staticmethod
     def _delete_conversation_callback():
+        """
+        Callback function to delete the current conversation history.
+
+        This method clears the conversation history for the selected chatbot path stored in the session state. It sets the conversation
+        history to an empty list.
+        """
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
     def _delete_conversation_button(self, container):
@@ -451,6 +501,24 @@ class SidebarManager:
 
     @staticmethod
     def _style_language_uploader():
+        """
+        Styles the file uploader component based on the selected language.
+
+        This function customizes the instructions and limits text shown in the file
+        uploader based on the user's language preference.
+        It supports English and German language instructions.
+
+        The style is applied using specific Streamlit DOM elements.
+
+        It uses a simple data structure to switch between languages and generate the appropriate HTML
+        and CSS modifications.
+
+        Supported languages:
+        - English ("en")
+        - German ("de")
+
+        Changes the visibility of default text and replaces it with translated instructions and file limits.
+        """
         lang = 'de'
         if 'lang' in st.query_params:
             lang = st.query_params['lang']
@@ -919,7 +987,6 @@ class AIClient:
         Extracts the content from the stream of responses from the OpenAI API.
         Parameters:
             stream: The stream of responses from the OpenAI API.
-
         """
         for chunk in stream:
             delta = chunk.choices[0].delta
@@ -940,9 +1007,19 @@ class AIClient:
             if isinstance(i, str):
                 str_response += i
 
+        replacements = {
+            r'\\\s*\(': r'$',
+            r'\\\s*\)': r'$',
+            r'\\\s*\[': r'$',
+            r'\\\s*\]': r'$'
+        }
+
+        # Perform the replacements
+        for pattern, replacement in replacements.items():
+            str_response = re.sub(pattern, replacement, str_response)
+
         st.markdown(str_response)
 
-        self.special_text = False
         self.partial_response = []
         self.response += str_response
 
@@ -978,6 +1055,7 @@ class AIClient:
                     gen_stream = self._generate_response(stream)
                     for chunk_content in gen_stream:
                         # check if the chunk is a code block
+                        # check if the chunk is a code block
                         if chunk_content == '```':
                             self._concatenate_partial_response()
                             self.partial_response.append(chunk_content)
@@ -992,25 +1070,6 @@ class AIClient:
                                         self.special_text = False
                                 except StopIteration:
                                     break
-
-                        # inline formula or math expression
-                        elif '\\(' in chunk_content:
-                            self.partial_response.append(chunk_content.replace('\\(', '$'))
-
-                        elif ')' in chunk_content and '\\' in self.partial_response[-1]:
-                            join_str = self.partial_response[-1] + chunk_content
-                            self.partial_response = self.partial_response[:-1]
-                            self.partial_response.append(join_str.replace('\\)', '$'))
-
-                        # block formula or math expression
-                        elif '\\[' in chunk_content:
-                            self.partial_response.append(chunk_content.replace('\\[', '$$'))
-
-                        elif ']' in chunk_content and '\\' in self.partial_response[-1]:
-                            join_str = self.partial_response[-1] + chunk_content
-                            self.partial_response = self.partial_response[:-1]
-                            self.partial_response.append(join_str.replace('\\]', '$$'))
-
 
                         else:
                             # If the chunk is not a code or math block, append it to the partial response
@@ -1027,8 +1086,8 @@ class AIClient:
 
         except Exception as e:
             print(f"An error occurred while fetching the OpenAI response: {e}")
-            # Optionally, return a default error message or handle the error appropriately.
-            return session_state['_']("Sorry, I couldn't process that request.")
+        # Return a default error message
+        return session_state['_']("Sorry, I couldn't process that request.")
 
     @staticmethod
     def _prepare_full_prompt_and_messages(user_prompt, description_to_use):

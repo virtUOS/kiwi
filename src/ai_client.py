@@ -80,33 +80,41 @@ class AIClient:
         Extracts the content from the stream of responses from the OpenAI API.
         Parameters:
             stream: The stream of responses from the OpenAI API.
-
         """
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:
                 chunk_content = chunk.choices[0].delta.content
-                yield chunk_content
+                if isinstance(chunk_content, str):
+                    yield chunk_content
+                else:
+                    continue
 
-    @staticmethod
-    def _concatenate_partial_response(partial_response):
+    def _concatenate_partial_response(self):
         """
         Concatenates the partial response into a single string.
-
-        Parameters:
-            partial_response (list): The chunks of the response from the OpenAI API.
-
-        Returns:
-            str: The concatenated response.
         """
+        # The concatenated response.
         str_response = ""
-        for i in partial_response:
+        for i in self.partial_response:
             if isinstance(i, str):
                 str_response += i
 
+        replacements = {
+            r'\\\s*\(': r'$',
+            r'\\\s*\)': r'$',
+            r'\\\s*\[': r'$$',
+            r'\\\s*\]': r'$$'
+        }
+
+        # Perform the replacements
+        for pattern, replacement in replacements.items():
+            str_response = re.sub(pattern, replacement, str_response)
+
         st.markdown(str_response)
 
-        return str_response
+        self.partial_response = []
+        self.response += str_response
 
     def process_response(self, current_history, user_message, prompt_to_use):
         """

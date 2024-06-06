@@ -799,7 +799,7 @@ class ChatManager:
                 session_state['_']("Take a photo"),
                 on_change=self._store_camera_photo_info,
                 key='your_photo')
-            float_parent(f"bottom: 30rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
+            float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
 
     def display_chat_interface(self):
         """

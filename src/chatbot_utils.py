@@ -1010,8 +1010,8 @@ class AIClient:
         replacements = {
             r'\\\s*\(': r'$',
             r'\\\s*\)': r'$',
-            r'\\\s*\[': r'$',
-            r'\\\s*\]': r'$'
+            r'\\\s*\[': r'$$',
+            r'\\\s*\]': r'$$'
         }
 
         # Perform the replacements

@@ -776,12 +776,12 @@ class AIClient:
             if isinstance(i, str):
                 str_response += i
                 
-        
+        # Perform the replacements
         replacements = {
                 r'\\\s*\(': r'$',
                 r'\\\s*\)': r'$',
-                r'\\\s*\[': r'$',
-                r'\\\s*\]': r'$'
+                r'\\\s*\[': r'$$',
+                r'\\\s*\]': r'$$'
             }
 
         

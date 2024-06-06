@@ -387,8 +387,8 @@ class SidebarManager:
         """
         Callback function to delete the current conversation history.
 
-        This method clears the conversation history for the selected chatbot path stored in the session state. It sets the conversation
-        history to an empty list.
+        This method clears the conversation history for the selected chatbot path stored in the session state.
+        It sets the conversation history to an empty list.
         """
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 

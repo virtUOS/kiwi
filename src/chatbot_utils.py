@@ -1,7 +1,7 @@
 import json
 import os
 import time
-
+import re
 import pandas as pd
 from openai import OpenAI
 import streamlit as st
@@ -757,6 +757,7 @@ class AIClient:
             delta = chunk.choices[0].delta
             if delta:
                 chunk_content = chunk.choices[0].delta.content
+                print(f'{chunk_content}---> length: {len(chunk_content) if isinstance(chunk_content,str) else 0}')
                 if isinstance(chunk_content,str):
                     yield chunk_content
                 else:
@@ -775,9 +776,21 @@ class AIClient:
             if isinstance(i, str):
                 str_response += i
                 
+        
+        replacements = {
+                r'\\\s*\(': r'$',
+                r'\\\s*\)': r'$',
+                r'\\\s*\[': r'$',
+                r'\\\s*\]': r'$'
+            }
+
+        
+        # Perform the replacements
+        for pattern, replacement in replacements.items():
+            str_response = re.sub(pattern, replacement, str_response)
+        
         st.markdown(str_response)
         
-        self.special_text = False
         self.partial_response = []
         self.response += str_response
 
@@ -830,23 +843,23 @@ class AIClient:
                                 break
 
                     # inline formula or math expression
-                    elif  '\\(' in chunk_content:
-                        self.partial_response.append(chunk_content.replace('\\(','$'))
+                    # elif  '\\(' in chunk_content:
+                    #     self.partial_response.append(chunk_content.replace('\\(','$'))
                         
-                    elif ')' in chunk_content and '\\' in self.partial_response[-1]:
-                            join_str = self.partial_response[-1] + chunk_content   
-                            self.partial_response = self.partial_response[:-1]           
-                            self.partial_response.append(join_str.replace('\\)','$'))
+                    # elif ')' in chunk_content and '\\' in self.partial_response[-1]:
+                    #         join_str = self.partial_response[-1] + chunk_content   
+                    #         self.partial_response = self.partial_response[:-1]           
+                    #         self.partial_response.append(join_str.replace('\\)','$'))
                            
                     
-                    # block formula or math expression
-                    elif  '\\[' in chunk_content:
-                        self.partial_response.append(chunk_content.replace('\\[','$$'))
+                    # # block formula or math expression
+                    # elif  '\\[' in chunk_content:
+                    #     self.partial_response.append(chunk_content.replace('\\[','$$'))
                         
-                    elif   ']' in chunk_content and '\\' in self.partial_response[-1]:
-                        join_str = self.partial_response[-1] + chunk_content   
-                        self.partial_response = self.partial_response[:-1]     
-                        self.partial_response.append(join_str.replace('\\]','$$'))
+                    # elif   ']' in chunk_content and '\\' in self.partial_response[-1]:
+                    #     join_str = self.partial_response[-1] + chunk_content   
+                    #     self.partial_response = self.partial_response[:-1]     
+                    #     self.partial_response.append(join_str.replace('\\]','$$'))
                         
                 
                     else:

@@ -82,10 +82,12 @@ class SidebarManager:
             'edited_prompts': {},
             'disable_custom': False,
             'images_key': 0,
+            'toggle_key': -1,
             'image_urls': [],
             'uploaded_images': [],
             'image_content': [],
-            'camera_image_content': [],
+            'photo_to_use': [],
+            'activate_camera': False,
         }
 
         for key, default_value in required_keys.items():
@@ -283,10 +285,12 @@ class SidebarManager:
                             session_state['uploaded_images'] or
                             session_state['camera_image_content']):
                         session_state['images_key'] += 1
+                        session_state['toggle_key'] -= 1
                         session_state['image_urls'] = []
                         session_state['uploaded_images'] = []
                         session_state['image_content'] = []
-                        session_state['camera_image_content'] = []
+                        session_state['photo_to_use'] = []
+                        session_state['activate_camera'] = False
                         st.rerun()
 
                 else:
@@ -361,13 +365,13 @@ class SidebarManager:
         with st.sidebar:
             with st.expander(session_state['_']("Images")):
                 # Checkbox to activate camera input
-                st.toggle(session_state['_']("Activate camera"),
-                          key='activate_camera',
-                          on_change=self._close_sidepanel_callback)
+                #st.toggle(session_state['_']("Activate camera"),
+                #          key='activate_camera',
+                #          on_change=self._close_sidepanel_callback)
 
                 # Widget to upload images
                 session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
-                                                                    type=['png', 'jpeg', 'gif', 'webp'],
+                                                                    type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
                                                                     accept_multiple_files=True,
                                                                     key=session_state['images_key'])
 
@@ -813,8 +817,11 @@ class ChatManager:
             if session_state['model_selection'] == 'OpenAI':
                 self._display_openai_model_info()
 
-    @staticmethod
-    def _display_images_column(uploaded_images, image_urls):
+
+    def _clear_photo_callback(self):
+        session_state['photo_to_use'] = []
+
+    def _display_images_column(self, uploaded_images, image_urls, photo_to_use):
         """
         Displays uploaded images, image URLs, and user photo in a specified column.
 
@@ -843,31 +850,75 @@ class ChatManager:
                 })
                 st.write(url)
 
-    @staticmethod
-    def _store_camera_photo_info():
-        """
-        Stores base64 encoded URL of the photo taken by the camera into the session state.
-        If there is existing photo within the session state, it appends the new image to the sequence.
-        """
-        session_state['camera_image_content'] = []  # Don't reinitialize if you want image sequences
-        if session_state['your_photo']:
-            your_image64 = base64.b64encode(session_state['your_photo'].getvalue()).decode()
-            session_state['camera_image_content'].append({
+        if photo_to_use:
+            st.markdown(session_state['_']("### Photo"))
+            photo64 = base64.b64encode(photo_to_use.getvalue()).decode()
+            session_state['image_content'].append({
                 'type': "image_url",
-                'image_url': {"url": f"data:image/jpeg;base64,{your_image64}"}
+                'image_url': {"url": f"data:image/jpeg;base64,{photo64}"}
             })
+            st.image(photo_to_use)
+            st.button("Clear photo 🧹", on_click=self._clear_photo_callback)
+
+    @staticmethod
+    def _use_photo_callback():
+        session_state['photo_to_use'] = session_state['your_photo']
+        session_state['toggle_key'] -= 1
+        session_state['activate_camera'] = False
 
     def _display_camera(self):
         """
         Renders the camera input widget and displays the captured photo.
         """
         col3, col4, col5 = st.columns([1, 1, 1])
-        with col5:
+        with col4:
             st.camera_input(
                 session_state['_']("Take a photo"),
-                on_change=self._store_camera_photo_info,
-                key='your_photo')
+                #on_change=self._store_camera_photo_info,
+                key='your_photo',
+                label_visibility="hidden")
+            if session_state['your_photo']:
+                st.button("Use photo",
+                          key='use_photo_button',
+                          #on_click=self._use_photo_callback,
+                          use_container_width=True)
             float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
+            if session_state['your_photo']:
+                if session_state['use_photo_button']:
+                    session_state['photo_to_use'] = session_state['your_photo']
+                    session_state['toggle_key'] -= 1
+                    session_state['activate_camera'] = False
+                    st.rerun()
+
+
+
+    def _toggle_camera_callback(self):
+        if not session_state['activate_camera']:
+            session_state['activate_camera'] = True
+        else:
+            session_state['activate_camera'] = False
+            session_state['photo_to_use'] = []
+
+    def _display_chat_buttons(self):
+        chat_buttons_container = st.container()
+        chat_buttons_container.float(
+            "bottom: 6.9rem;background-color: var(--default-backgroundColor); padding-top: 1rem;"
+        )
+
+        # We set the space between the icons thanks to a share of 100
+        cols_dimensions = [7, 14.9, 14.5, 9.1, 9, 8.6, 8.7]
+        cols_dimensions.append(100 - sum(cols_dimensions))
+
+        col0, col1, col2, col3, col4, col5, col6, col7 = chat_buttons_container.columns(
+            cols_dimensions
+        )
+
+        with col1:
+            st.toggle("📹",
+                      key=session_state['toggle_key'],
+                      value=False,
+                      help=session_state['_']("Activate Camera"),
+                      on_change=self._toggle_camera_callback)
 
     def display_chat_interface(self):
         """
@@ -893,9 +944,10 @@ class ChatManager:
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
                 image_urls = session_state.get('image_urls', [])
+                photo_to_use = session_state.get('photo_to_use', [])
 
                 # Set layout columns based on whether there are images or URLs
-                if uploaded_images or image_urls:
+                if uploaded_images or image_urls or photo_to_use:
                     col1, col2 = st.columns([2, 1], gap="medium")
                 else:
                     col1, col2 = st.container(), None
@@ -910,6 +962,8 @@ class ChatManager:
 
                     st.markdown("""---""")
 
+                    self._display_chat_buttons()
+
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history
@@ -921,7 +975,7 @@ class ChatManager:
                 # If col2 is defined, show uploaded images and URLs
                 if col2:
                     with col2:
-                        self._display_images_column(uploaded_images, image_urls)
+                        self._display_images_column(uploaded_images, image_urls, photo_to_use)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use, col1)
@@ -1120,7 +1174,6 @@ class AIClient:
         # Combine user prompt and image content
         user_message_content = [{"type": "text", "text": user_prompt}]
         user_message_content.extend(session_state['image_content'])
-        user_message_content.extend(session_state['camera_image_content'])
 
         # Building the messages with the "system" message based on expertise area
         if session_state["model_selection"] == 'OpenAI':

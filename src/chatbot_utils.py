@@ -860,11 +860,6 @@ class ChatManager:
             st.image(photo_to_use)
             st.button("Clear photo 🧹", on_click=self._clear_photo_callback)
 
-    @staticmethod
-    def _use_photo_callback():
-        session_state['photo_to_use'] = session_state['your_photo']
-        session_state['toggle_key'] -= 1
-        session_state['activate_camera'] = False
 
     def _display_camera(self):
         """
@@ -874,13 +869,11 @@ class ChatManager:
         with col4:
             st.camera_input(
                 session_state['_']("Take a photo"),
-                #on_change=self._store_camera_photo_info,
                 key='your_photo',
                 label_visibility="hidden")
             if session_state['your_photo']:
                 st.button("Use photo",
                           key='use_photo_button',
-                          #on_click=self._use_photo_callback,
                           use_container_width=True)
             float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
             if session_state['your_photo']:

@@ -944,6 +944,7 @@ class ChatManager:
                     col1, col2 = st.columns([2, 1], gap="medium")
                 else:
                     col1, col2 = st.container(), None
+                    session_state['image_content'] = []
 
                 with col1:
                     # Display chat interface header and model information if applicable
@@ -972,7 +973,8 @@ class ChatManager:
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use, col1)
-                # Adds empty lines to the chatbot response to avoid chat buttons hiding text (might need adjustments)
+                # Adds empty lines to the main app area to avoid hiding text behind chat buttons
+                # (might need adjustments)
                 st.write("")
                 st.write("")
                 st.write("")

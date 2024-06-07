@@ -893,16 +893,16 @@ class ChatManager:
             session_state['photo_to_use'] = []
 
     def _display_chat_buttons(self):
-        chat_buttons_container = st.container()
-        chat_buttons_container.float(
-            "bottom: 6.9rem;background-color: var(--default-backgroundColor); padding-top: 1rem;"
+        chat_buttons = st.container()
+        chat_buttons.float(
+            "bottom: 6rem;background-color: var(--default-backgroundColor); padding-top: 1rem;"
         )
 
         # We set the space between the icons thanks to a share of 100
         cols_dimensions = [7, 14.9, 14.5, 9.1, 9, 8.6, 8.7]
         cols_dimensions.append(100 - sum(cols_dimensions))
 
-        col0, col1, col2, col3, col4, col5, col6, col7 = chat_buttons_container.columns(
+        col0, col1, col2, col3, col4, col5, col6, col7 = chat_buttons.columns(
             cols_dimensions
         )
 
@@ -972,6 +972,15 @@ class ChatManager:
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use, col1)
+                # Adds empty lines to the chatbot response to avoid chat buttons hiding text (might need adjustments)
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
+                st.write("")
             else:
                 st.error(session_state['_']("The System Prompt should be a string and not empty."))
 

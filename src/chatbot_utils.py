@@ -895,18 +895,18 @@ class ChatManager:
     def _display_chat_buttons(self):
         chat_buttons = st.container()
         chat_buttons.float(
-            "bottom: 6rem;background-color: var(--default-backgroundColor); padding-top: 1rem;"
+            "bottom: 6.5rem;background-color: var(--default-backgroundColor); padding-top: 1rem; max-width: 80vw"
         )
 
         # We set the space between the icons thanks to a share of 100
-        cols_dimensions = [7, 14.9, 14.5, 9.1, 9, 8.6, 8.7]
-        cols_dimensions.append(100 - sum(cols_dimensions))
+        cols_dimensions = [1, 1, 1, 1]
+        #cols_dimensions.append(100 - sum(cols_dimensions))
 
-        col0, col1, col2, col3, col4, col5, col6, col7 = chat_buttons.columns(
+        col0, col1, col2, col3 = chat_buttons.columns(
             cols_dimensions
         )
 
-        with col1:
+        with col3:
             st.toggle("📹",
                       key=session_state['toggle_key'],
                       value=False,

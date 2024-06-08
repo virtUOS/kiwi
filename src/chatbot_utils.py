@@ -77,6 +77,7 @@ class SidebarManager:
             'model_selection': "OpenAI",
             'selected_chatbot_path': [],
             'conversation_histories': {},
+            'images_histories': {},
             'selected_chatbot_path_serialized': "",
             'prompt_options': menu_utils.load_prompts_from_yaml(),
             'edited_prompts': {},
@@ -806,10 +807,13 @@ class ChatManager:
         - image_urls (list): List of image URLs.
         """
         session_state['image_content'] = []
+        thumbnail_dim = 100
+        thumbnail_size = (thumbnail_dim, thumbnail_dim)
 
         if uploaded_images:
             st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
+                session_state['images_histories'][image.name] = image.resize(thumbnail_size, Image.Resampling.BILINEAR)
                 image64 = base64.b64encode(image.getvalue()).decode()
                 session_state['image_content'].append({
                     'type': "image_url",

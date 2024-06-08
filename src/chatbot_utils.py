@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import re
 
 import pandas as pd
 from openai import OpenAI
@@ -759,23 +760,19 @@ class AIClient:
         Extracts the content from the stream of responses from the OpenAI API.
         Parameters:
             stream: The stream of responses from the OpenAI API.
-
         """
-
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta:
                 chunk_content = chunk.choices[0].delta.content
-                yield chunk_content
+                if isinstance(chunk_content, str):
+                    yield chunk_content
+                else:
+                    continue
 
-    def _concatenate_partial_response(self, response_type):
+    def _concatenate_partial_response(self):
         """
         Concatenates the partial response into a single string.
-
-        Parameters:
-            response_type (str): whether the response is a text or a latex expression.
-            partial_response (list): The chunks of the response from the OpenAI API.
-
         """
         # The concatenated response.
         str_response = ""
@@ -783,14 +780,19 @@ class AIClient:
             if isinstance(i, str):
                 str_response += i
 
-        if response_type == 'text':
-            st.markdown(str_response)
-        elif response_type == 'latex':
-            st.latex(str_response)
-        else:
-            raise ValueError("Invalid response type. Please provide a valid response type.")
+        replacements = {
+            r'\\\s*\(': r'$',
+            r'\\\s*\)': r'$',
+            r'\\\s*\[': r'$$',
+            r'\\\s*\]': r'$$'
+        }
 
-        self.special_text = False
+        # Perform the replacements
+        for pattern, replacement in replacements.items():
+            str_response = re.sub(pattern, replacement, str_response)
+
+        st.markdown(str_response)
+
         self.partial_response = []
         self.response += str_response
 
@@ -817,7 +819,7 @@ class AIClient:
             with st.chat_message("assistant"):
                 with st.spinner(session_state['_']("Generating response...")):
                     stream = self.client.chat.completions.create(
-                        model=self.get_selected_model(),
+                        model=session_state['selected_model'],
                         messages=messages,
                         stream=True,
                     )
@@ -826,7 +828,9 @@ class AIClient:
                     gen_stream = self._generate_response(stream)
                     for chunk_content in gen_stream:
                         # check if the chunk is a code block
+                        # check if the chunk is a code block
                         if chunk_content == '```':
+                            self._concatenate_partial_response()
                             self.partial_response.append(chunk_content)
                             self.special_text = True
                             while self.special_text:
@@ -835,38 +839,8 @@ class AIClient:
                                     self.partial_response.append(chunk_content)
                                     if chunk_content == "`\n\n":
                                         # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response('text')
-                                except StopIteration:
-                                    break
-
-                        # inline formula or math expression
-                        elif chunk_content == ' \\(':
-                            self.partial_response.append(chunk_content)
-                            self.special_text = True
-                            while self.special_text:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    self.partial_response.append(chunk_content)
-                                    # example of inline math expression \\(f(t)\\) 
-                                    if chunk_content == ')' and '\\' in self.partial_response[-1]:
-                                        # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response('latex')
-                                except StopIteration:
-                                    break
-
-                        elif chunk_content == '\\':
-                            self.partial_response.append(chunk_content)
-                            self.special_text = True
-                            while self.special_text:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    self.partial_response.append(chunk_content)
-                                    # example \\[\nf(t) = \\frac{1}{2\\pi} \\int_{-\\infty}^{+\\infty}
-                                    # F(\\omega) e^{i\\omega t} d\\omega\n\\]
-                                    if ']' in chunk_content and '\\' in self.partial_response[-1]:
-                                        # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response('latex')
-
+                                        self._concatenate_partial_response()
+                                        self.special_text = False
                                 except StopIteration:
                                     break
 
@@ -875,18 +849,18 @@ class AIClient:
                             self.partial_response.append(chunk_content)
                             if chunk_content:
                                 if '\n' in chunk_content:
-                                    self._concatenate_partial_response('text')
+                                    self._concatenate_partial_response()
 
                 # If there is a partial response left, concatenate it and render it
                 if self.partial_response:
-                    self._concatenate_partial_response('text')
+                    self._concatenate_partial_response()
 
             return self.response
 
         except Exception as e:
             print(f"An error occurred while fetching the OpenAI response: {e}")
-            # Optionally, return a default error message or handle the error appropriately.
-            return "Sorry, I couldn't process that request."
+        # Return a default error message
+        return session_state['_']("Sorry, I couldn't process that request.")
 
     @staticmethod
     def _prepare_full_prompt_and_messages(user_prompt, output_parser_instructions):

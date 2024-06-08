@@ -753,7 +753,7 @@ class ChatManager:
         # Add AI response to the history
         current_history.append(('Assistant', response, ""))
 
-    def _handle_user_input(self, description_to_use, images, container_chat):
+    def _handle_user_input(self, description_to_use, images, current_conversation_history, container_chat):
         """
         Handles the user input: sends the message to OpenAI, prints it, and updates the conversation history.
 
@@ -768,12 +768,11 @@ class ChatManager:
         """
         selected_chatbot = session_state['selected_chatbot_path_serialized']
         if user_message := st.chat_input(session_state['USER']):
-            current_history = self._get_current_conversation_history()
 
             with container_chat:
                 # Ensures unique submission to prevent re-running on refresh
-                if self._is_new_message(current_history, user_message):
-                    self._append_user_message_to_history(current_history, user_message, description_to_use)
+                if self._is_new_message(current_conversation_history, user_message):
+                    self._append_user_message_to_history(current_conversation_history, user_message, description_to_use)
 
                     # Print user message immediately after getting entered because we're streaming the chatbot output
                     with st.chat_message("user"):
@@ -781,8 +780,8 @@ class ChatManager:
                         self._display_images_inside_message(images)
 
                     # Process and display response
-                    self._update_conversation_history(current_history)
-                    self._process_response(current_history, user_message, description_to_use)
+                    self._update_conversation_history(current_conversation_history)
+                    self._process_response(current_conversation_history, user_message, description_to_use)
                     # Add extra empty one for the system message
                     session_state['images_histories'][selected_chatbot].append({})
                     st.rerun()
@@ -985,6 +984,7 @@ class ChatManager:
         """
         if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
             selected_chatbot = session_state['selected_chatbot_path_serialized']
+            current_history = self._get_current_conversation_history()
             description = self._fetch_chatbot_description()
 
             if isinstance(description, str) and description.strip():
@@ -1018,9 +1018,8 @@ class ChatManager:
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history
-                    conversation_history = session_state['conversation_histories'].get(selected_chatbot, [])
                     images_history = session_state['images_histories'].get(selected_chatbot, [])
-                    self._display_conversation(conversation_history, images_history, col1)
+                    self._display_conversation(current_history, images_history, col1)
 
                 # If col2 is defined, show uploaded images and URLs
                 if col2:
@@ -1034,6 +1033,7 @@ class ChatManager:
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use,
                                         session_state['images_histories'][selected_chatbot][-1],
+                                        current_history,
                                         col1)
 
                 # Adds empty lines to the main app area to avoid hiding text behind chat buttons

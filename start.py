@@ -117,7 +117,8 @@ if current_language == 'en':
 
         md_msg = f"""
 
-                # Welcome to the {APP_NAME}!
+                # Welcome to {APP_NAME}!
+                ## Use ChatGPT securely.
 
                 ##### {APP_NAME} is an open source app of {institution_name}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI. Students must adhere to the requirements of their faculty when using this app in the context of their studies.
 
@@ -129,7 +130,8 @@ if current_language == 'en':
 
         md_msg = ("""
     
-        # Welcome to the {APP_NAME}!
+        # Welcome to {APP_NAME}!
+        ## Use ChatGPT securely.
     
         ##### {APP_NAME} is an open source app of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI. Students must adhere to the requirements of their faculty when using this app in the context of their studies.
     
@@ -153,7 +155,8 @@ else:
 
         md_msg = f"""
 
-                # Herzlich Willkommen auf dem {APP_NAME}!
+                # Herzlich Willkommen bei {APP_NAME}!
+                ## ChatGPT sicher nutzen.
 
                 ##### Dies ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
 
@@ -164,7 +167,8 @@ else:
     else:
         md_msg = ("""
     
-        # Herzlich Willkommen auf dem {APP_NAME}!
+        # Herzlich Willkommen bei {APP_NAME}!
+        ## ChatGPT sicher nutzen.
     
         ##### Dies ist eine Open Source-Anwendung der {INSTITUTION}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
     

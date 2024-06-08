@@ -3,6 +3,8 @@ import os
 import time
 import base64
 import re
+from PIL import Image
+from io import BytesIO
 
 import pandas as pd
 from openai import OpenAI
@@ -313,7 +315,7 @@ class SidebarManager:
             col1, col2, col3 = st.columns([1, 1, 1])
         self._upload_conversation_button(col1, conversation_key)
         if conversation_key in session_state['conversation_histories'] and session_state[
-            'conversation_histories'][conversation_key]:
+                'conversation_histories'][conversation_key]:
             self._download_conversation_button(col2, conversation_key)
             # self._delete_conversation_button(col3)
 
@@ -464,6 +466,8 @@ class SidebarManager:
 
                 # Update the session state with the uploaded conversation
                 session_state['conversation_histories'][conversation_key] = conversation_list
+                # Initialize images_histories with lists of empty dictionaries
+                session_state['images_histories'][conversation_key] = [{} for _ in range(len(conversation_list))]
 
                 # Extract the last "System prompt" from a user's message
                 # in the uploaded conversation for "edited_prompts"
@@ -645,19 +649,35 @@ class ChatManager:
                                                        'selected_chatbot_path_serialized'], default_description)
 
     @staticmethod
-    def _display_conversation(conversation_history, container=None):
-        """
-        Displays the conversation history between the user and the assistant within the given container or globally.
+    def _display_images_inside_message(images, user_message_container=None):
+        user_message_container = user_message_container if user_message_container else st
+        # Check if there are images associated with this message
+        if images:
+            with user_message_container.expander("View Images"):
+                for image_data in images:
+                    for i, (name, image) in enumerate(image_data.items()):
+                        st.write(f"{i} - {name}")
+                        if isinstance(image, str):  # It's an image URL
+                            st.write(image)
+                        else:  # It's an image object
+                            st.image(image)
+
+    def _display_conversation(self, conversation_history, images_history, container=None):
+        """Displays the conversation history between the user and the assistant within the given container or globally.
 
         Parameters:
         - conversation_history: A list containing tuples of (speaker, message) representing the conversation.
+        - images_histories: A list containing dictionaries of images corresponding to each conversation message.
         - container: The Streamlit container (e.g., column, expander) where the messages should be displayed.
-          If None, messages will be displayed in the main app area.
+        If None, messages will be displayed in the main app area.
         """
-        for speaker, message, __ in conversation_history:
+        for (speaker, message, __), images in zip(conversation_history, images_history):
             chat_message_container = container if container else st
             if speaker == session_state['USER']:
-                chat_message_container.chat_message("user").write(message)
+                user_message_container = chat_message_container.chat_message("user")
+                user_message_container.write(message)
+                self._display_images_inside_message(images, user_message_container)
+
             elif speaker == "Assistant":
                 chat_message_container.chat_message("assistant").write(message)
 
@@ -672,6 +692,7 @@ class ChatManager:
         serialized_path = session_state['selected_chatbot_path_serialized']
         if serialized_path not in session_state['conversation_histories']:
             session_state['conversation_histories'][serialized_path] = []
+            session_state['images_histories'][serialized_path] = []
         return session_state['conversation_histories'][serialized_path]
 
     @staticmethod
@@ -732,7 +753,7 @@ class ChatManager:
         # Add AI response to the history
         current_history.append(('Assistant', response, ""))
 
-    def _handle_user_input(self, description_to_use, container_chat):
+    def _handle_user_input(self, description_to_use, images, container_chat):
         """
         Handles the user input: sends the message to OpenAI, prints it, and updates the conversation history.
 
@@ -745,6 +766,7 @@ class ChatManager:
         - description_to_use (str): The current system description or prompt used alongside user messages.
         - container_chat (streamlit.container): The Streamlit container where the chat messages are displayed.
         """
+        selected_chatbot = session_state['selected_chatbot_path_serialized']
         if user_message := st.chat_input(session_state['USER']):
             current_history = self._get_current_conversation_history()
 
@@ -756,10 +778,13 @@ class ChatManager:
                     # Print user message immediately after getting entered because we're streaming the chatbot output
                     with st.chat_message("user"):
                         st.markdown(user_message)
+                        self._display_images_inside_message(images)
 
                     # Process and display response
                     self._update_conversation_history(current_history)
                     self._process_response(current_history, user_message, description_to_use)
+                    # Add extra empty one for the system message
+                    session_state['images_histories'][selected_chatbot].append({})
                     st.rerun()
 
     @staticmethod
@@ -798,23 +823,41 @@ class ChatManager:
     def _clear_photo_callback():
         session_state['photo_to_use'] = []
 
-    def _display_images_column(self, uploaded_images, image_urls, photo_to_use):
+    @staticmethod
+    def _resize_image_and_get_base64(image, thumbnail_size):
+        img = Image.open(image)
+        resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
+
+        # Convert RGBA to RGB if necessary
+        if resized_img.mode == 'RGBA':
+            resized_img = resized_img.convert('RGB')
+
+        buffer = BytesIO()
+        resized_img.save(buffer, format="JPEG")
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        return img_str, resized_img
+
+    def _display_images_column(self, uploaded_images, image_urls, photo_to_use, selected_chatbot):
         """
         Displays uploaded images, image URLs, and user photo in a specified column.
 
         Parameters:
         - uploaded_images (list): List of uploaded images.
         - image_urls (list): List of image URLs.
+        - photo_to_use (UploadedFile): Photo captured via camera input.
         """
         session_state['image_content'] = []
         thumbnail_dim = 100
         thumbnail_size = (thumbnail_dim, thumbnail_dim)
 
+        # Create a new dictionary to hold all images for populating alongside the conversation history
+        images_dict = {}
+
         if uploaded_images:
             st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
-                session_state['images_histories'][image.name] = image.resize(thumbnail_size, Image.Resampling.BILINEAR)
-                image64 = base64.b64encode(image.getvalue()).decode()
+                image64, resized_image = self._resize_image_and_get_base64(image, thumbnail_size)
+                images_dict[image.name] = resized_image
                 session_state['image_content'].append({
                     'type': "image_url",
                     'image_url': {"url": f"data:image/jpeg;base64,{image64}"}
@@ -823,7 +866,8 @@ class ChatManager:
 
         if image_urls:
             st.markdown(session_state['_']("### Image URLs"))
-            for url in image_urls:
+            for i, url in enumerate(image_urls):
+                images_dict[f"url-{i}"] = url
                 session_state['image_content'].append({
                     'type': "image_url",
                     'image_url': {"url": url}
@@ -832,13 +876,17 @@ class ChatManager:
 
         if photo_to_use:
             st.markdown(session_state['_']("### Photo"))
-            photo64 = base64.b64encode(photo_to_use.getvalue()).decode()
+            photo64, resized_photo = self._resize_image_and_get_base64(photo_to_use, thumbnail_size)
+            images_dict['photo'] = resized_photo
             session_state['image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{photo64}"}
             })
             st.image(photo_to_use)
             st.button("Clear photo 🧹", on_click=self._clear_photo_callback)
+
+        # Append the dictionary of images to the chatbot's list of histories
+        session_state['images_histories'][selected_chatbot].append(images_dict)
 
     @staticmethod
     def _display_camera():
@@ -880,6 +928,7 @@ class ChatManager:
         It sets the conversation history to an empty list.
         """
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
+        session_state['images_histories'][session_state['selected_chatbot_path_serialized']] = []
 
     def _delete_conversation_button(self, container):
         """
@@ -911,7 +960,7 @@ class ChatManager:
                 cols_dimensions
             )
 
-            col0.toggle("📹",
+            col0.toggle("📷",
                         key=session_state['toggle_key'],
                         value=False,
                         help=session_state['_']("Activate Camera"),
@@ -935,7 +984,7 @@ class ChatManager:
         It also provides an option to view or edit the system prompt through an expander in the layout.
         """
         if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
-
+            selected_chatbot = session_state['selected_chatbot_path_serialized']
             description = self._fetch_chatbot_description()
 
             if isinstance(description, str) and description.strip():
@@ -969,18 +1018,24 @@ class ChatManager:
                     description_to_use = self._get_description_to_use(description)
 
                     # Displays the existing conversation history
-                    conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                           'selected_chatbot_path_serialized'],
-                                                                                       [])
-                    self._display_conversation(conversation_history, col1)
+                    conversation_history = session_state['conversation_histories'].get(selected_chatbot, [])
+                    images_history = session_state['images_histories'].get(selected_chatbot, [])
+                    self._display_conversation(conversation_history, images_history, col1)
 
                 # If col2 is defined, show uploaded images and URLs
                 if col2:
                     with col2:
-                        self._display_images_column(uploaded_images, image_urls, photo_to_use)
+                        self._display_images_column(uploaded_images, image_urls, photo_to_use, selected_chatbot)
+                else:
+                    # Add empty dictionary if there are no images to keep up with the placing of images in the
+                    # conversation
+                    session_state['images_histories'][selected_chatbot].append({})
 
                 # Handles the user's input and interaction with the LLM
-                self._handle_user_input(description_to_use, col1)
+                self._handle_user_input(description_to_use,
+                                        session_state['images_histories'][selected_chatbot][-1],
+                                        col1)
+
                 # Adds empty lines to the main app area to avoid hiding text behind chat buttons
                 # (might need adjustments)
                 st.write("")

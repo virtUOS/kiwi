@@ -112,7 +112,7 @@ class DocsManager:
                        height=1000,
                        width=int(self.main_dim['width'] * 0.4) if self.main_dim else 400)
 
-    def _process_uploaded_files(_self):
+    def _process_uploaded_files(self):
         """
         Processes and stores the content of uploaded PDF files into a session state.
         Updates the session state with metadata, binary data, chunk data, and text data for each uploaded PDF.
@@ -128,11 +128,11 @@ class DocsManager:
                 docs_utils.parse_pdf(session_state['doc_binary_data'][file_id], file_id)
 
             # Prepare text data for database
-            text.extend(_self.client.prepare_chunks_for_database(session_state['doc_chunk_data'][file_id]))
+            text.extend(self.client.prepare_chunks_for_database(session_state['doc_chunk_data'][file_id]))
 
         # Update collection name based on username and initialize vector store for documents
         session_state['collection_name'] = f"docs-{session_state['username']}"
-        session_state['vector_store_docs'] = _self.client.set_vector_store(text)
+        session_state['vector_store_docs'] = self.client.set_vector_store(text)
 
     @staticmethod
     def _display_chat_title():

@@ -7,9 +7,10 @@ Kiwi is a proxy to unify access to large language models for universities, curre
 Some of its features are:
 - Multi-language support (currently English and German)
 - Simple interface to Open AI's chat models
+- Choose between several models
 - LDAP-Support
 - Modifiable chatbot prompts
-- Saving and deleting conversations
+- Downloading, uploading and deleting conversations
 
 # Usage & Configuration
 
@@ -37,7 +38,7 @@ services:
       APP_NAME_DE: "Kiwi"
       # OpenAI settings:
       OPENAI_API_KEY: "CHANGE!"
-      OPENAI_DEFAULT_MODEL: 'gpt-4'
+      OPENAI_DEFAULT_MODEL: '{"models":["gpt-3.5-turbo","gpt-4o"]}'
       # User settings
       USER_ROLES: '{"user1":"open","user2":"restricted"}'
       MODELS_PER_ROLE: '{"restricted":["gpt-3.5-turbo"],"open":["gpt-3.5-turbo","gpt-4o"]}'
@@ -78,6 +79,12 @@ Then simply run a development server like this:
 ```bash
 streamlit run start.py
 ```
+## Community contributions
+
+This app uses the following community libraries:
+
+- [streamlit-cookies-manager](https://github.com/ktosiek/streamlit-cookies-manager): to handle access cookies and user roles.
+- [streamlit-option-menu](https://github.com/victoryhb/streamlit-option-menu): to display sidepanel chat menu.
 
 ## Authors
 

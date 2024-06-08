@@ -312,9 +312,9 @@ class SidebarManager:
             col1, col2, col3 = st.columns([1, 1, 1])
         self._upload_conversation_button(col1, conversation_key)
         if conversation_key in session_state['conversation_histories'] and session_state[
-                'conversation_histories'][conversation_key]:
+            'conversation_histories'][conversation_key]:
             self._download_conversation_button(col2, conversation_key)
-            #self._delete_conversation_button(col3)
+            # self._delete_conversation_button(col3)
 
     @staticmethod
     def _get_rid_of_submit_text():
@@ -365,7 +365,7 @@ class SidebarManager:
         with st.sidebar:
             with st.expander(session_state['_']("Images")):
                 # Checkbox to activate camera input
-                #st.toggle(session_state['_']("Activate camera"),
+                # st.toggle(session_state['_']("Activate camera"),
                 #          key='activate_camera',
                 #          on_change=self._close_sidepanel_callback)
 
@@ -793,8 +793,8 @@ class ChatManager:
             if session_state['model_selection'] == 'OpenAI':
                 self._display_openai_model_info()
 
-
-    def _clear_photo_callback(self):
+    @staticmethod
+    def _clear_photo_callback():
         session_state['photo_to_use'] = []
 
     def _display_images_column(self, uploaded_images, image_urls, photo_to_use):
@@ -836,8 +836,8 @@ class ChatManager:
             st.image(photo_to_use)
             st.button("Clear photo 🧹", on_click=self._clear_photo_callback)
 
-
-    def _display_camera(self):
+    @staticmethod
+    def _display_camera():
         """
         Renders the camera input widget and displays the captured photo.
         """
@@ -859,9 +859,8 @@ class ChatManager:
                     session_state['activate_camera'] = False
                     st.rerun()
 
-
-
-    def _toggle_camera_callback(self):
+    @staticmethod
+    def _toggle_camera_callback():
         if not session_state['activate_camera']:
             session_state['activate_camera'] = True
         else:
@@ -878,7 +877,6 @@ class ChatManager:
         """
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
-
     def _delete_conversation_button(self, container):
         """
         Render a button in the specified column that allows the user
@@ -893,7 +891,6 @@ class ChatManager:
         delete_label = session_state['_']("Delete Conversation")
         container.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
-
     def _display_chat_buttons(self):
         chat_buttons = st.container()
         chat_buttons.float(
@@ -901,9 +898,7 @@ class ChatManager:
             "padding-top: 1rem; max-width: 80vw; flex-wrap: nowrap"
         )
 
-        # We set the space between the icons thanks to a share of 100
         cols_dimensions = [99, 7, 6]
-        #cols_dimensions.append(100 - sum(cols_dimensions))
 
         conversation_key = session_state['selected_chatbot_path_serialized']
 
@@ -918,11 +913,9 @@ class ChatManager:
                         help=session_state['_']("Activate Camera"),
                         on_change=self._toggle_camera_callback)
 
-
             if conversation_key in session_state['conversation_histories'] and session_state[
-                'conversation_histories'][conversation_key]:
+                    'conversation_histories'][conversation_key]:
                 self._delete_conversation_button(col2)
-
 
     def display_chat_interface(self):
         """
@@ -973,7 +966,7 @@ class ChatManager:
 
                     # Displays the existing conversation history
                     conversation_history = session_state['conversation_histories'].get(session_state[
-                                                                                'selected_chatbot_path_serialized'],
+                                                                                           'selected_chatbot_path_serialized'],
                                                                                        [])
                     self._display_conversation(conversation_history, col1)
 
@@ -1182,7 +1175,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt
         for speaker, message, __ in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

@@ -221,9 +221,6 @@ class SidebarManager:
 
         self._show_conversation_controls()
 
-        if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
-            self._show_images_controls()
-
         self._add_custom_css()
 
         self._logout_option()
@@ -318,62 +315,6 @@ class SidebarManager:
                 'conversation_histories'][conversation_key]:
             self._download_conversation_button(col2, conversation_key)
             # self._delete_conversation_button(col3)
-
-    @staticmethod
-    def _get_rid_of_submit_text():
-        """
-        Hides the default submit text in the Streamlit text area component.
-
-        This method injects custom CSS into the Streamlit app to hide the default submit text
-        that appears in the text area component.
-        This enhances the user interface by removing unnecessary visual elements.
-        """
-        hide_submit_text = """
-        <style>
-        div[data-testid="InputInstructions"] > span:nth-child(1) {
-            visibility: hidden;
-        }
-        </style>
-        """
-        st.markdown(hide_submit_text, unsafe_allow_html=True)
-
-    def _show_images_controls(self):
-        """
-        Display buttons for image management, including uploading images, in the sidebar.
-
-        This method presents an expander with the label "Images Controls" in the sidebar, inside which there are various options
-        to manage images. Users can activate camera input, upload multiple images of supported formats, and enter image URLs manually.
-
-        Functionalities provided:
-        - Toggle to activate camera input.
-        - File uploader to upload images with supported formats.
-        - Text area to manually enter image URLs, which are processed and stored in the session state on button click.
-
-        The method also makes sure to remove any unnecessary submit text from the text area widget.
-        """
-        with st.sidebar:
-            with st.expander(session_state['_']("Images")):
-                # Checkbox to activate camera input
-                # st.toggle(session_state['_']("Activate camera"),
-                #          key='activate_camera',
-                #          on_change=self._close_sidepanel_callback)
-
-                # Widget to upload images
-                # session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
-                #                                                    type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
-                #                                                    accept_multiple_files=True,
-                #                                                    key=session_state['images_key'])
-
-                # Text area for image URLs (Get rid of the submit text on the text area because it's useless here)
-                self._get_rid_of_submit_text()
-                urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
-
-                if st.button(session_state['_']("Add URLs")):
-                    # Process the URLs
-                    url_list = urls.strip().split('\n')
-                    if 'image_urls' not in session_state:
-                        session_state['image_urls'] = []
-                    session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
     def _upload_conversation_button(self, container, conversation_key):
         """
@@ -941,6 +882,24 @@ class ChatManager:
         """
         session_state['new_images'] = True
 
+    @staticmethod
+    def _get_rid_of_submit_text():
+        """
+        Hides the default submit text in the Streamlit text area component.
+
+        This method injects custom CSS into the Streamlit app to hide the default submit text
+        that appears in the text area component.
+        This enhances the user interface by removing unnecessary visual elements.
+        """
+        hide_submit_text = """
+        <style>
+        div[data-testid="InputInstructions"] > span:nth-child(1) {
+            visibility: hidden;
+        }
+        </style>
+        """
+        st.markdown(hide_submit_text, unsafe_allow_html=True)
+
     def _display_chat_buttons(self):
         """
         Displays a set of interactive buttons within the chat interface, allowing users to:
@@ -980,6 +939,14 @@ class ChatManager:
                     if session_state['new_images']:
                         session_state['new_images'] = False
                         st.rerun()
+
+                    self._get_rid_of_submit_text()
+                    urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
+
+                    if st.button(session_state['_']("Add URLs")):
+                        # Process the URLs
+                        url_list = urls.strip().split('\n')
+                        session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
         with container_delete_conversation:
             float_parent(

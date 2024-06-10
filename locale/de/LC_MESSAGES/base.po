@@ -142,6 +142,10 @@ msgstr "### Bild-URLs"
 msgid "### Your Photo"
 msgstr "### Ihr Foto"
 
+#: src/chatbot_utils.py:891
+msgid "Clear photo 🧹"
+msgstr "Foto löschen 🧹"
+
 #: src/chatbot_utils.py:1005
 msgid "Sorry, I couldn't process that request."
 msgstr "Tut mir leid, ich konnte diese Anfrage nicht bearbeiten."

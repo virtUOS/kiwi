@@ -962,7 +962,7 @@ class ChatManager:
             col0.toggle("📷",
                         key=session_state['toggle_key'],
                         value=False,
-                        help=session_state['_']("Activate Camera"),
+                        help=session_state['_']("Activate camera"),
                         on_change=self._toggle_camera_callback)
 
             if conversation_key in session_state['conversation_histories'] and session_state[

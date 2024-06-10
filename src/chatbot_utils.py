@@ -385,9 +385,6 @@ class SidebarManager:
         - container (st.delta_generator.DeltaGenerator): The Streamlit container (e.g., a sidebar or a column)
           where the upload button will be displayed.
         - conversation_key (str): A unique string identifier for the conversation history to be upl
-        Parameters:
-        - self: Reference to the instance of the class where this method is defined.oaded. This
-          is used to correctly associate the uploaded conversation with its relevant session state.
         """
         upload_label = session_state['_']("Upload Conversation")
         with container:

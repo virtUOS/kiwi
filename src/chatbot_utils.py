@@ -943,14 +943,6 @@ class ChatManager:
         st.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
     def _display_chat_buttons(self):
-        chat_buttons = st.container()
-        chat_buttons.float(
-            "bottom: 6.5rem;background-color: var(--default-backgroundColor); "
-            "padding-top: 1rem; max-width: 80vw; flex-wrap: nowrap"
-        )
-
-        cols_dimensions = [99, 7, 6]
-
         conversation_key = session_state['selected_chatbot_path_serialized']
 
         container_camera = st.container()
@@ -966,7 +958,7 @@ class ChatManager:
 
         with container_delete_conversation:
             float_parent(
-                "margin-left: 100rem; bottom: 6.9rem;background-color: "
+                "margin-left: 6rem; bottom: 6.9rem;background-color: "
                 "var(--default-backgroundColor); padding-top: 0.9rem;")
 
             if conversation_key in session_state['conversation_histories'] and session_state[
@@ -1042,9 +1034,6 @@ class ChatManager:
 
                 # Adds empty lines to the main app area to avoid hiding text behind chat buttons
                 # (might need adjustments)
-                st.write("")
-                st.write("")
-                st.write("")
                 st.write("")
                 st.write("")
                 st.write("")

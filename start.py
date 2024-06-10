@@ -120,7 +120,7 @@ if current_language == 'en':
                 # Welcome to {APP_NAME}!
                 ## Use ChatGPT securely.
 
-                ##### {APP_NAME} is an open source app of {institution_name}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI. Students must adhere to the requirements of their faculty when using this app in the context of their studies.
+                ##### {APP_NAME} is an open source app of {institution_name}: It provides data protection-compliant access to OpenAI's GPT models. In concrete terms, this means that you do not need an account and all input that you transmit to the GPT models via kiwi may not be used by OpenAI to train the models. Please note, however, that the information will still be sent to OpenAI. Students are required to observe the guidelines of their subjects when using the models in the context of their studies.
 
                 ##### General legal information can be found in the <a href="{datenschutz_page}" target="_self">Privacy Policy</a> and <a href="{impressum_page}" target="_self">Legal Notice</a>.
 
@@ -133,7 +133,7 @@ if current_language == 'en':
         # Welcome to {APP_NAME}!
         ## Use ChatGPT securely.
     
-        ##### {APP_NAME} is an open source app of {INSTITUTION}: It allows you to chat with OpenAI's GPT models without submitting personal data to OpenAI during the login process. Please keep in mind that all information you enter within the chat area is submitted to OpenAI. Students must adhere to the requirements of their faculty when using this app in the context of their studies.
+        ##### {APP_NAME} is an open source app of {INSTITUTION}: It provides data protection-compliant access to OpenAI's GPT models. In concrete terms, this means that you do not need an account and all input that you transmit to the GPT models via kiwi may not be used by OpenAI to train the models. Please note, however, that the information will still be sent to OpenAI. Students are required to observe the guidelines of their subjects when using the models in the context of their studies.
     
         ##### General legal information can be found in the [Privacy Policy]({DATENSCHUTZ}) and [Legal Notice]({IMPRESSUM}).
     
@@ -153,12 +153,12 @@ else:
         datenschutz_page = prepare_streamlit_links_to_legal_pages(datenschutz_link)
         impressum_page = prepare_streamlit_links_to_legal_pages(impressum_link)
 
-        md_msg = f"""
+        md_msg = f"""Dies
 
                 # Herzlich Willkommen bei {APP_NAME}!
                 ## ChatGPT sicher nutzen.
 
-                ##### Dies ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
+                ##### {APP_NAME} ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
 
                 ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den <a href="{datenschutz_page}" target="_self">Datenschutzhinweisen</a> und im <a href="{impressum_page}" target="_self">Impressum</a>.
 
@@ -170,7 +170,7 @@ else:
         # Herzlich Willkommen bei {APP_NAME}!
         ## ChatGPT sicher nutzen.
     
-        ##### Dies ist eine Open Source-Anwendung der {INSTITUTION}: Sie ermöglicht es Ihnen, mit den GPT-Modellen von OpenAI zu chatten, ohne dass Sie bei der Anmeldung persönliche Daten an OpenAI übermitteln. Bitte beachten Sie jedoch, dass alle Informationen, die Sie im Chat-Bereich eingeben, an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
+        ##### {APP_NAME} ist eine Open Source-Anwendung der {INSTITUTION}: Sie ermöglicht bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
     
         ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}).
         

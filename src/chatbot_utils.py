@@ -315,7 +315,7 @@ class SidebarManager:
             col1, col2, col3 = st.columns([1, 1, 1])
         self._upload_conversation_button(col1, conversation_key)
         if conversation_key in session_state['conversation_histories'] and session_state[
-                'conversation_histories'][conversation_key]:
+            'conversation_histories'][conversation_key]:
             self._download_conversation_button(col2, conversation_key)
             # self._delete_conversation_button(col3)
 
@@ -929,7 +929,7 @@ class ChatManager:
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
         session_state['images_histories'][session_state['selected_chatbot_path_serialized']] = []
 
-    def _delete_conversation_button(self, container):
+    def _delete_conversation_button(self):
         """
         Render a button in the specified column that allows the user
         to delete the active chatbot's conversation history.
@@ -937,11 +937,10 @@ class ChatManager:
         On button click, this static method removes the conversation history from the session state for the
         current chatbot path and triggers a page rerun to refresh the state.
 
-        :param container: The container in Streamlit where the button should be placed.
         This should be a Streamlit column object.
         """
         delete_label = session_state['_']("Delete Conversation")
-        container.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
+        st.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
     def _display_chat_buttons(self):
         chat_buttons = st.container()
@@ -954,20 +953,25 @@ class ChatManager:
 
         conversation_key = session_state['selected_chatbot_path_serialized']
 
-        with chat_buttons:
-            col0, col1, col2 = st.columns(
-                cols_dimensions
-            )
+        container_camera = st.container()
+        container_delete_conversation = st.container()
 
-            col0.toggle("📷",
-                        key=session_state['toggle_key'],
-                        value=False,
-                        help=session_state['_']("Activate camera"),
-                        on_change=self._toggle_camera_callback)
+        with container_camera:
+            float_parent("bottom: 6.9rem;background-color: var(--default-backgroundColor); padding-top: 0.9rem;")
+            st.toggle("📷",
+                      key=session_state['toggle_key'],
+                      value=False,
+                      help=session_state['_']("Activate camera"),
+                      on_change=self._toggle_camera_callback)
+
+        with container_delete_conversation:
+            float_parent(
+                "margin-left: 100rem; bottom: 6.9rem;background-color: "
+                "var(--default-backgroundColor); padding-top: 0.9rem;")
 
             if conversation_key in session_state['conversation_histories'] and session_state[
                     'conversation_histories'][conversation_key]:
-                self._delete_conversation_button(col2)
+                self._delete_conversation_button()
 
     def display_chat_interface(self):
         """

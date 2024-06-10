@@ -118,7 +118,7 @@ if current_language == 'en':
         md_msg = f"""
 
                 # Welcome to {APP_NAME}!
-                ## Use ChatGPT securely.
+                ## Use. ChatGPT. Securely.
 
                 ##### {APP_NAME} is an open source app of {institution_name}: It provides data protection-compliant access to OpenAI's GPT models. In concrete terms, this means that you do not need an account and all input that you transmit to the GPT models via kiwi may not be used by OpenAI to train the models. Please note, however, that the information will still be sent to OpenAI. Students are required to observe the guidelines of their subjects when using the models in the context of their studies.
 
@@ -131,7 +131,7 @@ if current_language == 'en':
         md_msg = ("""
     
         # Welcome to {APP_NAME}!
-        ## Use ChatGPT securely.
+        ## Use. ChatGPT. Securely.
     
         ##### {APP_NAME} is an open source app of {INSTITUTION}: It provides data protection-compliant access to OpenAI's GPT models. In concrete terms, this means that you do not need an account and all input that you transmit to the GPT models via kiwi may not be used by OpenAI to train the models. Please note, however, that the information will still be sent to OpenAI. Students are required to observe the guidelines of their subjects when using the models in the context of their studies.
     
@@ -156,7 +156,7 @@ else:
         md_msg = f"""Dies
 
                 # Herzlich Willkommen bei {APP_NAME}!
-                ## ChatGPT sicher nutzen.
+                ## ChatGPT. Sicher. Nutzen.
 
                 ##### {APP_NAME} ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
 
@@ -168,7 +168,7 @@ else:
         md_msg = ("""
     
         # Herzlich Willkommen bei {APP_NAME}!
-        ## ChatGPT sicher nutzen.
+        ## ChatGPT. Sicher. Nutzen.
     
         ##### {APP_NAME} ist eine Open Source-Anwendung der {INSTITUTION}: Sie ermöglicht bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
     

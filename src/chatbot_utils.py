@@ -950,8 +950,8 @@ class ChatManager:
         """
         conversation_key = session_state['selected_chatbot_path_serialized']
 
-        container_upload_images = st.container()
         container_camera = st.container()
+        container_upload_images = st.container()
         container_delete_conversation = st.container()
 
         left_delete_button_margin = 0
@@ -959,7 +959,7 @@ class ChatManager:
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
             left_delete_button_margin = 12
             with container_camera:
-                float_parent("margin-left: 6rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                float_parent("margin-left: 0rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                              "padding-top: 0.9rem;")
                 st.toggle("📷",
                           key=session_state['toggle_key'],
@@ -968,7 +968,7 @@ class ChatManager:
                           on_change=self._toggle_camera_callback)
 
             with container_upload_images:
-                float_parent("margin-left: 0rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                float_parent("margin-left: 6rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                              "padding-top: 0.9rem;")
                 with st.popover("📥", help=session_state['_']("Upload Images")):
                     session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),

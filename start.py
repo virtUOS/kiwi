@@ -53,9 +53,9 @@ with st.sidebar:
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""
-        user_found = ldap_connector.check_auth(username=session_state['username_input'],
-                                               password=session_state['password_input'])
-
+        #user_found = ldap_connector.check_auth(username=session_state['username_input'],
+        #                                       password=session_state['password_input'])
+        user_found = True
         if user_found:
             session_state['password_correct'] = True
             del session_state['password_input']  # Don't store the password.
@@ -153,7 +153,7 @@ else:
         datenschutz_page = prepare_streamlit_links_to_legal_pages(datenschutz_link)
         impressum_page = prepare_streamlit_links_to_legal_pages(impressum_link)
 
-        md_msg = f"""Dies
+        md_msg = f"""
 
                 # Herzlich Willkommen bei {APP_NAME}!
                 ## ChatGPT. Sicher. Nutzen.

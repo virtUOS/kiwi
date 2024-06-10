@@ -6,22 +6,20 @@ from src.chatbot_utils import SidebarManager, ChatManager, AIClient
 # Load environment variables
 load_dotenv()
 
-if 'sidebar_state' not in session_state:
-    session_state['sidebar_state'] = "expanded"
-
 # Streamlit page config
 st.set_page_config(page_title="kiwi",
                    layout="wide",
                    page_icon="🥝",
-                   initial_sidebar_state=session_state['sidebar_state'])
+                   initial_sidebar_state="auto")
 
 
 # Main Application Class
 class ChatbotApplication:
 
     def __init__(self):
-        self.sidebar_manager = SidebarManager()
-        self.chat_manager = ChatManager(user=session_state['_']("User"))
+        advanced_model = "gpt-4o"
+        self.sidebar_manager = SidebarManager(advanced_model=advanced_model)
+        self.chat_manager = ChatManager(user=session_state['_']("User"), advanced_model=advanced_model)
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""

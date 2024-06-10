@@ -23,7 +23,7 @@ load_dotenv()
 
 class SidebarManager:
 
-    def __init__(self):
+    def __init__(self, advanced_model):
         """
         Initialize the SidebarManager instance by setting up session cookies and initializing the language.
         """
@@ -33,7 +33,7 @@ class SidebarManager:
                                    "always check the answers for their accuracy. Remember not to enter "
                                    "any personal information and copyrighted materials."))
         language_controls()
-        self.advanced_model = "gpt-4o"
+        self.advanced_model = advanced_model
         # Float feature initialization
         float_init()
 
@@ -90,6 +90,7 @@ class SidebarManager:
             'image_content': [],
             'photo_to_use': [],
             'activate_camera': False,
+            'new_images': False,
         }
 
         for key, default_value in required_keys.items():
@@ -285,7 +286,7 @@ class SidebarManager:
                     if session_state['selected_model'] != self.advanced_model and (
                             session_state['image_urls'] or
                             session_state['uploaded_images'] or
-                            session_state['camera_image_content']):
+                            session_state['photo_to_use']):
                         session_state['images_key'] += 1
                         session_state['toggle_key'] -= 1
                         session_state['image_urls'] = []
@@ -336,20 +337,6 @@ class SidebarManager:
         """
         st.markdown(hide_submit_text, unsafe_allow_html=True)
 
-    @staticmethod
-    def _close_sidepanel_callback():
-        """
-        Callback function to manage the state of the sidebar based on camera activation.
-
-        This method sets the state of the sidebar (collapsed or expanded) based
-        on whether the camera input is active or not.
-        If the camera is activated, the sidebar is collapsed; otherwise, it is expanded.
-        """
-        if session_state['activate_camera']:
-            session_state['sidebar_state'] = "collapsed"
-        else:
-            session_state['sidebar_state'] = "expanded"
-
     def _show_images_controls(self):
         """
         Display buttons for image management, including uploading images, in the sidebar.
@@ -372,10 +359,10 @@ class SidebarManager:
                 #          on_change=self._close_sidepanel_callback)
 
                 # Widget to upload images
-                session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
-                                                                    type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
-                                                                    accept_multiple_files=True,
-                                                                    key=session_state['images_key'])
+                # session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
+                #                                                    type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
+                #                                                    accept_multiple_files=True,
+                #                                                    key=session_state['images_key'])
 
                 # Text area for image URLs (Get rid of the submit text on the text area because it's useless here)
                 self._get_rid_of_submit_text()
@@ -581,7 +568,7 @@ class SidebarManager:
 
 class ChatManager:
 
-    def __init__(self, user):
+    def __init__(self, user, advanced_model):
         """
         Initializes the ChatManager instance with the user's identifier.
 
@@ -590,6 +577,7 @@ class ChatManager:
         """
         self.client = None
         session_state['USER'] = user
+        self.advanced_model = advanced_model
 
     def set_client(self, client):
         """
@@ -664,7 +652,7 @@ class ChatManager:
             user_message_container = user_message_container if user_message_container else st
             with user_message_container.expander(session_state['_']("Images")):
                 for i, (name, image) in enumerate(images.items()):
-                    st.write(f"{i+1} - {name}")
+                    st.write(f"{i + 1} - {name}")
                     if isinstance(image, str):  # It's an image URL
                         st.write(image)
                     else:  # It's an image object
@@ -947,23 +935,47 @@ class ChatManager:
         delete_label = session_state['_']("Delete Conversation")
         st.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
+    @staticmethod
+    def _upload_images_callback():
+        session_state['new_images'] = True
+
     def _display_chat_buttons(self):
         conversation_key = session_state['selected_chatbot_path_serialized']
 
+        container_upload_images = st.container()
         container_camera = st.container()
         container_delete_conversation = st.container()
 
-        with container_camera:
-            float_parent("bottom: 6.9rem;background-color: var(--default-backgroundColor); padding-top: 0.9rem;")
-            st.toggle("📷",
-                      key=session_state['toggle_key'],
-                      value=False,
-                      help=session_state['_']("Activate camera"),
-                      on_change=self._toggle_camera_callback)
+        left_delete_button_margin = 0
+
+        if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
+            left_delete_button_margin = 12
+            with container_camera:
+                float_parent("margin-left: 6rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                             "padding-top: 0.9rem;")
+                st.toggle("📷",
+                          key=session_state['toggle_key'],
+                          value=False,
+                          help=session_state['_']("Activate camera"),
+                          on_change=self._toggle_camera_callback)
+
+            with container_upload_images:
+                float_parent("margin-left: 0rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                             "padding-top: 0.9rem;")
+                with st.popover("📥", help=session_state['_']("Upload Images")):
+                    session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
+                                                                        type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
+                                                                        accept_multiple_files=True,
+                                                                        key=session_state['images_key'],
+                                                                        on_change=self._upload_images_callback)
+
+                    if session_state['new_images']:
+                        session_state['new_images'] = False
+                        st.rerun()
 
         with container_delete_conversation:
             float_parent(
-                "margin-left: 6rem; bottom: 6.9rem;background-color: "
+                f"margin-left: {left_delete_button_margin}rem; bottom: 6.9rem;background-color: "
                 "var(--default-backgroundColor); padding-top: 0.9rem;")
 
             if conversation_key in session_state['conversation_histories'] and session_state[
@@ -1233,7 +1245,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt and images of past messages
         for speaker, message, __, __ in session_state['conversation_histories'][
-                session_state['selected_chatbot_path_serialized']]:
+            session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

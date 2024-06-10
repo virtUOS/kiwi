@@ -384,7 +384,9 @@ class SidebarManager:
         Parameters:
         - container (st.delta_generator.DeltaGenerator): The Streamlit container (e.g., a sidebar or a column)
           where the upload button will be displayed.
-        - conversation_key (str): A unique string identifier for the conversation history to be uploaded. This
+        - conversation_key (str): A unique string identifier for the conversation history to be upl
+        Parameters:
+        - self: Reference to the instance of the class where this method is defined.oaded. This
           is used to correctly associate the uploaded conversation with its relevant session state.
         """
         upload_label = session_state['_']("Upload Conversation")
@@ -924,22 +926,31 @@ class ChatManager:
 
     def _delete_conversation_button(self):
         """
-        Render a button in the specified column that allows the user
-        to delete the active chatbot's conversation history.
+        Render a button in the specified column that allows the user to delete the active chatbot's conversation history.
 
-        On button click, this static method removes the conversation history from the session state for the
-        current chatbot path and triggers a page rerun to refresh the state.
-
-        This should be a Streamlit column object.
+        On button click, this method removes the conversation history from the session state for the current chatbot path
+        and triggers a page rerun to refresh the state.
         """
         delete_label = session_state['_']("Delete Conversation")
         st.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
     @staticmethod
     def _upload_images_callback():
+        """
+        Static callback method to handle image upload events.
+
+        This method sets the 'new_images' flag in the session state to True.
+        It serves as the callback for the file uploader to indicate that new images have been uploaded.
+        """
         session_state['new_images'] = True
 
     def _display_chat_buttons(self):
+        """
+        Displays a set of interactive buttons within the chat interface, allowing users to:
+        - Activate or deactivate the camera.
+        - Upload images.
+        - Delete the conversation history.
+        """
         conversation_key = session_state['selected_chatbot_path_serialized']
 
         container_upload_images = st.container()
@@ -996,7 +1007,6 @@ class ChatManager:
         It also provides an option to view or edit the system prompt through an expander in the layout.
         """
         if 'selected_chatbot_path' in session_state and session_state["selected_chatbot_path"]:
-            selected_chatbot = session_state['selected_chatbot_path_serialized']
             current_history = self._get_current_conversation_history()
             description = self._fetch_chatbot_description()
 
@@ -1245,7 +1255,7 @@ class AIClient:
 
         # Add the history of the conversation, ignore the system prompt and images of past messages
         for speaker, message, __, __ in session_state['conversation_histories'][
-            session_state['selected_chatbot_path_serialized']]:
+                session_state['selected_chatbot_path_serialized']]:
             role = 'user' if speaker == session_state['USER'] else 'assistant'
             messages.append({'role': role, 'content': message})
 

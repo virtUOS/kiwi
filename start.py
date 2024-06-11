@@ -31,7 +31,6 @@ if not cookies.ready():
     st.stop()
 
 initialize_language()
-language_controls()
 
 current_language = st.query_params['lang']
 
@@ -50,6 +49,7 @@ with st.sidebar:
     with col2:
         st.image("img/logo.svg", width=100)
 
+    language_controls()
 
     def credentials_entered():
         """Checks whether a password entered by the user is correct."""

@@ -118,6 +118,10 @@ msgstr "System-Prompt einsehen oder bearbeiten"
 msgid "Activate camera"
 msgstr "Kamera aktivieren"
 
+#: src/chatbot_utils.py:325
+msgid "Deactivate camera"
+msgstr "Kamera deaktivieren"
+
 #: src/chatbot_utils.py:312
 msgid "Take a photo"
 msgstr "Ein Foto machen"

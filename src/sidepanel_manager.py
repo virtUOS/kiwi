@@ -76,6 +76,7 @@ class SidepanelManager:
             'image_content': [],
             'photo_to_use': [],
             'activate_camera': False,
+            'toggle_camera_label': "Activate camera",
             'new_images': False,
         }
 

@@ -64,9 +64,11 @@ class ChatManager:
         """
         if not session_state['activate_camera']:
             session_state['activate_camera'] = True
+            session_state['toggle_camera_label'] = "Deactivate camera"
         else:
             session_state['activate_camera'] = False
             session_state['photo_to_use'] = []
+            session_state['toggle_camera_label'] = "Activate camera"
 
     @staticmethod
     def _fetch_chatbot_description():
@@ -421,7 +423,8 @@ class ChatManager:
                 st.button("📷",
                           key='activate_camera_key',
                           on_click=self._activate_camera_callback,
-                          help=session_state['_']("Activate camera"))
+                          help=session_state['_'](session_state['toggle_camera_label'])
+                          )
 
             with container_images_controls:
                 float_parent("margin-left: 6rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "

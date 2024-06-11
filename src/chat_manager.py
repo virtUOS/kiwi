@@ -403,6 +403,7 @@ class ChatManager:
                 if session_state['use_photo_button']:
                     session_state['photo_to_use'] = session_state['your_photo']
                     session_state['activate_camera'] = False
+                    session_state['toggle_camera_label'] = "Activate camera"
                     st.rerun()
 
     def _display_chat_buttons(self):

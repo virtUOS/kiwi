@@ -133,7 +133,7 @@ class SidebarManager:
         if not language:
             language = "de"
 
-        """Load chat prompts based on language."""
+        # Load chat prompts based on language.
         session_state["prompt_options"] = menu_utils.load_prompts_from_yaml(language=language)
 
     def logout_and_redirect(self):
@@ -268,7 +268,7 @@ class SidebarManager:
                     model_label = session_state['_']("Model:")
                     index = 0
                     if self.advanced_model in accessible_models:  # Use most advanced model as default
-                        index = accessible_models.index('gpt-4o')
+                        index = accessible_models.index(self.advanced_model)
                     st.selectbox(model_label,
                                  accessible_models,
                                  index=index,
@@ -835,7 +835,7 @@ class ChatManager:
             if session_state['your_photo']:
                 st.button("Use photo",
                           key='use_photo_button',
-                          use_container_width=True)
+                          use_container_width=True,)
             float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
             if session_state['your_photo']:
                 if session_state['use_photo_button']:
@@ -885,7 +885,7 @@ class ChatManager:
     @staticmethod
     def _get_rid_of_submit_text():
         """
-        Hides the default submit text in the Streamlit text area component.
+        Hides the default submit text in the StreamlitThe Hockey Player text area component.
 
         This method injects custom CSS into the Streamlit app to hide the default submit text
         that appears in the text area component.
@@ -976,7 +976,9 @@ class ChatManager:
             description = self._fetch_chatbot_description()
 
             if isinstance(description, str) and description.strip():
-                if session_state.get('activate_camera', None):
+                self._display_chat_buttons()
+
+                if session_state.get('activate_camera', False):
                     self._display_camera()
 
                 # Initialize variables for uploaded content
@@ -1003,8 +1005,6 @@ class ChatManager:
                         self._display_prompt_editor(description)
 
                     st.markdown("""---""")
-
-                    self._display_chat_buttons()
 
                     description_to_use = self._get_description_to_use(description)
 

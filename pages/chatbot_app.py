@@ -1,7 +1,11 @@
-import streamlit as st
 from streamlit import session_state
+from streamlit_float import *
 from dotenv import load_dotenv
-from src.chatbot_utils import SidebarManager, ChatManager, AIClient
+from src.chat_manager import ChatManager
+from src.ai_client import AIClient
+from src.sidepanel_manager import SidepanelManager
+import src.styling as styling
+
 
 # Load environment variables
 load_dotenv()
@@ -17,8 +21,13 @@ st.set_page_config(page_title="kiwi",
 class ChatbotApplication:
 
     def __init__(self):
+        # Float feature initialization
+        float_init()
+        # Styling initialization
+        styling.apply_styling()
+        # App set up
         advanced_model = "gpt-4o"
-        self.sidebar_manager = SidebarManager(advanced_model=advanced_model)
+        self.sidebar_manager = SidepanelManager(advanced_model=advanced_model)
         self.chat_manager = ChatManager(user=session_state['_']("User"), advanced_model=advanced_model)
 
     def initialize_app(self):

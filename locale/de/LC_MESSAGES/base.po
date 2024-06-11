@@ -139,8 +139,8 @@ msgid "### Image URLs"
 msgstr "### Bild-URLs"
 
 #: src/chatbot_utils.py:778
-msgid "### Your Photo"
-msgstr "### Ihr Foto"
+msgid "### Photo"
+msgstr "### Foto"
 
 #: src/chatbot_utils.py:891
 msgid "Clear photo 🧹"

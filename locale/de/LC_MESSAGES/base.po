@@ -86,6 +86,10 @@ msgstr "Konversation hochladen"
 msgid "Add URLs"
 msgstr "URLs hinzufügen"
 
+#: src/chatbot_utils.py:300
+msgid "Delete URLs"
+msgstr "URLs löschen"
+
 #: src/chatbot_utils.py:303
 msgid "The uploaded file is missing one or more required columns: 'Speaker', 'Message', 'System prompt'"
 msgstr "In der hochgeladenen Datei fehlen eine oder mehrere erforderliche Spalten: 'Sprecher', 'Nachricht', 'System-Prompt'"

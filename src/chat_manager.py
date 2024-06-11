@@ -450,10 +450,15 @@ class ChatManager:
 
                     urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
 
-                    if st.button(session_state['_']("Add URLs")):
+                    col1, col2 = st.columns([1, 1])
+
+                    if col1.button(session_state['_']("Add URLs")):
                         # Process the URLs
                         url_list = urls.strip().split('\n')
                         session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
+
+                    if col2.button(session_state['_']("Delete URLs"), disabled=not session_state['image_urls']):
+                        session_state['image_urls'] = []
 
     def display_chat_interface(self):
         """

@@ -55,7 +55,7 @@ class ChatManager:
         session_state['photo_to_use'] = []
 
     @staticmethod
-    def _toggle_camera_callback():
+    def _activate_camera_callback():
         """
         Toggle the camera activation within the session state.
 
@@ -67,16 +67,6 @@ class ChatManager:
         else:
             session_state['activate_camera'] = False
             session_state['photo_to_use'] = []
-
-    @staticmethod
-    def _delete_conversation_callback():
-        """
-        Callback function to delete the current conversation history.
-
-        This method clears the conversation history for the selected chatbot path stored in the session state.
-        It sets the conversation history to an empty list.
-        """
-        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
     @staticmethod
     def _fetch_chatbot_description():
@@ -410,19 +400,8 @@ class ChatManager:
             if session_state['your_photo']:
                 if session_state['use_photo_button']:
                     session_state['photo_to_use'] = session_state['your_photo']
-                    session_state['toggle_key'] -= 1
                     session_state['activate_camera'] = False
                     st.rerun()
-
-    def _display_delete_conversation_button(self):
-        """
-        Render a button in the specified column that allows the user to delete the active chatbot's conversation history.
-
-        On button click, this method removes the conversation history from the session state for the current chatbot path
-        and triggers a page rerun to refresh the state.
-        """
-        delete_label = session_state['_']("Delete Conversation")
-        st.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
     def _display_chat_buttons(self):
         """
@@ -431,29 +410,24 @@ class ChatManager:
         - Upload images.
         - Delete the conversation history.
         """
-        conversation_key = session_state['selected_chatbot_path_serialized']
-
-        #container_camera = st.container()
+        container_camera = st.container()
         container_images_controls = st.container()
-        container_delete_conversation = st.container()
-
-        left_delete_button_margin = 0
 
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
-            left_delete_button_margin = 6
-            #with container_camera:
-            #    float_parent("margin-left: 0rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
-            #                 "padding-top: 0.9rem;")
-
-            with container_images_controls:
+            with container_camera:
                 float_parent("margin-left: 0rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                              "padding-top: 0.9rem;")
 
-                with st.popover("📷️", help=session_state['_']("Images")):
-                    st.toggle(session_state['_']("Activate camera"),
-                              key=session_state['toggle_key'],
-                              value=False,
-                              on_change=self._toggle_camera_callback)
+                st.button("📷",
+                          key='activate_camera_key',
+                          on_click=self._activate_camera_callback,
+                          help=session_state['_']("Activate camera"))
+
+            with container_images_controls:
+                float_parent("margin-left: 6rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                             "padding-top: 0.9rem;")
+
+                with st.popover("🖼️", help=session_state['_']("Images")):
 
                     session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
                                                                         type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
@@ -471,15 +445,6 @@ class ChatManager:
                         # Process the URLs
                         url_list = urls.strip().split('\n')
                         session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
-
-        with container_delete_conversation:
-            float_parent(
-                f"margin-left: {left_delete_button_margin}rem; bottom: 6.9rem;background-color: "
-                "var(--default-backgroundColor); padding-top: 0.9rem;")
-
-            if conversation_key in session_state['conversation_histories'] and session_state[
-                    'conversation_histories'][conversation_key]:
-                self._display_delete_conversation_button()
 
     def display_chat_interface(self):
         """

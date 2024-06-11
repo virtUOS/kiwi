@@ -5,7 +5,6 @@ import pandas as pd
 import streamlit as st
 from streamlit import session_state
 from streamlit_cookies_manager import EncryptedCookieManager
-from streamlit_option_menu import option_menu
 
 from src.language_utils import initialize_language, language_controls
 from src import menu_utils
@@ -23,7 +22,6 @@ class SidepanelManager:
         st.info(session_state['_']("The outputs of the chat assistant may be erroneous - therefore, "
                                    "always check the answers for their accuracy. Remember not to enter "
                                    "any personal information and copyrighted materials."))
-        language_controls()
         self.advanced_model = advanced_model
 
     @staticmethod
@@ -73,7 +71,6 @@ class SidepanelManager:
             'edited_prompts': {},
             'disable_custom': False,
             'images_key': 0,
-            'toggle_key': -1,
             'image_urls': [],
             'uploaded_images': [],
             'image_content': [],
@@ -85,6 +82,16 @@ class SidepanelManager:
         for key, default_value in required_keys.items():
             if key not in session_state:
                 session_state[key] = default_value
+
+    @staticmethod
+    def _delete_conversation_callback():
+        """
+        Callback function to delete the current conversation history.
+
+        This method clears the conversation history for the selected chatbot path stored in the session state.
+        It sets the conversation history to an empty list.
+        """
+        session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
 
     @staticmethod
     def display_logo():
@@ -139,11 +146,14 @@ class SidepanelManager:
         if isinstance(options, dict) and options:  # Verify options is a dictionary and not empty
             next_level = list(options.keys())
 
-            with st.sidebar:
-                choice = option_menu("", next_level,
-                                     # icons=['chat-dots'] * len(next_level),
-                                     # menu_icon="cast",
-                                     default_index=0)
+            #with st.sidebar:
+                #choice = option_menu("", next_level,
+                #                     # icons=['chat-dots'] * len(next_level),
+                #                     # menu_icon="cast",
+                #                     default_index=0)
+
+            # For now keep the choice always on the first level since we don't have more chatbots or features
+            choice = next_level[0]
 
             if choice:
                 new_path = path + [choice]
@@ -262,13 +272,22 @@ class SidepanelManager:
                             session_state['uploaded_images'] or
                             session_state['photo_to_use']):
                         session_state['images_key'] += 1
-                        session_state['toggle_key'] -= 1
                         session_state['image_urls'] = []
                         session_state['uploaded_images'] = []
                         session_state['image_content'] = []
                         session_state['photo_to_use'] = []
                         session_state['activate_camera'] = False
                         st.rerun()
+
+    def _display_delete_conversation_button(self, container):
+        """
+        Render a button in the specified column that allows the user to delete the active chatbot's conversation history.
+
+        On button click, this method removes the conversation history from the session state for the current chatbot path
+        and triggers a page rerun to refresh the state.
+        """
+        delete_label = session_state['_']("Delete Conversation")
+        container.button("🗑️", on_click=self._delete_conversation_callback, help=delete_label)
 
     def _show_conversation_controls(self):
         """
@@ -287,7 +306,7 @@ class SidepanelManager:
         if conversation_key in session_state['conversation_histories'] and session_state[
                 'conversation_histories'][conversation_key]:
             self._download_conversation_button(col2, conversation_key)
-            # self._delete_conversation_button(col3)
+            self._display_delete_conversation_button(col3)
 
     def _upload_conversation_button(self, container, conversation_key):
         """

@@ -5,6 +5,7 @@ from src.chat_manager import ChatManager
 from src.ai_client import AIClient
 from src.sidepanel_manager import SidepanelManager
 import src.styling as styling
+from src.language_utils import initialize_language, language_controls
 
 
 # Load environment variables
@@ -36,6 +37,7 @@ class ChatbotApplication:
         # Set and manage sidebar interface controls
         self.sidebar_manager.initialize_session_variables()
         self.sidebar_manager.display_logo()
+        language_controls()
         self.sidebar_manager.display_sidebar_controls()
 
         # Initialize the client

@@ -23,15 +23,16 @@ def initialize_language():
 
 
 def language_controls():
-    st.radio(
-        "Language",
-        options=languages,
-        horizontal=True,
-        key="selected_language",
-        on_change=change_language,
-        index=1,
-        label_visibility='hidden'
-    )
+    with st.sidebar:
+        st.radio(
+            "Language",
+            options=languages,
+            horizontal=True,
+            key="selected_language",
+            on_change=change_language,
+            index=1,
+            label_visibility='hidden'
+        )
 
 
 def translate():

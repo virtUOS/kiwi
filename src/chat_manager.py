@@ -66,6 +66,7 @@ class ChatManager:
             session_state['activate_camera'] = True
         else:
             session_state['activate_camera'] = False
+            session_state['work_around_for_broken_ui'] = True
             #session_state['photo_to_use'] = []
 
     @staticmethod
@@ -425,6 +426,11 @@ class ChatManager:
                           on_click=self._activate_camera_callback,
                           help=session_state['_'](session_state['toggle_camera_label'])
                           )
+
+                # Ugly workaround to fix broken floating UI after deactivating camera without taking a photo
+                if session_state['work_around_for_broken_ui']:
+                    session_state['work_around_for_broken_ui'] = False
+                    st.rerun()
 
             with container_images_controls:
                 float_parent("margin-left: 3rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "

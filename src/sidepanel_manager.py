@@ -78,6 +78,7 @@ class SidepanelManager:
             'activate_camera': False,
             'toggle_camera_label': "Activate camera",
             'new_images': False,
+            'work_around_for_broken_ui': False
         }
 
         for key, default_value in required_keys.items():
@@ -278,6 +279,7 @@ class SidepanelManager:
                         session_state['image_content'] = []
                         session_state['photo_to_use'] = []
                         session_state['activate_camera'] = False
+                        session_state['work_around_for_broken_ui'] = False
                         st.rerun()
 
     def _display_delete_conversation_button(self, container):

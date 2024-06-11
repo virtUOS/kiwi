@@ -433,7 +433,7 @@ class ChatManager:
                     st.rerun()
 
             with container_images_controls:
-                float_parent("margin-left: 3rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                float_parent("margin-left: 3.3rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                              "padding-top: 0.9rem;")
 
                 with st.popover("🖼️", help=session_state['_']("Images")):

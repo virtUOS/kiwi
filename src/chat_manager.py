@@ -64,11 +64,9 @@ class ChatManager:
         """
         if not session_state['activate_camera']:
             session_state['activate_camera'] = True
-            session_state['toggle_camera_label'] = "Deactivate camera"
         else:
             session_state['activate_camera'] = False
-            session_state['photo_to_use'] = []
-            session_state['toggle_camera_label'] = "Activate camera"
+            #session_state['photo_to_use'] = []
 
     @staticmethod
     def _fetch_chatbot_description():
@@ -390,6 +388,7 @@ class ChatManager:
         """
         col3, col4, col5 = st.columns([1, 1, 1])
         with col4:
+            float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
             st.camera_input(
                 session_state['_']("Take a photo"),
                 key='your_photo',
@@ -398,13 +397,13 @@ class ChatManager:
                 st.button("Use photo",
                           key='use_photo_button',
                           use_container_width=True,)
-            float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
-            if session_state['your_photo']:
-                if session_state['use_photo_button']:
-                    session_state['photo_to_use'] = session_state['your_photo']
-                    session_state['activate_camera'] = False
-                    session_state['toggle_camera_label'] = "Activate camera"
-                    st.rerun()
+
+        if session_state['your_photo']:
+            if session_state['use_photo_button']:
+                session_state['photo_to_use'] = session_state['your_photo']
+                session_state['activate_camera'] = False
+                session_state['toggle_camera_label'] = "Activate camera"
+                st.rerun()
 
     def _display_chat_buttons(self):
         """
@@ -468,10 +467,13 @@ class ChatManager:
             description = self._fetch_chatbot_description()
 
             if isinstance(description, str) and description.strip():
-                self._display_chat_buttons()
-
                 if session_state.get('activate_camera', False):
+                    session_state['toggle_camera_label'] = "Deactivate camera"
                     self._display_camera()
+                else:
+                    session_state['toggle_camera_label'] = "Activate camera"
+
+                self._display_chat_buttons()
 
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])

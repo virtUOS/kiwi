@@ -2,7 +2,6 @@ ldap3
 openai
 python-dotenv
 streamlit
-streamlit-option-menu
 streamlit-cookies-manager-hotpatched
 streamlit-float
 PyYAML

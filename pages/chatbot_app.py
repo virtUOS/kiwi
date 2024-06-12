@@ -5,7 +5,7 @@ from src.chat_manager import ChatManager
 from src.ai_client import AIClient
 from src.sidebar_manager import SidebarManager
 import src.styling as styling
-from src.language_utils import initialize_language, language_controls
+from src.language_utils import language_controls
 
 
 # Load environment variables

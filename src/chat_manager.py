@@ -428,7 +428,7 @@ class ChatManager:
                           )
 
                 # Ugly workaround to fix broken floating UI after deactivating camera without taking a photo
-                if session_state['work_around_for_broken_ui']:
+                if session_state['work_around_for_broken_ui'] and not session_state['photo_to_use']:
                     session_state['work_around_for_broken_ui'] = False
                     st.rerun()
 

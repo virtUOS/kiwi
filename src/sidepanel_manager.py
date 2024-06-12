@@ -69,7 +69,6 @@ class SidepanelManager:
             'selected_chatbot_path_serialized': "",
             'prompt_options': menu_utils.load_prompts_from_yaml(),
             'edited_prompts': {},
-            'disable_custom': False,
             'images_key': 0,
             'image_urls': [],
             'uploaded_images': [],

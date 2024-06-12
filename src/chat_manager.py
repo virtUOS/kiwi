@@ -67,7 +67,6 @@ class ChatManager:
         else:
             session_state['activate_camera'] = False
             session_state['work_around_for_broken_ui'] = True
-            #session_state['photo_to_use'] = []
 
     @staticmethod
     def _fetch_chatbot_description():

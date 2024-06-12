@@ -6,12 +6,12 @@ import streamlit as st
 from streamlit import session_state
 from streamlit_cookies_manager import EncryptedCookieManager
 
-from src.language_utils import initialize_language, language_controls
+from src.language_utils import initialize_language
 from src import menu_utils
 from src.ai_client import AIClient
 
 
-class SidepanelManager:
+class SidebarManager:
 
     def __init__(self, advanced_model):
         """

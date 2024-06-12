@@ -3,7 +3,7 @@ from streamlit_float import *
 from dotenv import load_dotenv
 from src.chat_manager import ChatManager
 from src.ai_client import AIClient
-from src.sidepanel_manager import SidepanelManager
+from src.sidebar_manager import SidebarManager
 import src.styling as styling
 from src.language_utils import initialize_language, language_controls
 
@@ -28,7 +28,7 @@ class ChatbotApplication:
         styling.apply_styling()
         # App set up
         advanced_model = "gpt-4o"
-        self.sidebar_manager = SidepanelManager(advanced_model=advanced_model)
+        self.sidebar_manager = SidebarManager(advanced_model=advanced_model)
         self.chat_manager = ChatManager(user=session_state['_']("User"), advanced_model=advanced_model)
 
     def initialize_app(self):

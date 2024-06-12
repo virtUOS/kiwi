@@ -6,13 +6,13 @@ Kiwi is a proxy to unify access to large language models for universities, curre
 
 Some of its features are:
 - Multi-language support (currently English and German)
-- Simple interface to Open AI's chat models
-- LDAP-Support
+- Simple interface for OpenAI's chat models
+- LDAP support
 - Modifiable chatbot prompts
-- Saving and deleting conversations
-- Now you can use images on your chats with gpt4-o!
+- Ability to save and delete conversations
+- **New**: Use images in your chats with GPT-4!
   - Upload images
-  - Use image urls
+  - Use image URLs
   - Take pictures with the camera
 
 ## Chat with Images Feature
@@ -89,10 +89,10 @@ streamlit run start.py
 
 ## Community contributions
 
-This app uses the following streamlit community libraries:
+This app uses the following Streamlit community libraries:
 
-- [streamlit-cookies-manager](https://github.com/ktosiek/streamlit-cookies-manager): to handle access cookies and user roles.
-- [streamlit-float](https://github.com/bouzidanas/streamlit-float): allows to float streamlit containers to make the interface more flexible. Special thanks to its creator, bouzidanas, on the streamlit forums for all the help.
+- [streamlit-cookies-manager](https://github.com/ktosiek/streamlit-cookies-manager): Handles access cookies and user roles.
+- [streamlit-float](https://github.com/bouzidanas/streamlit-float): Allows floating Streamlit containers to make the interface more flexible. Special thanks to its creator, bouzidanas, on the Streamlit forums for all the help.
 
 
 

@@ -384,8 +384,10 @@ class SidebarManager:
                                            " 'Speaker', 'Message', 'System prompt'"))
                     return
 
-                # Convert the DataFrame to a list of tuples (converting each row to a tuple)
-                conversation_list = conversation_df[required_columns].to_records(index=False).tolist()
+                # Add a fourth value (None) to each tuple in the conversation list
+                conversation_list = []
+                for row in conversation_df[required_columns].itertuples(index=False):
+                    conversation_list.append(tuple(list(row) + [None]))  # Add None as the fourth value
 
                 # Update the session state with the uploaded conversation
                 session_state['conversation_histories'][conversation_key] = conversation_list

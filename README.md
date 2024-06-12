@@ -10,6 +10,14 @@ Some of its features are:
 - LDAP-Support
 - Modifiable chatbot prompts
 - Saving and deleting conversations
+- Now you can use images on your chats with gpt4-o!
+  - Upload images
+  - Use image urls
+  - Take pictures with the camera
+
+## Chat with Images Feature
+
+![screenshot_images.png](docs/assets/screenshot_images.png)
 
 # Usage & Configuration
 
@@ -78,6 +86,15 @@ Then simply run a development server like this:
 ```bash
 streamlit run start.py
 ```
+
+## Community contributions
+
+This app uses the following streamlit community libraries:
+
+- [streamlit-cookies-manager](https://github.com/ktosiek/streamlit-cookies-manager): to handle access cookies and user roles.
+- [streamlit-float](https://github.com/bouzidanas/streamlit-float): allows to float streamlit containers to make the interface more flexible. Special thanks to its creator, bouzidanas, on the streamlit forums for all the help.
+
+
 
 ## Authors
 

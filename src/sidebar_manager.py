@@ -77,7 +77,8 @@ class SidebarManager:
             'activate_camera': False,
             'toggle_camera_label': "Activate camera",
             'new_images': False,
-            'work_around_for_broken_ui': False
+            'work_around_for_broken_ui': False,
+            'work_around_for_broken_ui_conversation': False,
         }
 
         for key, default_value in required_keys.items():
@@ -331,6 +332,10 @@ class SidebarManager:
                                  args=(conversation_key,)
                                  )
 
+        if session_state['work_around_for_broken_ui_conversation']:
+            session_state['work_around_for_broken_ui_conversation'] = False
+            st.rerun()
+
     @staticmethod
     def _download_conversation_button(container, conversation_key):
         """
@@ -371,6 +376,7 @@ class SidebarManager:
         """
         if session_state['file_uploader_conversation']:
             try:
+                session_state['work_around_for_broken_ui_conversation'] = True
                 # Read the uploaded CSV file into a DataFrame
                 conversation_df = pd.read_csv(session_state['file_uploader_conversation'])
 

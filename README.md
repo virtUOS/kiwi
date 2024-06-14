@@ -1,6 +1,6 @@
 # kiwi
 
-[kiwi](www.ki.uos.de) is a proxy to unify access to large language models for universities, currently tailored towards Open AI's chat models.
+[kiwi](https://ki.uni-osnabrueck.de/) is a proxy to unify access to large language models for universities, currently tailored towards Open AI's chat models.
 
 ![screenshot.png](docs/assets/screenshot.png)
 

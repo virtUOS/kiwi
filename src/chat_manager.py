@@ -1,4 +1,6 @@
 import base64
+
+import streamlit
 from PIL import Image
 from io import BytesIO
 
@@ -42,7 +44,7 @@ class ChatManager:
         This method sets the 'new_images' flag in the session state to True.
         It serves as the callback for the file uploader to indicate that new images have been uploaded.
         """
-        session_state['new_images'] = True
+        session_state['new_images'] = 0
 
     @staticmethod
     def _clear_photo_callback():
@@ -134,7 +136,11 @@ class ChatManager:
         - description_to_use: The system description or prompt that should accompany user messages.
         """
         # Adding user message and description to the current conversation
-        current_history.append((session_state['USER'], user_message, description_to_use, query_images))
+        if session_state['new_images'] == 1:
+            current_history.append((session_state['USER'], user_message, description_to_use, query_images))
+            session_state['new_images'] = 2
+        elif session_state['new_images'] == 2:
+            current_history.append((session_state['USER'], user_message, description_to_use, {}))
 
     @staticmethod
     def _update_conversation_history(current_history):
@@ -210,7 +216,7 @@ class ChatManager:
         # Add AI response to the history
         current_history.append(('Assistant', response, "", ""))
 
-    def _handle_user_input(self, description_to_use, images, current_conversation_history, container_chat):
+    def _handle_user_input(self, description_to_use, images, current_conversation_history):
         """
         Handles the user input: sends the message to OpenAI, prints it, and updates the conversation history.
 
@@ -224,24 +230,21 @@ class ChatManager:
         - container_chat (streamlit.container): The Streamlit container where the chat messages are displayed.
         """
         if user_message := st.chat_input(session_state['USER']):
+            # Ensures unique submission to prevent re-running on refresh
+            if self._is_new_message(current_conversation_history, user_message):
+                self._append_user_message_to_history(current_conversation_history,
+                                                     user_message,
+                                                     images,
+                                                     description_to_use)
 
-            with container_chat:
-                # Ensures unique submission to prevent re-running on refresh
-                if self._is_new_message(current_conversation_history, user_message):
-                    self._append_user_message_to_history(current_conversation_history,
-                                                         user_message,
-                                                         images,
-                                                         description_to_use)
+                # Print user message immediately after getting entered because we're streaming the chatbot output
+                with st.chat_message("user"):
+                    st.markdown(user_message)
 
-                    # Print user message immediately after getting entered because we're streaming the chatbot output
-                    with st.chat_message("user"):
-                        st.markdown(user_message)
-                        self._display_images_inside_message(images)
-
-                    # Process and display response
-                    self._update_conversation_history(current_conversation_history)
-                    self._process_response(current_conversation_history, user_message, description_to_use)
-                    st.rerun()
+                # Process and display response
+                self._update_conversation_history(current_conversation_history)
+                self._process_response(current_conversation_history, user_message, description_to_use)
+                st.rerun()
 
     def _display_prompt_editor(self, description):
         """
@@ -262,44 +265,41 @@ class ChatManager:
         st.button("🔄", help=session_state['_']("Restore Original Prompt"), on_click=self._restore_prompt)
 
     @staticmethod
-    def _display_images_inside_message(images, user_message_container=None):
+    def _display_images_inside_message(images):
         """
         Displays images associated with a user's message within an expandable section.
 
         Parameters:
         - images (dict): A dictionary mapping image names to image objects or URLs.
             Example: {"image1": <image_object_or_url>, "image2": <image_object_or_url>}
-        - user_message_container (streamlit.delta_generator.DeltaGenerator): The container where the images are
         to be displayed. If None, will use the main app area.
         """
         # Check if there are images associated with this message
         if images:
-            user_message_container = user_message_container if user_message_container else st
-            with user_message_container.expander(session_state['_']("Images")):
-                for i, (name, image) in enumerate(images.items()):
-                    st.write(f"{i + 1} - {name}")
-                    if isinstance(image, str):  # It's an image URL
-                        st.write(image)
-                    else:  # It's an image object
-                        st.image(image)
+            for i, (name, image) in enumerate(images.items()):
+                st.write(f"{i + 1} - {name}")
+                if isinstance(image, str):  # It's an image URL
+                    st.write(image)
+                else:  # It's an image object
+                    st.image(image)
 
-    def _display_conversation(self, conversation_history, container=None):
+    def _display_conversation(self, conversation_history):
         """Displays the conversation history between the user and the assistant within the given container or globally.
 
         Parameters:
         - conversation_history: A list containing tuples of (speaker, message) representing the conversation.
-        - container: The Streamlit container (e.g., column, expander) where the messages should be displayed.
         If None, messages will be displayed in the main app area.
         """
         for speaker, message, __, images in conversation_history:
-            chat_message_container = container if container else st
             if speaker == session_state['USER']:
-                user_message_container = chat_message_container.chat_message("user")
-                user_message_container.write(message)
-                self._display_images_inside_message(images, user_message_container)
+                with st.chat_message("user"):
+                    self._display_images_inside_message(images)
+                with st.chat_message("user"):
+                    st.write(message)
 
             elif speaker == "Assistant":
-                chat_message_container.chat_message("assistant").write(message)
+                with st.chat_message("assistant"):
+                    st.write(message)
 
     @staticmethod
     def _display_openai_model_info():
@@ -346,12 +346,11 @@ class ChatManager:
             st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
                 image64, resized_image = self._resize_image_and_get_base64(image, thumbnail_size)
-                images_dict[image.name] = resized_image
+                images_dict[image.name] = image
                 session_state['image_content'].append({
                     'type': "image_url",
                     'image_url': {"url": f"data:image/jpeg;base64,{image64}"}
                 })
-                st.image(image)
 
         if image_urls:
             st.markdown(session_state['_']("### Image URLs"))
@@ -361,18 +360,16 @@ class ChatManager:
                     'type': "image_url",
                     'image_url': {"url": url}
                 })
-                st.write(url)
 
         if photo_to_use:
             st.markdown(session_state['_']("### Photo"))
             photo64, resized_photo = self._resize_image_and_get_base64(photo_to_use, thumbnail_size)
-            images_dict['photo'] = resized_photo
+            images_dict['photo'] = photo_to_use
             session_state['image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{photo64}"}
             })
-            st.image(photo_to_use)
-            st.button(session_state['_']("Clear photo 🧹"), on_click=self._clear_photo_callback)
+            #st.button(session_state['_']("Clear photo 🧹"), on_click=self._clear_photo_callback)
 
         # Return dictionary of images for the chat history
         return images_dict
@@ -443,9 +440,8 @@ class ChatManager:
                                                                         key=session_state['images_key'],
                                                                         on_change=self._upload_images_callback)
 
-                    if session_state['new_images']:
-                        session_state['new_images'] = False
-                        st.rerun()
+                    #if session_state['new_images'] == 0:
+                        #st.rerun()
 
                     urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
 
@@ -491,43 +487,39 @@ class ChatManager:
                 photo_to_use = session_state.get('photo_to_use', [])
 
                 # Set layout columns based on whether there are images or URLs
-                if uploaded_images or image_urls or photo_to_use:
-                    col1, col2 = st.columns([2, 1], gap="medium")
-                else:
-                    col1, col2 = st.container(), None
+                if (uploaded_images or image_urls or photo_to_use) and session_state['new_images'] < 2:
+                    session_state['new_images'] = 1
 
                 # For each interaction, we want to always refill the image content
                 # or leave it empty in case of no images so we reinitialize it every time.
                 session_state['image_content'] = []
 
-                with col1:
-                    # Display chat interface header and model information if applicable
-                    self._display_chat_interface_header()
+                # Display chat interface header and model information if applicable
+                self._display_chat_interface_header()
 
-                    # Option to view or edit the system prompt
-                    with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
-                        self._display_prompt_editor(description)
+                # Option to view or edit the system prompt
+                with st.expander(label=session_state['_']("View or edit system prompt"), expanded=False):
+                    self._display_prompt_editor(description)
 
-                    st.markdown("""---""")
+                st.markdown("""---""")
 
-                    description_to_use = self._get_description_to_use(description)
-
-                    # Displays the existing conversation history
-                    self._display_conversation(current_history, col1)
+                description_to_use = self._get_description_to_use(description)
 
                 # If col2 is defined, show uploaded images and URLs
                 images_dict = {}
-                if col2:
-                    with col2:
-                        images_dict = self._display_images_column(uploaded_images,
-                                                                  image_urls,
-                                                                  photo_to_use)
+                if session_state['new_images'] > 0:
+                    images_dict = self._display_images_column(uploaded_images, image_urls, photo_to_use)
+                    if session_state['new_images'] == 1:
+                        with st.chat_message("user"):
+                            self._display_images_inside_message(images_dict)
+
+                # Displays the existing conversation history
+                self._display_conversation(current_history)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use,
                                         images_dict,
-                                        current_history,
-                                        col1)
+                                        current_history)
 
                 # Adds empty lines to the main app area to avoid hiding text behind chat buttons
                 # (might need adjustments)

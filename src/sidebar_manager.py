@@ -76,7 +76,7 @@ class SidebarManager:
             'photo_to_use': [],
             'activate_camera': False,
             'toggle_camera_label': "Activate camera",
-            'new_images': False,
+            'new_images': 0,
             'work_around_for_broken_ui': False,
             'work_around_for_broken_ui_conversation': False,
         }

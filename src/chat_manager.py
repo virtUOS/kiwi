@@ -6,6 +6,8 @@ from io import BytesIO
 
 from streamlit import session_state
 from streamlit_float import *
+from streamlit_image_gallery import streamlit_image_gallery
+
 from src import menu_utils
 from dotenv import load_dotenv
 
@@ -291,9 +293,21 @@ class ChatManager:
         """
         # Check if there are images associated with this message
         if images:
+            images_list = []
             for i, (name, image) in enumerate(images.items()):
-                st.write(f"{i + 1} - {name}")
-                st.image(image)
+                img = Image.open(image)
+
+                buffer = BytesIO()
+                img.save(buffer, format="JPEG")
+                img_base64 = base64.b64encode(buffer.getvalue()).decode()
+                img_src = f'data:image/jpeg;base64,{img_base64}'
+
+                images_list.append({
+                    'title': f"{i + 1} - {name}",
+                    'src': img_src
+                })
+
+            streamlit_image_gallery(images_list, max_width='100%')
 
     def _display_conversation(self, conversation_history):
         """Displays the conversation history between the user and the assistant within the given container or globally.

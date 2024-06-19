@@ -4,4 +4,5 @@ python-dotenv
 streamlit
 streamlit-cookies-manager-hotpatched
 streamlit-float
+streamlit-image-gallery
 PyYAML

@@ -1,6 +1,6 @@
 import base64
+import requests
 
-import streamlit
 from PIL import Image
 from io import BytesIO
 
@@ -200,18 +200,65 @@ class ChatManager:
         # TODO: Should we send the reduced image to the model instead of the original-sized one?
         #  The advantage of the reduced ones are faster answers and it seems to work better
         #  for the model to see some details on reduced images that are lost on original-sized ones (ex. illusions)
-        img = Image.open(image)
-        #resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
+        if isinstance(image, str):
+            if image.startswith('data:image'):
+                # Handle Data URL
+                img_str = image.split(',', 1)[1]
+                img_data = base64.b64decode(img_str)
+            else:
+                img_data = base64.b64encode(requests.get(image).content)
+        else:
+            img = Image.open(image)
+            #resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
+
+            # Convert RGBA to RGB if necessary
+            if img.mode == 'RGBA':
+                #resized_img = resized_img.convert('RGB')
+                img = img.convert('RGB')
+
+            buffer = BytesIO()
+            img.save(buffer, format="JPEG")
+            img_data = base64.b64encode(buffer.getvalue()).decode()
+        return img_data, None
+
+    @staticmethod
+    def _convert_image_to_base64(image):
+        """
+        Convert an image to a Base64 string.
+
+        Parameters:
+        - image: The image to be converted. This can be a URL (HTTP/HTTPS) or a Data URL.
+
+        Returns:
+        - img_str (str): The Base64 string representation of the image.
+        """
+        if isinstance(image, str):
+            if image.startswith('data:image'):
+                # Handle Data URL
+                img_str = image.split(',', 1)[1]
+                img_data = base64.b64decode(img_str)
+            else:
+                # Handle regular URL
+                img_data = requests.get(image).content
+
+            # Open image from bytes
+            img = Image.open(BytesIO(img_data))
+        else:
+            img = Image.open(image)
 
         # Convert RGBA to RGB if necessary
         if img.mode == 'RGBA':
-            #resized_img = resized_img.convert('RGB')
             img = img.convert('RGB')
 
+        # Save the image to a bytes buffer
         buffer = BytesIO()
         img.save(buffer, format="JPEG")
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        return img_str, None
+
+        # Get the base64 encoded string
+        img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        image_data_url = f"data:image/jpeg;base64,{img_str}"
+
+        return image_data_url
 
     def _process_response(self, current_history, user_message, description_to_use):
         """
@@ -299,11 +346,9 @@ class ChatManager:
         if images:
             images_list = []
             for i, (name, image) in enumerate(images.items()):
-                img_src = f'data:image/jpeg;base64,{image}'
-
                 images_list.append({
                     'title': f"{i + 1} - {name}",
-                    'src': img_src
+                    'src': image
                 })
 
             streamlit_image_gallery(images_list, max_width='100%')
@@ -373,29 +418,30 @@ class ChatManager:
         if uploaded_images:
             # st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
-                image64, resized_image = self._resize_image_and_get_base64(image, thumbnail_size)
+                image64 = self._convert_image_to_base64(image)
                 images_dict[image.name] = image64
                 session_state['image_content'].append({
                     'type': "image_url",
-                    'image_url': {"url": f"data:image/jpeg;base64,{image64}"}
+                    'image_url': {"url": image64}
                 })
 
         if image_urls:
             # st.markdown(session_state['_']("### Image URLs"))
             for i, url in enumerate(image_urls):
-                images_dict[f"url-{i}"] = url
+                url64 = self._convert_image_to_base64(url)
+                images_dict[f"url-{i}"] = url64
                 session_state['image_content'].append({
                     'type': "image_url",
-                    'image_url': {"url": url}
+                    'image_url': {"url": url64}
                 })
 
         if photo_to_use:
             # st.markdown(session_state['_']("### Photo"))
-            photo64, resized_photo = self._resize_image_and_get_base64(photo_to_use, thumbnail_size)
+            photo64 = self._convert_image_to_base64(photo_to_use)
             images_dict['photo'] = photo64
             session_state['image_content'].append({
                 'type': "image_url",
-                'image_url': {"url": f"data:image/jpeg;base64,{photo64}"}
+                'image_url': {"url": photo64}
             })
             # st.button(session_state['_']("Clear photo 🧹"), on_click=self._clear_photo_callback)
 

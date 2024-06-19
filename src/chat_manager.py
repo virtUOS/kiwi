@@ -180,48 +180,6 @@ class ChatManager:
             del session_state['edited_prompts'][session_state['selected_chatbot_path_serialized']]
 
     @staticmethod
-    def _resize_image_and_get_base64(image, thumbnail_size):
-        """
-        Resize an image and convert it to a Base64 string.
-
-        Parameters:
-        - image: The image to be resized.
-        - thumbnail_size (tuple): The desired dimensions for the thumbnail as a tuple (width, height).
-
-        Returns:
-        - img_str (str): The Base64 string representation of the resized image.
-        - resized_img (PIL.Image.Image): The resized image object.
-
-        Notes:
-        - This method opens the provided image, resizes it to the specified dimensions,
-          and converts it to Base64 format. If the image is in RGBA mode, it is converted
-          to RGB format before resizing.
-        """
-        # TODO: Should we send the reduced image to the model instead of the original-sized one?
-        #  The advantage of the reduced ones are faster answers and it seems to work better
-        #  for the model to see some details on reduced images that are lost on original-sized ones (ex. illusions)
-        if isinstance(image, str):
-            if image.startswith('data:image'):
-                # Handle Data URL
-                img_str = image.split(',', 1)[1]
-                img_data = base64.b64decode(img_str)
-            else:
-                img_data = base64.b64encode(requests.get(image).content)
-        else:
-            img = Image.open(image)
-            #resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
-
-            # Convert RGBA to RGB if necessary
-            if img.mode == 'RGBA':
-                #resized_img = resized_img.convert('RGB')
-                img = img.convert('RGB')
-
-            buffer = BytesIO()
-            img.save(buffer, format="JPEG")
-            img_data = base64.b64encode(buffer.getvalue()).decode()
-        return img_data, None
-
-    @staticmethod
     def _convert_image_to_base64(image):
         """
         Convert an image to a Base64 string.
@@ -245,6 +203,11 @@ class ChatManager:
             img = Image.open(BytesIO(img_data))
         else:
             img = Image.open(image)
+
+        # TODO: Should we send the reduced image to the model instead of the original-sized one?
+        #  The advantage of the reduced ones are faster answers and it seems to work better
+        #  for the model to see some details on reduced images that are lost on original-sized ones (ex. illusions)
+        # resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
 
         # Convert RGBA to RGB if necessary
         if img.mode == 'RGBA':
@@ -409,14 +372,10 @@ class ChatManager:
         - images_dict (dict): A dictionary containing all images to populate alongside
           the conversation history.
         """
-        thumbnail_dim = 100
-        thumbnail_size = (thumbnail_dim, thumbnail_dim)
-
         # Create a new dictionary to hold all images for populating alongside the conversation history
         images_dict = {}
 
         if uploaded_images:
-            # st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
                 image64 = self._convert_image_to_base64(image)
                 images_dict[image.name] = image64
@@ -426,7 +385,6 @@ class ChatManager:
                 })
 
         if image_urls:
-            # st.markdown(session_state['_']("### Image URLs"))
             for i, url in enumerate(image_urls):
                 url64 = self._convert_image_to_base64(url)
                 images_dict[f"url-{i}"] = url64
@@ -436,14 +394,12 @@ class ChatManager:
                 })
 
         if photo_to_use:
-            # st.markdown(session_state['_']("### Photo"))
             photo64 = self._convert_image_to_base64(photo_to_use)
             images_dict['photo'] = photo64
             session_state['image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": photo64}
             })
-            # st.button(session_state['_']("Clear photo 🧹"), on_click=self._clear_photo_callback)
 
         # Return dictionary of images for the chat history
         return images_dict

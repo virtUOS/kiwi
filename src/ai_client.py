@@ -100,58 +100,58 @@ class AIClient:
         Returns:
             str: The response from the chatbot.
         """
-        try:
-            # Prepare the full prompt and messages with context or instructions
-            messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
+        #try:
+        # Prepare the full prompt and messages with context or instructions
+        messages = self._prepare_full_prompt_and_messages(prompt, description_to_use)
 
-            # Send the request to the OpenAI API
-            # Display assistant response in chat message container
-            self.response = ""
-            # true if the response contains a special text like code block or math expression
-            self.special_text = False
-            with st.chat_message("assistant"):
-                with st.spinner(session_state['_']("Generating response...")):
-                    stream = self.client.chat.completions.create(
-                        model=session_state['selected_model'],
-                        messages=messages,
-                        stream=True,
-                    )
-                    self.partial_response = []
+        # Send the request to the OpenAI API
+        # Display assistant response in chat message container
+        self.response = ""
+        # true if the response contains a special text like code block or math expression
+        self.special_text = False
+        with st.chat_message("assistant"):
+            with st.spinner(session_state['_']("Generating response...")):
+                stream = self.client.chat.completions.create(
+                    model=session_state['selected_model'],
+                    messages=messages,
+                    stream=True,
+                )
+                self.partial_response = []
 
-                    gen_stream = self._generate_response(stream)
-                    for chunk_content in gen_stream:
-                        # check if the chunk is a code block
-                        # check if the chunk is a code block
-                        if chunk_content == '```':
-                            self._concatenate_partial_response()
-                            self.partial_response.append(chunk_content)
-                            self.special_text = True
-                            while self.special_text:
-                                try:
-                                    chunk_content = next(gen_stream)
-                                    self.partial_response.append(chunk_content)
-                                    if chunk_content == "`\n\n":
-                                        # show partial response to the user and keep it  for later use
-                                        self._concatenate_partial_response()
-                                        self.special_text = False
-                                except StopIteration:
-                                    break
-
-                        else:
-                            # If the chunk is not a code or math block, append it to the partial response
-                            self.partial_response.append(chunk_content)
-                            if chunk_content:
-                                if '\n' in chunk_content:
+                gen_stream = self._generate_response(stream)
+                for chunk_content in gen_stream:
+                    # check if the chunk is a code block
+                    # check if the chunk is a code block
+                    if chunk_content == '```':
+                        self._concatenate_partial_response()
+                        self.partial_response.append(chunk_content)
+                        self.special_text = True
+                        while self.special_text:
+                            try:
+                                chunk_content = next(gen_stream)
+                                self.partial_response.append(chunk_content)
+                                if chunk_content == "`\n\n":
+                                    # show partial response to the user and keep it  for later use
                                     self._concatenate_partial_response()
+                                    self.special_text = False
+                            except StopIteration:
+                                break
 
-                # If there is a partial response left, concatenate it and render it
-                if self.partial_response:
-                    self._concatenate_partial_response()
+                    else:
+                        # If the chunk is not a code or math block, append it to the partial response
+                        self.partial_response.append(chunk_content)
+                        if chunk_content:
+                            if '\n' in chunk_content:
+                                self._concatenate_partial_response()
 
-            return self.response
+            # If there is a partial response left, concatenate it and render it
+            if self.partial_response:
+                self._concatenate_partial_response()
 
-        except Exception as e:
-            print(f"An error occurred while fetching the OpenAI response: {e}")
+        return self.response
+
+        #except Exception as e:
+        #    print(f"An error occurred while fetching the OpenAI response: {e}")
         # Return a default error message
         return session_state['_']("Sorry, I couldn't process that request.")
 

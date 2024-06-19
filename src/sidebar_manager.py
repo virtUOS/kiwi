@@ -70,13 +70,16 @@ class SidebarManager:
             'prompt_options': menu_utils.load_prompts_from_yaml(),
             'edited_prompts': {},
             'images_key': 0,
+            'urls_key': -1,
             'image_urls': [],
             'uploaded_images': [],
+            'current_uploaded_images': [],
+            'current_image_urls': [],
             'image_content': [],
             'photo_to_use': [],
             'activate_camera': False,
             'toggle_camera_label': "Activate camera",
-            'new_images': 0,
+            'images_state': -1,  # -1 is for no images yet. 0 images uploaded, 1 user interacted with images
             'work_around_for_broken_ui': False,
             'work_around_for_broken_ui_conversation': False,
         }

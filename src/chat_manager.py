@@ -9,7 +9,6 @@ from streamlit_float import *
 from src import menu_utils
 from dotenv import load_dotenv
 
-
 # Load environment variables
 load_dotenv()
 
@@ -41,10 +40,15 @@ class ChatManager:
         """
         Static callback method to handle image upload events.
 
-        This method sets the 'new_images' flag in the session state to True.
-        It serves as the callback for the file uploader to indicate that new images have been uploaded.
+        This method sets the 'images_state' flag in the session state to the corresponding value.
+        It serves as the callback for the images' widgets to indicate that new images have been uploaded.
         """
-        session_state['new_images'] = 0
+        # If the user already interacted with images we want to reset all of them
+        if session_state['images_state'] == 1 or session_state['images_state'] == -1:
+            session_state['images_state'] = 0
+            session_state['current_image_urls'] = []
+            session_state['current_uploaded_images'] = []
+            session_state['current_photo_to_use'] = []
 
     @staticmethod
     def _clear_photo_callback():
@@ -136,10 +140,10 @@ class ChatManager:
         - description_to_use: The system description or prompt that should accompany user messages.
         """
         # Adding user message and description to the current conversation
-        if session_state['new_images'] == 1:
+        # Only add images on the first message after uploading images
+        if session_state['images_state'] == 0:
             current_history.append((session_state['USER'], user_message, description_to_use, query_images))
-            session_state['new_images'] = 2
-        elif session_state['new_images'] == 2:
+        else:
             current_history.append((session_state['USER'], user_message, description_to_use, {}))
 
     @staticmethod
@@ -216,6 +220,13 @@ class ChatManager:
         # Add AI response to the history
         current_history.append(('Assistant', response, "", ""))
 
+    @staticmethod
+    def _reset_images_widgets():
+        session_state['images_key'] += 1
+        session_state['urls_key'] -= 1
+        session_state['image_urls'] = []
+        session_state['photo_to_use'] = []
+
     def _handle_user_input(self, description_to_use, images, current_conversation_history):
         """
         Handles the user input: sends the message to OpenAI, prints it, and updates the conversation history.
@@ -244,6 +255,10 @@ class ChatManager:
                 # Process and display response
                 self._update_conversation_history(current_conversation_history)
                 self._process_response(current_conversation_history, user_message, description_to_use)
+                # Set images' widgets to reset when uploading new images after the user interacted
+                if images:
+                    self._reset_images_widgets()
+                    session_state['images_state'] = 1  # Now we know the user has interacted with the images
                 st.rerun()
 
     def _display_prompt_editor(self, description):
@@ -278,10 +293,7 @@ class ChatManager:
         if images:
             for i, (name, image) in enumerate(images.items()):
                 st.write(f"{i + 1} - {name}")
-                if isinstance(image, str):  # It's an image URL
-                    st.write(image)
-                else:  # It's an image object
-                    st.image(image)
+                st.image(image)
 
     def _display_conversation(self, conversation_history):
         """Displays the conversation history between the user and the assistant within the given container or globally.
@@ -290,10 +302,11 @@ class ChatManager:
         - conversation_history: A list containing tuples of (speaker, message) representing the conversation.
         If None, messages will be displayed in the main app area.
         """
-        for speaker, message, __, images in conversation_history:
+        for speaker, message, _, images in conversation_history:
             if speaker == session_state['USER']:
-                with st.chat_message("user"):
-                    self._display_images_inside_message(images)
+                if images:
+                    with st.chat_message("user"):
+                        self._display_images_inside_message(images)
                 with st.chat_message("user"):
                     st.write(message)
 
@@ -323,9 +336,9 @@ class ChatManager:
             if session_state['model_selection'] == 'OpenAI':
                 self._display_openai_model_info()
 
-    def _display_images_column(self, uploaded_images, image_urls, photo_to_use):
+    def _fill_up_image_content(self, uploaded_images, image_urls, photo_to_use):
         """
-        Displays uploaded images, image URLs, and user photo in a specified column.
+        Fills image content with uploaded images, image URLs, and user photo.
 
         Parameters:
         - uploaded_images (list): List of uploaded images.
@@ -343,7 +356,7 @@ class ChatManager:
         images_dict = {}
 
         if uploaded_images:
-            st.markdown(session_state['_']("### Uploaded Images"))
+            # st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
                 image64, resized_image = self._resize_image_and_get_base64(image, thumbnail_size)
                 images_dict[image.name] = image
@@ -353,7 +366,7 @@ class ChatManager:
                 })
 
         if image_urls:
-            st.markdown(session_state['_']("### Image URLs"))
+            # st.markdown(session_state['_']("### Image URLs"))
             for i, url in enumerate(image_urls):
                 images_dict[f"url-{i}"] = url
                 session_state['image_content'].append({
@@ -362,20 +375,19 @@ class ChatManager:
                 })
 
         if photo_to_use:
-            st.markdown(session_state['_']("### Photo"))
+            # st.markdown(session_state['_']("### Photo"))
             photo64, resized_photo = self._resize_image_and_get_base64(photo_to_use, thumbnail_size)
             images_dict['photo'] = photo_to_use
             session_state['image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{photo64}"}
             })
-            #st.button(session_state['_']("Clear photo 🧹"), on_click=self._clear_photo_callback)
+            # st.button(session_state['_']("Clear photo 🧹"), on_click=self._clear_photo_callback)
 
         # Return dictionary of images for the chat history
         return images_dict
 
-    @staticmethod
-    def _display_camera():
+    def _display_camera(self):
         """
         Renders the camera input widget and displays the captured photo.
 
@@ -393,7 +405,8 @@ class ChatManager:
             if session_state['your_photo']:
                 st.button("Use photo",
                           key='use_photo_button',
-                          use_container_width=True,)
+                          use_container_width=True,
+                          on_click=self._upload_images_callback)
 
         if session_state['your_photo']:
             if session_state['use_photo_button']:
@@ -401,6 +414,30 @@ class ChatManager:
                 session_state['activate_camera'] = False
                 session_state['toggle_camera_label'] = "Activate camera"
                 st.rerun()
+
+    @staticmethod
+    def _clear_images_callback():
+        session_state['uploaded_images'] = []
+        session_state['current_uploaded_images'] = []
+        session_state['image_urls'] = []
+        session_state['current_image_urls'] = []
+        session_state['photo_to_use'] = []
+        session_state['current_photo_to_use'] = []
+        session_state['images_state'] = -1
+
+    @staticmethod
+    def _count_images():
+        if session_state['uploaded_images']:
+            counter_images = len(session_state['uploaded_images'])
+        else:
+            counter_images = len(session_state['current_uploaded_images'])
+        if session_state['image_urls']:
+            counter_images += len(session_state['image_urls'])
+        else:
+            counter_images += len(session_state['current_image_urls'])
+        if session_state['photo_to_use'] or session_state['current_photo_to_use']:
+            counter_images += 1
+        return counter_images
 
     def _display_chat_buttons(self):
         """
@@ -411,6 +448,7 @@ class ChatManager:
         """
         container_camera = st.container()
         container_images_controls = st.container()
+        container_clear_images_button = st.container()
 
         if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
             with container_camera:
@@ -433,27 +471,30 @@ class ChatManager:
                              "padding-top: 0.9rem;")
 
                 with st.popover("🖼️", help=session_state['_']("Images")):
-
                     session_state['uploaded_images'] = st.file_uploader(session_state['_']("Upload Images"),
                                                                         type=['png', 'jpeg', 'jpg', 'gif', 'webp'],
                                                                         accept_multiple_files=True,
                                                                         key=session_state['images_key'],
                                                                         on_change=self._upload_images_callback)
 
-                    #if session_state['new_images'] == 0:
-                        #st.rerun()
-
-                    urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"))
+                    urls = st.text_area(session_state['_']("Enter Image URLs (one per line)"),
+                                        key=session_state['urls_key'])
 
                     col1, col2 = st.columns([1, 1])
 
-                    if col1.button(session_state['_']("Add URLs")):
+                    if col1.button(session_state['_']("Add URLs"), on_click=self._upload_images_callback):
                         # Process the URLs
                         url_list = urls.strip().split('\n')
                         session_state['image_urls'].extend([url.strip() for url in url_list if url.strip()])
 
-                    if col2.button(session_state['_']("Delete URLs"), disabled=not session_state['image_urls']):
-                        session_state['image_urls'] = []
+            if session_state['images_state'] >= 0:
+                counter_images = self._count_images()
+                with container_clear_images_button:
+                    float_parent(
+                        "margin-left: 8rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
+                        "padding-top: 0.9rem;")
+                    clear_images_label = session_state['_']("Clear images 🧹")
+                    st.button(clear_images_label + f": {counter_images}", on_click=self._clear_images_callback)
 
     def display_chat_interface(self):
         """
@@ -479,16 +520,22 @@ class ChatManager:
                 else:
                     session_state['toggle_camera_label'] = "Activate camera"
 
+                # Display buttons above chat widget. Put it before checking for uploaded images
+                # to help app flow
                 self._display_chat_buttons()
 
                 # Initialize variables for uploaded content
                 uploaded_images = session_state.get('uploaded_images', [])
-                image_urls = session_state.get('image_urls', [])
-                photo_to_use = session_state.get('photo_to_use', [])
+                if uploaded_images:
+                    session_state['current_uploaded_images'] = uploaded_images
 
-                # Set layout columns based on whether there are images or URLs
-                if (uploaded_images or image_urls or photo_to_use) and session_state['new_images'] < 2:
-                    session_state['new_images'] = 1
+                image_urls = session_state.get('image_urls', [])
+                if image_urls:
+                    session_state['current_image_urls'] = image_urls
+
+                photo_to_use = session_state.get('photo_to_use', [])
+                if photo_to_use:
+                    session_state['current_photo_to_use'] = photo_to_use
 
                 # For each interaction, we want to always refill the image content
                 # or leave it empty in case of no images so we reinitialize it every time.
@@ -505,16 +552,19 @@ class ChatManager:
 
                 description_to_use = self._get_description_to_use(description)
 
-                # If col2 is defined, show uploaded images and URLs
-                images_dict = {}
-                if session_state['new_images'] > 0:
-                    images_dict = self._display_images_column(uploaded_images, image_urls, photo_to_use)
-                    if session_state['new_images'] == 1:
-                        with st.chat_message("user"):
-                            self._display_images_inside_message(images_dict)
-
                 # Displays the existing conversation history
                 self._display_conversation(current_history)
+
+                # If there are images, fill up image info and show them
+                images_dict = {}
+                if session_state['images_state'] >= 0:
+                    images_dict = self._fill_up_image_content(session_state['current_uploaded_images'],
+                                                              session_state['current_image_urls'],
+                                                              session_state['current_photo_to_use'])
+                    # We want to display the images just once in the chat area
+                    if session_state['images_state'] == 0:
+                        with st.chat_message("user"):
+                            self._display_images_inside_message(images_dict)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use,

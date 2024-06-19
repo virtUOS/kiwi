@@ -197,17 +197,21 @@ class ChatManager:
           and converts it to Base64 format. If the image is in RGBA mode, it is converted
           to RGB format before resizing.
         """
+        # TODO: Should we send the reduced image to the model instead of the original-sized one?
+        #  The advantage of the reduced ones are faster answers and it seems to work better
+        #  for the model to see some details on reduced images that are lost on original-sized ones (ex. illusions)
         img = Image.open(image)
-        resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
+        #resized_img = img.resize(thumbnail_size, Image.Resampling.BILINEAR)
 
         # Convert RGBA to RGB if necessary
-        if resized_img.mode == 'RGBA':
-            resized_img = resized_img.convert('RGB')
+        if img.mode == 'RGBA':
+            #resized_img = resized_img.convert('RGB')
+            img = img.convert('RGB')
 
         buffer = BytesIO()
-        resized_img.save(buffer, format="JPEG")
+        img.save(buffer, format="JPEG")
         img_str = base64.b64encode(buffer.getvalue()).decode()
-        return img_str, resized_img
+        return img_str, None
 
     def _process_response(self, current_history, user_message, description_to_use):
         """
@@ -295,12 +299,7 @@ class ChatManager:
         if images:
             images_list = []
             for i, (name, image) in enumerate(images.items()):
-                img = Image.open(image)
-
-                buffer = BytesIO()
-                img.save(buffer, format="JPEG")
-                img_base64 = base64.b64encode(buffer.getvalue()).decode()
-                img_src = f'data:image/jpeg;base64,{img_base64}'
+                img_src = f'data:image/jpeg;base64,{image}'
 
                 images_list.append({
                     'title': f"{i + 1} - {name}",
@@ -319,8 +318,10 @@ class ChatManager:
         for speaker, message, _, images in conversation_history:
             if speaker == session_state['USER']:
                 if images:
-                    with st.chat_message("user"):
-                        self._display_images_inside_message(images)
+                    col1, _ = st.columns(2)
+                    with col1:
+                        with st.chat_message("user"):
+                            self._display_images_inside_message(images)
                 with st.chat_message("user"):
                     st.write(message)
 
@@ -373,7 +374,7 @@ class ChatManager:
             # st.markdown(session_state['_']("### Uploaded Images"))
             for image in uploaded_images:
                 image64, resized_image = self._resize_image_and_get_base64(image, thumbnail_size)
-                images_dict[image.name] = image
+                images_dict[image.name] = image64
                 session_state['image_content'].append({
                     'type': "image_url",
                     'image_url': {"url": f"data:image/jpeg;base64,{image64}"}
@@ -391,7 +392,7 @@ class ChatManager:
         if photo_to_use:
             # st.markdown(session_state['_']("### Photo"))
             photo64, resized_photo = self._resize_image_and_get_base64(photo_to_use, thumbnail_size)
-            images_dict['photo'] = photo_to_use
+            images_dict['photo'] = photo64
             session_state['image_content'].append({
                 'type': "image_url",
                 'image_url': {"url": f"data:image/jpeg;base64,{photo64}"}
@@ -429,15 +430,13 @@ class ChatManager:
                 session_state['toggle_camera_label'] = "Activate camera"
                 st.rerun()
 
-    @staticmethod
-    def _clear_images_callback():
+    def _clear_images_callback(self):
         session_state['uploaded_images'] = []
         session_state['current_uploaded_images'] = []
-        session_state['image_urls'] = []
         session_state['current_image_urls'] = []
-        session_state['photo_to_use'] = []
         session_state['current_photo_to_use'] = []
         session_state['images_state'] = -1
+        self._reset_images_widgets()
 
     @staticmethod
     def _count_images():
@@ -577,8 +576,10 @@ class ChatManager:
                                                               session_state['current_photo_to_use'])
                     # We want to display the images just once in the chat area
                     if session_state['images_state'] == 0:
-                        with st.chat_message("user"):
-                            self._display_images_inside_message(images_dict)
+                        col1, _ = st.columns(2)
+                        with col1:
+                            with st.chat_message("user"):
+                                self._display_images_inside_message(images_dict)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use,

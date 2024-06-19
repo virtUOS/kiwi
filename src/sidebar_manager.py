@@ -80,8 +80,6 @@ class SidebarManager:
             'activate_camera': False,
             'toggle_camera_label': "Activate camera",
             'images_state': -1,  # -1 is for no images yet. 0 images uploaded, 1 user interacted with images
-            'work_around_for_broken_ui': False,
-            'work_around_for_broken_ui_conversation': False,
         }
 
         for key, default_value in required_keys.items():
@@ -282,7 +280,6 @@ class SidebarManager:
                         session_state['image_content'] = []
                         session_state['photo_to_use'] = []
                         session_state['activate_camera'] = False
-                        session_state['work_around_for_broken_ui'] = False
                         st.rerun()
 
     def _display_delete_conversation_button(self, container):

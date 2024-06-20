@@ -307,7 +307,10 @@ class ChatManager:
                     'src': image
                 })
 
-            streamlit_image_gallery(images_list, max_width='100%')
+            col1, _ = st.columns(2)
+            with col1:
+                with st.chat_message("user"):
+                    streamlit_image_gallery(images_list, max_width='100%')
 
     def _display_conversation(self, conversation_history):
         """Displays the conversation history between the user and the assistant within the given container or globally.
@@ -318,11 +321,7 @@ class ChatManager:
         """
         for speaker, message, _, images in conversation_history:
             if speaker == session_state['USER']:
-                if images:
-                    col1, _ = st.columns(2)
-                    with col1:
-                        with st.chat_message("user"):
-                            self._display_images_inside_message(images)
+                self._display_images_inside_message(images)
                 with st.chat_message("user"):
                     st.write(message)
 
@@ -558,10 +557,7 @@ class ChatManager:
                                                               session_state['current_photo_to_use'])
                     # We want to display the images just once in the chat area
                     if session_state['images_state'] == 0:
-                        col1, _ = st.columns(2)
-                        with col1:
-                            with st.chat_message("user"):
-                                self._display_images_inside_message(images_dict)
+                        self._display_images_inside_message(images_dict)
 
                 # Handles the user's input and interaction with the LLM
                 self._handle_user_input(description_to_use,

@@ -87,7 +87,21 @@ class SidebarManager:
                 session_state[key] = default_value
 
     @staticmethod
-    def _delete_conversation_callback():
+    def reset_images_widgets():
+        session_state['images_key'] += 1
+        session_state['urls_key'] -= 1
+        session_state['image_urls'] = []
+        session_state['photo_to_use'] = []
+
+    def clear_images_callback(self):
+        session_state['uploaded_images'] = []
+        session_state['current_uploaded_images'] = []
+        session_state['current_image_urls'] = []
+        session_state['current_photo_to_use'] = []
+        session_state['images_state'] = -1
+        self.reset_images_widgets()
+
+    def _delete_conversation_callback(self):
         """
         Callback function to delete the current conversation history.
 
@@ -95,6 +109,7 @@ class SidebarManager:
         It sets the conversation history to an empty list.
         """
         session_state['conversation_histories'][session_state['selected_chatbot_path_serialized']] = []
+        self.clear_images_callback()
 
     @staticmethod
     def display_logo():
@@ -331,10 +346,6 @@ class SidebarManager:
                                  on_change=self._process_uploaded_conversation_file,
                                  args=(conversation_key,)
                                  )
-
-        if session_state['work_around_for_broken_ui_conversation']:
-            session_state['work_around_for_broken_ui_conversation'] = False
-            st.rerun()
 
     @staticmethod
     def _download_conversation_button(container, conversation_key):

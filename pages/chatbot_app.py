@@ -29,7 +29,9 @@ class ChatbotApplication:
         # App set up
         advanced_model = "gpt-4o"
         self.sidebar_manager = SidebarManager(advanced_model=advanced_model)
-        self.chat_manager = ChatManager(user=session_state['_']("User"), advanced_model=advanced_model)
+        self.chat_manager = ChatManager(user=session_state['_']("User"),
+                                        advanced_model=advanced_model,
+                                        sidebar_manager=self.sidebar_manager)
 
     def initialize_app(self):
         """Initializes the app configurations, verifies user session, and sets up the UI components."""

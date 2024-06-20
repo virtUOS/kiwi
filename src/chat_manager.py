@@ -17,7 +17,7 @@ load_dotenv()
 
 class ChatManager:
 
-    def __init__(self, user, advanced_model):
+    def __init__(self, user, advanced_model, sidebar_manager):
         """
         Initializes the ChatManager instance with the user's identifier.
 
@@ -27,6 +27,7 @@ class ChatManager:
         self.client = None
         session_state['USER'] = user
         self.advanced_model = advanced_model
+        self.sbm = sidebar_manager
 
     def set_client(self, client):
         """
@@ -235,13 +236,6 @@ class ChatManager:
         # Add AI response to the history
         current_history.append(('Assistant', response, "", ""))
 
-    @staticmethod
-    def _reset_images_widgets():
-        session_state['images_key'] += 1
-        session_state['urls_key'] -= 1
-        session_state['image_urls'] = []
-        session_state['photo_to_use'] = []
-
     def _handle_user_input(self, description_to_use, images, current_conversation_history):
         """
         Handles the user input: sends the message to OpenAI, prints it, and updates the conversation history.
@@ -272,7 +266,7 @@ class ChatManager:
                 self._process_response(current_conversation_history, user_message, description_to_use)
                 # Set images' widgets to reset when uploading new images after the user interacted
                 if images:
-                    self._reset_images_widgets()
+                    self.sbm.reset_images_widgets()
                     session_state['images_state'] = 1  # Now we know the user has interacted with the images
                 st.rerun()
 
@@ -431,14 +425,6 @@ class ChatManager:
                 session_state['toggle_camera_label'] = "Activate camera"
                 st.rerun()
 
-    def _clear_images_callback(self):
-        session_state['uploaded_images'] = []
-        session_state['current_uploaded_images'] = []
-        session_state['current_image_urls'] = []
-        session_state['current_photo_to_use'] = []
-        session_state['images_state'] = -1
-        self._reset_images_widgets()
-
     @staticmethod
     def _count_images():
         if session_state['uploaded_images']:
@@ -503,7 +489,7 @@ class ChatManager:
                         "margin-left: 8rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                         "padding-top: 0.9rem;")
                     clear_images_label = session_state['_']("Clear images 🧹")
-                    st.button(clear_images_label + f": {counter_images}", on_click=self._clear_images_callback)
+                    st.button(clear_images_label + f": {counter_images}", on_click=self.sbm.clear_images_callback)
 
     def display_chat_interface(self):
         """

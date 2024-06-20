@@ -17,7 +17,9 @@ Some of its features are:
 
 ## Chat with Images Feature
 
-![screenshot_images.png](docs/assets/screenshot_images.png)
+![screenshot_images_1.png](docs/assets/screenshot_images_1.png)
+
+![screenshot_images_2.png](docs/assets/screenshot_images_2.png)
 
 # Usage & Configuration
 

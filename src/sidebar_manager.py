@@ -434,4 +434,4 @@ class SidebarManager:
         with st.sidebar:
             if st.button(session_state['_']('Logout')):
                 self.logout_and_redirect()
-            st.write(f"Version: *v1.1.10*")
+            st.write(f"Version: *v1.2.0*")

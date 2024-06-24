@@ -498,7 +498,11 @@ class ChatManager:
                     float_parent(
                         "margin-left: 8rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                         "padding-top: 0.9rem;")
-                    st.button(clear_images_label + f": {counter_images}", on_click=self.sbm.clear_images_callback)
+                    st.button(clear_images_label + f": {counter_images}",
+                              on_click=self.sbm.clear_images_callback,
+                              help=session_state['_']("By clearing the uploaded images, they will be removed from "
+                                                      "the model's context. This means the images won't be considered "
+                                                      "in the ongoing conversation anymore."))
 
     def display_chat_interface(self):
         """

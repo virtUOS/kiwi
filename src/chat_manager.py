@@ -483,11 +483,15 @@ class ChatManager:
 
             if session_state['images_state'] >= 0:
                 counter_images = self._count_images()
+                if counter_images == 1:
+                    clear_images_label = session_state['_']("Clear image 🧹")
+                else:
+                    clear_images_label = session_state['_']("Clear images 🧹")
+
                 with container_clear_images_button:
                     float_parent(
                         "margin-left: 8rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                         "padding-top: 0.9rem;")
-                    clear_images_label = session_state['_']("Clear images 🧹")
                     st.button(clear_images_label + f": {counter_images}", on_click=self.sbm.clear_images_callback)
 
     def display_chat_interface(self):

@@ -138,6 +138,10 @@ msgstr "Antwort wird generiert..."
 msgid "The System Prompt should be a string and not empty."
 msgstr "Die System-Prompt sollte eine String und nicht leer sein."
 
+#: src/chatbot_manager.py:484
+msgid "Clear image 🧹"
+msgstr "Bild löschen 🧹"
+
 #: src/chatbot_manager.py:485
 msgid "Clear images 🧹"
 msgstr "Bilder löschen 🧹"

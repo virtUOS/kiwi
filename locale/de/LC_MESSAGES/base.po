@@ -126,6 +126,10 @@ msgstr "Kamera aktivieren"
 msgid "Deactivate camera"
 msgstr "Kamera deaktivieren"
 
+#: src/chatbot_manager.py:417
+msgid "Use photo"
+msgstr "Foto verwenden"
+
 #: src/chatbot_utils.py:312
 msgid "Take a photo"
 msgstr "Ein Foto machen"

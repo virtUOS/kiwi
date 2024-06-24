@@ -64,7 +64,7 @@ class ChatManager:
         session_state['photo_to_use'] = []
 
     @staticmethod
-    def _activate_camera_callback():
+    def _toggle_camera_callback():
         """
         Toggle the camera activation within the session state.
 
@@ -405,6 +405,7 @@ class ChatManager:
         existing photos if the 'Use photo' button is pressed.
         """
         col3, col4, col5 = st.columns([1, 1, 1])
+
         with col4:
             float_parent(f"bottom: 20rem; background-color: var(--default-backgroundColor); padding-top: 1rem;")
             st.camera_input(
@@ -412,10 +413,15 @@ class ChatManager:
                 key='your_photo',
                 label_visibility="hidden")
             if session_state['your_photo']:
-                st.button("Use photo",
+                st.button(session_state['_']("Use photo"),
                           key='use_photo_button',
+                          type='primary',
                           use_container_width=True,
                           on_click=self._upload_images_callback)
+
+            st.button(session_state['_']("Deactivate camera"),
+                      use_container_width=True,
+                      on_click=self._toggle_camera_callback)
 
         if session_state['your_photo']:
             if session_state['use_photo_button']:
@@ -456,7 +462,7 @@ class ChatManager:
 
                 st.button("📷",
                           key='activate_camera_key',
-                          on_click=self._activate_camera_callback,
+                          on_click=self._toggle_camera_callback,
                           help=session_state['_'](session_state['toggle_camera_label'])
                           )
 
@@ -492,7 +498,11 @@ class ChatManager:
                     float_parent(
                         "margin-left: 8rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                         "padding-top: 0.9rem;")
-                    st.button(clear_images_label + f": {counter_images}", on_click=self.sbm.clear_images_callback)
+                    st.button(clear_images_label + f": {counter_images}",
+                              on_click=self.sbm.clear_images_callback,
+                              help=session_state['_']("By clearing the uploaded images, they will be removed from "
+                                                      "the model's context. This means the images won't be considered "
+                                                      "in the ongoing conversation anymore."))
 
     def display_chat_interface(self):
         """

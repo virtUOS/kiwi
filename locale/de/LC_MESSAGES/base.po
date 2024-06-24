@@ -126,6 +126,10 @@ msgstr "Kamera aktivieren"
 msgid "Deactivate camera"
 msgstr "Kamera deaktivieren"
 
+#: src/chatbot_manager.py:417
+msgid "Use photo"
+msgstr "Foto verwenden"
+
 #: src/chatbot_utils.py:312
 msgid "Take a photo"
 msgstr "Ein Foto machen"
@@ -145,6 +149,10 @@ msgstr "Bild löschen 🧹"
 #: src/chatbot_manager.py:485
 msgid "Clear images 🧹"
 msgstr "Bilder löschen 🧹"
+
+#: src/chatbot_manager.py:503
+msgid "By clearing the uploaded images, they will be removed from the model's context. This means the images won't be considered in the ongoing conversation anymore."
+msgstr "Wenn Sie die hochgeladenen Bilder löschen, werden sie aus dem Kontext des Models entfernt. Das bedeutet, dass die Bilder in der laufenden Konversation nicht mehr berücksichtigt werden."
 
 #: src/chatbot_utils.py:729
 msgid "### Uploaded Images"

@@ -265,37 +265,44 @@ class SidebarManager:
         identify the active model configuration.
         """
         with st.sidebar:
-            if session_state['model_selection'] == 'OpenAI':
-                accessible_models = AIClient.get_accessible_models()
+            accessible_models = AIClient.get_accessible_models()
+            fastchat_models = AIClient.get_fastchat_models()
 
-                # Show dropdown when multiple models are available
-                if accessible_models:
-                    model_label = session_state['_']("Model:")
-                    index = 0
-                    if self.advanced_model in accessible_models:  # Use most advanced model as default
-                        index = accessible_models.index(self.advanced_model)
-                    st.selectbox(model_label,
-                                 accessible_models,
-                                 index=index,
-                                 key='selected_model')
+            all_accessible_models = accessible_models + fastchat_models
 
-                    # If the model is changed to one that doesn't support images
-                    # we have to clear the widgets from images. For the upload widget,
-                    # the way to do this is by generating a new widget with a new key
-                    # as described in:
-                    # https://discuss.streamlit.io/t/
-                    # are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903
-                    if session_state['selected_model'] != self.advanced_model and (
-                            session_state['image_urls'] or
-                            session_state['uploaded_images'] or
-                            session_state['photo_to_use']):
-                        session_state['images_key'] += 1
-                        session_state['image_urls'] = []
-                        session_state['uploaded_images'] = []
-                        session_state['image_content'] = []
-                        session_state['photo_to_use'] = []
-                        session_state['activate_camera'] = False
-                        st.rerun()
+            # Show dropdown when multiple models are available
+            if all_accessible_models:
+                model_label = session_state['_']("Model:")
+                index = 0
+                if self.advanced_model in all_accessible_models:  # Use most advanced model as default
+                    index = accessible_models.index(self.advanced_model)
+                st.selectbox(model_label,
+                             all_accessible_models,
+                             index=index,
+                             key='selected_model')
+
+                if session_state['selected_model'] in fastchat_models:
+                    session_state['model_selection'] = "OTHER"
+                else:
+                    session_state['model_selection'] = "OpenAI"
+
+                # If the model is changed to one that doesn't support images
+                # we have to clear the widgets from images. For the upload widget,
+                # the way to do this is by generating a new widget with a new key
+                # as described in:
+                # https://discuss.streamlit.io/t/
+                # are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903
+                if session_state['selected_model'] != self.advanced_model and (
+                        session_state['image_urls'] or
+                        session_state['uploaded_images'] or
+                        session_state['photo_to_use']):
+                    session_state['images_key'] += 1
+                    session_state['image_urls'] = []
+                    session_state['uploaded_images'] = []
+                    session_state['image_content'] = []
+                    session_state['photo_to_use'] = []
+                    session_state['activate_camera'] = False
+                    st.rerun()
 
     def _display_delete_conversation_button(self, container):
         """

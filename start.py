@@ -157,7 +157,7 @@ else:
                 # Herzlich Willkommen bei {APP_NAME}!
                 ## ChatGPT. Sicher. Nutzen.
 
-                ##### {APP_NAME} ist eine Open Source-Anwendung der {institution_name}: Sie ermöglicht bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
+                ##### {APP_NAME} ist eine Open Source-Anwendung der {institution_name}: Sie bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
 
                 ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den <a href="{datenschutz_page}" target="_self">Datenschutzhinweisen</a> und im <a href="{impressum_page}" target="_self">Impressum</a>.
 
@@ -169,7 +169,7 @@ else:
         # Herzlich Willkommen bei {APP_NAME}!
         ## ChatGPT. Sicher. Nutzen.
     
-        ##### {APP_NAME} ist eine Open Source-Anwendung der {INSTITUTION}: Sie ermöglicht bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
+        ##### {APP_NAME} ist eine Open Source-Anwendung der {INSTITUTION}: Sie bietet einen datenschutzkonformen Zugang zu OpenAI‘s GPT-Modellen. Das bedeutete konkret: Sie brauchen keinen Account und sämtliche Eingaben, die Sie über kiwi an die GPT-Modelle übermitteln, dürfen von OpenAI nicht zum Training der Modelle genutzt werden. Bitte beachten Sie jedoch, dass die Informationen trotzdem an OpenAI gesendet werden. Studierende sind dazu angehalten, bei der Nutzung im Kontext des Studiums die Vorgaben ihrer Fächer zu beachten.
     
         ##### Mehr zu den rechtlichen Hintergründen erfahren Sie in den [Datenschutzhinweisen]({DATENSCHUTZ}) und im [Impressum]({IMPRESSUM}).
         

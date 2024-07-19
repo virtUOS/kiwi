@@ -10,7 +10,7 @@ Some of its features are:
 - LDAP support
 - Modifiable chatbot prompts
 - Ability to save and delete conversations
-- **New**: Use images in your chats with GPT-4!
+- Use images in your chats with GPT-4!
   - Upload images
   - Use image URLs
   - Take pictures with the camera
@@ -47,7 +47,10 @@ services:
       APP_NAME_DE: "Kiwi"
       # OpenAI settings:
       OPENAI_API_KEY: "CHANGE!"
-      OPENAI_DEFAULT_MODEL: '{"models":["gpt-3.5-turbo","gpt-4o"]}'
+      OPENAI_MODELS: '{"models":["gpt-4o-mini","gpt-4o"]}'
+      # Extra settings for models
+      DEFAULT_MODEL: "gpt-4o"
+      MULTI_MODELS: '{"models":["gpt-4o-mini","gpt-4o"]}'
       # User settings
       USER_ROLES: '{"user1":"open","user2":"restricted"}'
       MODELS_PER_ROLE: '{"restricted":["gpt-3.5-turbo"],"open":["gpt-3.5-turbo","gpt-4o"]}'

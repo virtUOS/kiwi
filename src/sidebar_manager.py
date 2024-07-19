@@ -13,7 +13,7 @@ from src.ai_client import AIClient
 
 class SidebarManager:
 
-    def __init__(self, advanced_model):
+    def __init__(self, default_model, multi_models):
         """
         Initialize the SidebarManager instance by setting up session cookies and initializing the language.
         """
@@ -22,7 +22,8 @@ class SidebarManager:
         st.info(session_state['_']("The outputs of the chat assistant may be erroneous - therefore, "
                                    "always check the answers for their accuracy. Remember not to enter "
                                    "any personal information and copyrighted materials."))
-        self.advanced_model = advanced_model
+        self.default_model = default_model
+        self.multi_models = multi_models
 
     @staticmethod
     def initialize_cookies():
@@ -272,8 +273,8 @@ class SidebarManager:
                 if accessible_models:
                     model_label = session_state['_']("Model:")
                     index = 0
-                    if self.advanced_model in accessible_models:  # Use most advanced model as default
-                        index = accessible_models.index(self.advanced_model)
+                    if self.default_model in accessible_models:
+                        index = accessible_models.index(self.default_model)
                     st.selectbox(model_label,
                                  accessible_models,
                                  index=index,
@@ -285,7 +286,7 @@ class SidebarManager:
                     # as described in:
                     # https://discuss.streamlit.io/t/
                     # are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903
-                    if session_state['selected_model'] != self.advanced_model and (
+                    if session_state['selected_model'] not in self.multi_models and (
                             session_state['image_urls'] or
                             session_state['uploaded_images'] or
                             session_state['photo_to_use']):

@@ -17,7 +17,7 @@ load_dotenv()
 
 class ChatManager:
 
-    def __init__(self, user, advanced_model, sidebar_manager):
+    def __init__(self, user, multi_models, sidebar_manager):
         """
         Initializes the ChatManager instance with the user's identifier.
 
@@ -26,7 +26,7 @@ class ChatManager:
         """
         self.client = None
         session_state['USER'] = user
-        self.advanced_model = advanced_model
+        self.multi_models = multi_models
         self.sbm = sidebar_manager
 
     def set_client(self, client):
@@ -455,7 +455,7 @@ class ChatManager:
         container_images_controls = st.container()
         container_clear_images_button = st.container()
 
-        if 'selected_model' in session_state and session_state['selected_model'] == self.advanced_model:
+        if 'selected_model' in session_state and session_state['selected_model'] in self.multi_models:
             with container_camera:
                 float_parent("margin-left: 0rem; bottom: 6.9rem;background-color: var(--default-backgroundColor); "
                              "padding-top: 0.9rem;")

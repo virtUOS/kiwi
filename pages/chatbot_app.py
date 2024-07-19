@@ -1,3 +1,6 @@
+import os
+import json
+
 from streamlit import session_state
 from streamlit_float import *
 from dotenv import load_dotenv
@@ -27,10 +30,12 @@ class ChatbotApplication:
         # Styling initialization
         styling.apply_styling()
         # App set up
-        advanced_model = "gpt-4o"
-        self.sidebar_manager = SidebarManager(advanced_model=advanced_model)
+        default_model = os.getenv("DEFAULT_MODEL")
+        multi_models = json.loads(os.getenv("MULTI_MODELS"))
+        multi_models = multi_models['models']
+        self.sidebar_manager = SidebarManager(default_model=default_model, multi_models=multi_models)
         self.chat_manager = ChatManager(user=session_state['_']("User"),
-                                        advanced_model=advanced_model,
+                                        multi_models=multi_models,
                                         sidebar_manager=self.sidebar_manager)
 
     def initialize_app(self):
